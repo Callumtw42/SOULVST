@@ -1,42 +1,22 @@
-/*
-  ==============================================================================
-
-	This file contains the basic framework code for a JUCE plugin processor.
-
-  ==============================================================================
-*/
-
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
-//==============================================================================
+using namespace juce;
+
 DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
-#ifndef JucePlugin_PreferredChannelConfigurations
 	: AudioProcessor(BusesProperties()
-#if ! JucePlugin_IsMidiEffect
-#if ! JucePlugin_IsSynth
-		.withInput("Input", juce::AudioChannelSet::stereo(), true)
-#endif
-		.withOutput("Output", juce::AudioChannelSet::stereo(), true)
-#endif
-	)
-#endif
+		.withInput("Input", AudioChannelSet::stereo(), true)
+		.withOutput("Output", AudioChannelSet::stereo(), true))
 {
-	juce::File path("C:\\Users\\callu\\SOUL\\examples\\patches\\SineSynth\\SineSynth.soulpatch");
-	patchLoader = new PatchLoaderComponent();
-	patchLoader->load(path);
-
+	//patchLoader = new PatchLoaderComponent();
+	//patchMidiCollector = &patchLoader->player.getMidiMessageCollector();
+	//patchLoader->player.getCurrentProcessor()->a
 }
 
-DefaultpluginAudioProcessor::~DefaultpluginAudioProcessor()
-{
-}
 
-//==============================================================================
-const juce::String DefaultpluginAudioProcessor::getName() const
-{
-	return JucePlugin_Name;
-}
+DefaultpluginAudioProcessor::~DefaultpluginAudioProcessor() {}
+
+const juce::String DefaultpluginAudioProcessor::getName() const { return JucePlugin_Name; }
 
 bool DefaultpluginAudioProcessor::acceptsMidi() const
 {
@@ -100,12 +80,14 @@ void DefaultpluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPe
 	//auto patchDLL = lookForSOULPatchDLL();
 // Use this method as the place to do any pre-playback
 // initialisation that you need..
+	//patchLoader->currentPlugin->prepareToPlay(sampleRate, samplesPerBlock);
 }
 
 void DefaultpluginAudioProcessor::releaseResources()
 {
 	// When playback stops, you can use this as an opportunity to free up any
-	// spare memory, etc.
+	 //spare memory, etc.
+	//patchLoader->currentPlugin->releaseResources();
 }
 
 #ifndef JucePlugin_PreferredChannelConfigurations
@@ -134,31 +116,9 @@ bool DefaultpluginAudioProcessor::isBusesLayoutSupported(const BusesLayout& layo
 
 void DefaultpluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-	juce::ScopedNoDenormals noDenormals;
-	auto totalNumInputChannels = getTotalNumInputChannels();
-	auto totalNumOutputChannels = getTotalNumOutputChannels();
-
-	// In case we have more outputs than inputs, this code clears any output
-	// channels that didn't contain input data, (because these aren't
-	// guaranteed to be empty - they may contain garbage).
-	// This is here to avoid people getting screaming feedback
-	// when they first compile a plugin, but obviously you don't need to keep
-	// this code if your algorithm always overwrites all the output channels.
-	for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
-		buffer.clear(i, 0, buffer.getNumSamples());
-
-	// This is the place where you'd normally do the guts of your plugin's
-	// audio processing...
-	// Make sure to reset the state if your inner loop is processing
-	// the samples and the outer loop is handling the channels.
-	// Alternatively, you can process the samples with the channels
-	// interleaved by keeping the same state.
-	for (int channel = 0; channel < totalNumInputChannels; ++channel)
-	{
-		auto* channelData = buffer.getWritePointer(channel);
-
-		// ..do something to the data...
-	}
+	//Logger::writeToLog(String(midiMessages.getNumEvents()));
+	//for (auto m : midiMessages)
+	//	patchMidiCollector->addMessageToQueue(m.getMessage());
 }
 
 //==============================================================================
@@ -169,12 +129,7 @@ bool DefaultpluginAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* DefaultpluginAudioProcessor::createEditor()
 {
-	//	while (patchLoader->pluginEditor.get() == nullptr) {
-	//		continue;
-	//	}
-	juce::AudioProcessorEditor* defEditor = new DefaultpluginAudioProcessorEditor(*this);
-	return defEditor;
-	//return 	patchLoader->pluginEditor.get();
+	return new DefaultpluginAudioProcessorEditor(*this);
 }
 
 //==============================================================================
@@ -198,6 +153,13 @@ void DefaultpluginAudioProcessor::setStateInformation(const void* data, int size
 // This creates new instances of the plugin..
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
-
+	//auto* p = new DefaultpluginAudioProcessor();
+	PatchLoaderComponent* patchLoader = new PatchLoaderComponent();
+	juce::File patchPath("C:\\Users\\callu\\SOUL\\examples\\patches\\SineSynth\\SineSynth.soulpatch");
+	jassert(patchPath.existsAsFile());
+	//patchLoader->onPatchLoad = [&]() {onPatchLoad(); };
+	patchLoader->load(patchPath);
+	//return patchLoader->currentPlugin.get();
 	return new DefaultpluginAudioProcessor();
+
 }
