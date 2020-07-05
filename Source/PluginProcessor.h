@@ -62,6 +62,7 @@ public:
 	//==============================================================================
 	void getStateInformation(juce::MemoryBlock& destData) override;
 	void setStateInformation(const void* data, int sizeInBytes) override;
+	void DefaultpluginAudioProcessor::connectPlugin();
 
 	std::unique_ptr<juce::AudioProcessorGraph> mainProcessor;
 	std::unique_ptr<juce::AudioPluginInstance> plugin;
@@ -72,15 +73,16 @@ private:
 	void connectAudioNodes();
 	AudioProcessorGraph* g = new AudioProcessorGraph();
 	Node::Ptr audioInputNode;
-	Node::Ptr soulPatchNode;
+	//Node::Ptr soulPatchNode;
 	Node::Ptr audioOutputNode;
 	Node::Ptr midiInputNode;
 	Node::Ptr midiOutputNode;
-	Node::Ptr osc;
+	Node::Ptr pluginNode;
 	PatchLoaderComponent* patchLoader;
 	AudioProcessorPlayer* player;
 	AudioDeviceManager* manager;
 	soul::patch::SOULPatchAudioPluginFormat* patchFormat;
+	bool reinitialised;
 
 
 	//==============================================================================
