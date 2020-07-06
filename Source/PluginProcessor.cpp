@@ -100,15 +100,17 @@ void DefaultpluginAudioProcessor::connectPlugin()
 		//pluginNode->getProcessor()->prepareToPlay(getSampleRate(), getBlockSize
 		//player->setProcessor(pluginNode->getProcessor());
 
-		plugin->setPlayConfigDetails(getNumInputChannels(), getNumOutputChannels(), getSampleRate(), getBlockSize());
-		bool supportsDouble = plugin->supportsDoublePrecisionProcessing() && plugin->isUsingDoublePrecision();
-		plugin->setProcessingPrecision(supportsDouble ? AudioProcessor::doublePrecision
-			: AudioProcessor::singlePrecision);
+		//plugin->setPlayConfigDetails(getNumInputChannels(), getNumOutputChannels(), getSampleRate(), getBlockSize());
+		//bool supportsDouble = plugin->supportsDoublePrecisionProcessing() && plugin->isUsingDoublePrecision();
+		//plugin->setProcessingPrecision(supportsDouble ? AudioProcessor::doublePrecision
+		//	: AudioProcessor::singlePrecision);
 		plugin->prepareToPlay(getSampleRate(), getBlockSize());
 
-		pluginNode = mainProcessor->addNode(std::move(plugin));
 
-		connectAudioNodes();
+		//pluginNode = mainProcessor->addNode(std::move(plugin));
+
+		//connectAudioNodes();
+		//connectMidiNodes();
 	}
 }
 
@@ -128,13 +130,14 @@ void DefaultpluginAudioProcessor::initialiseGraph()
 	manager->addAudioCallback(player);
 	//AudioIODevice* device = manager->getCurrentAudioDevice();
 	reinitialised = false;
-	juce::File patchPath("C:\\Users\\callu\\SOUL\\examples\\patches\\ClassicRingtone\\ClassicRingtone.soulpatch");
+	juce::File patchPath("C:\\Users\\callu\\SOUL\\examples\\patches\\SineSynth\\SineSynth.soulpatch");
 	jassert(patchPath.existsAsFile());
 
 	juce::String dll("C:\\Users\\callu\\SOUL_PatchLoader.dll");
 	auto reinitialiseCallback = [this](soul::patch::SOULPatchAudioProcessor& patch)
 	{
 		player->setProcessor(nullptr);
+		//manager->removeAudioCallback(player);
 		if (pluginNode != nullptr)
 			mainProcessor->removeNode(pluginNode->nodeID);
 		patch.reinitialise();
@@ -182,7 +185,7 @@ void DefaultpluginAudioProcessor::connectAudioNodes()
 void DefaultpluginAudioProcessor::connectMidiNodes()
 {
 	mainProcessor->addConnection({ { midiInputNode->nodeID,  juce::AudioProcessorGraph::midiChannelIndex },
-									{ midiOutputNode->nodeID, juce::AudioProcessorGraph::midiChannelIndex } });
+									{ pluginNode->nodeID, juce::AudioProcessorGraph::midiChannelIndex } });
 }
 
 void DefaultpluginAudioProcessor::releaseResources()
@@ -230,10 +233,12 @@ void DefaultpluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 	for (int i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
 		buffer.clear(i, 0, buffer.getNumSamples());
 
-	//Logger::writeToLog(juce::String(plugin.get()->getNumOutputChannels()));
-	//Logger::writeToLog(juce::String(osc->getProcessor()->getNumOutputChannels()));
-	//Logger::writeToLog(juce::String(osc->getProcessor()->getName()));
-	if (reinitialised)mainProcessor->processBlock(buffer, midiMessages);
+	if (reinitialised)
+	{
+		//Logger::writeToLog(juce::String(pluginNode->getProcessor()->getName()));
+		//mainProcessor->processBlock(buffer, midiMessages);
+		plugin->processBlock(buffer, midiMessages);
+	}
 }
 
 //==============================================================================
