@@ -5,32 +5,6 @@
               cppLanguageStandard="17" pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn">
   <MAINGROUP id="tPqceN" name="defaultplugin">
     <GROUP id="{1BF8D3CB-F9A7-43D2-B317-640F5BCEBB19}" name="Source">
-      <GROUP id="{DB6708BB-0BBF-2156-E99E-D1C380503E9C}" name="API">
-        <FILE id="hPme47" name="soul_patch.h" compile="0" resource="0" file="../../../SOUL/source/API/soul_patch/API/soul_patch.h"/>
-        <FILE id="dwLM1J" name="soul_patch_Instance.h" compile="0" resource="0"
-              file="../../../SOUL/source/API/soul_patch/API/soul_patch_Instance.h"/>
-        <FILE id="BO35N2" name="soul_patch_Library.h" compile="0" resource="0"
-              file="../../../SOUL/source/API/soul_patch/API/soul_patch_Library.h"/>
-        <FILE id="ivdHgm" name="soul_patch_Player.h" compile="0" resource="0"
-              file="../../../SOUL/source/API/soul_patch/API/soul_patch_Player.h"/>
-        <FILE id="OrUPrD" name="soul_patch_VirtualFile.h" compile="0" resource="0"
-              file="../../../SOUL/source/API/soul_patch/API/soul_patch_VirtualFile.h"/>
-      </GROUP>
-      <GROUP id="{3D128DA3-92EB-35CD-980D-9F704DD568EB}" name="helper_classes">
-        <FILE id="vX7z9r" name="soul_patch_AudioPluginFormat.h" compile="0"
-              resource="0" file="../../../SOUL/source/API/soul_patch/helper_classes/soul_patch_AudioPluginFormat.h"/>
-        <FILE id="DdikZK" name="soul_patch_AudioProcessor.h" compile="0" resource="0"
-              file="../../../SOUL/source/API/soul_patch/helper_classes/soul_patch_AudioProcessor.h"/>
-        <FILE id="jEo7Du" name="soul_patch_CompilerCacheFolder.h" compile="0"
-              resource="0" file="../../../SOUL/source/API/soul_patch/helper_classes/soul_patch_CompilerCacheFolder.h"/>
-        <FILE id="qkXgd6" name="soul_patch_Utilities.h" compile="0" resource="0"
-              file="../../../SOUL/source/API/soul_patch/helper_classes/soul_patch_Utilities.h"/>
-      </GROUP>
-      <FILE id="rEqPH1" name="BindNativeCallbacks.cpp" compile="1" resource="0"
-            file="Source/BindNativeCallbacks.cpp"/>
-      <FILE id="a87F9R" name="Main.cpp" compile="1" resource="0" file="../../../SOUL/examples/SOULPatchHostDemo/Source/Main.cpp"/>
-      <FILE id="vitzyI" name="PatchLoaderComponent.h" compile="0" resource="0"
-            file="../../../SOUL/examples/SOULPatchHostDemo/Source/PatchLoaderComponent.h"/>
       <FILE id="WrJICZ" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
       <FILE id="dw2dL8" name="PluginProcessor.h" compile="0" resource="0"

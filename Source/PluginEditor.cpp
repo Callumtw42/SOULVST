@@ -1,25 +1,16 @@
-#include "PluginProcessor.h"
 #include "PluginEditor.h"
-using namespace juce;
 
 juce::String message;
 
 DefaultpluginAudioProcessorEditor::DefaultpluginAudioProcessorEditor(DefaultpluginAudioProcessor& p)
 	: AudioProcessorEditor(&p), audioProcessor(p)
 {
-	//juce::File patchPath("C:\\Users\\callu\\SOUL\\examples\\patches\\SineSynth\\SineSynth.soulpatch");
-	//jassert(patchPath.existsAsFile());
-	//patchLoader = audioProcessor.patchLoader;
-	//patchLoader->onPatchLoad = [&]() {onPatchLoad(); };
-	//patchLoader->load(patchPath);
 	setSize(400, 300);
 }
 
-DefaultpluginAudioProcessorEditor::~DefaultpluginAudioProcessorEditor()
-{
-}
+DefaultpluginAudioProcessorEditor::~DefaultpluginAudioProcessorEditor() { }
 
-void DefaultpluginAudioProcessorEditor::onPatchLoad()
+void DefaultpluginAudioProcessorEditor::updateParams()
 {
 	setResizable(true, true);
 	addAndMakeVisible(appRoot);
@@ -29,8 +20,8 @@ void DefaultpluginAudioProcessorEditor::onPatchLoad()
 	bindNativeCallbacks();
 
 	// Now our React application is up and running, so we can start dispatching events, such as current parameter values.
-	Logger::writeToLog("Loaded: " + patchLoader->currentPlugin->getName());
-	for (AudioProcessorParameter* p : patchLoader->currentPlugin->getParameters())
+	Logger::writeToLog("Loaded: " + audioProcessor.plugin->getName());
+	for (AudioProcessorParameter* p : audioProcessor.plugin->getParameters())
 	{
 		params.insert_or_assign(p->getName(100), p);
 		juce::Logger::writeToLog(p->getName(100));
@@ -84,7 +75,7 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 
 void DefaultpluginAudioProcessorEditor::parameterValueChanged(int parameterIndex, float newValue)
 {
-	const auto& p = patchLoader->currentPlugin->getParameters()[parameterIndex];
+	const auto& p = audioProcessor.plugin->getParameters()[parameterIndex];
 	juce::String id = p->getName(100);
 
 	if (auto* x = dynamic_cast<AudioProcessorParameterWithID*>(p))
