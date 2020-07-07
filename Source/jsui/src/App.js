@@ -9,30 +9,16 @@ import {
   Text,
 } from 'juce-blueprint';
 
-
-function animatedDraw(ctx) {
-  let now = (Date.now() / 10);
-  let width = now % 100;
-  let red = Math.sqrt(width / 100) * 255;
-  let hex = Math.floor(red).toString(16);
-
-  // TODO: Should update the ctx proxy to convert from javascript hex strings, aka
-  // #ffffaa to juce's Colour::fromString() API which is ffffffaa.
-  ctx.fillStyle = `ff${hex}ffaa`;
-  ctx.fillRect(0, 0, width, 2);
-}
-
 class App extends Component {
   render() {
     return (
       <View {...styles.container}>
         <View {...styles.content}>
-          <Image source={require('./logo.svg')} {...styles.logo} />
+
           <Slider paramId="volume" {...styles.knob}>
             <Label paramId="volume" {...styles.label} />
           </Slider>
-          <Meter {...styles.meter} />
-          <Canvas {...styles.canvas} animate={true} onDraw={animatedDraw} />
+          
         </View>
       </View>
     );

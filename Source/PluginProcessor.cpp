@@ -8,26 +8,15 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 	player(new AudioProcessorPlayer()),
 	manager(new AudioDeviceManager()),
 	isPlayable(false),
-	editor(new DefaultpluginAudioProcessorEditor(*this))
+	editor(new DefaultpluginAudioProcessorEditor(*this)),
+	desc(new PluginDescription)
+
 {
 	manager->initialiseWithDefaultDevices(2, 2);
 	manager->addAudioCallback(player);
 	juce::File patchPath("C:\\Users\\callu\\SOUL\\examples\\patches\\SineSynth\\SineSynth.soulpatch");
 	jassert(patchPath.existsAsFile());
 
-	juce::String dll("C:\\Users\\callu\\SOUL_PatchLoader.dll");
-	auto reinitialiseCallback = [this](soul::patch::SOULPatchAudioProcessor& patch)
-	{
-		isPlayable = false;
-		player->setProcessor(nullptr);
-		patch.reinitialise();
-		plugin->prepareToPlay(getSampleRate(), getBlockSize());
-		static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams();
-		isPlayable = true;
-	};
-	SOULPatchAudioPluginFormat* patchFormat = new SOULPatchAudioPluginFormat(dll, reinitialiseCallback);
-
-	juce::PluginDescription* desc = new PluginDescription();
 	desc->pluginFormatName = soul::patch::SOULPatchAudioProcessor::getPluginFormatName();
 	desc->fileOrIdentifier = patchPath.getFullPathName();
 
@@ -38,6 +27,19 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 		plugin = std::move(newPlugin);
 		player->setProcessor(plugin.get());
 	};
+
+	auto reinitialiseCallback = [&setPlugin, this](soul::patch::SOULPatchAudioProcessor& patch)
+	{
+		isPlayable = false;
+		player->setProcessor(nullptr);
+		patch.reinitialise();
+		plugin->prepareToPlay(getSampleRate(), getBlockSize());
+		static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams();
+		isPlayable = true;
+	};
+	juce::String dll("C:\\Users\\callu\\SOUL_PatchLoader.dll");
+	patchFormat = new SOULPatchAudioPluginFormat(dll, reinitialiseCallback);
+
 	patchFormat->createPluginInstance(*desc, getSampleRate(), getBlockSize(), setPlugin);
 }
 

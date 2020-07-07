@@ -35,7 +35,8 @@ class Label extends Component {
 
   render() {
     return (
-      <View {...this.props}>
+      <View {...this.props} {...styles.container}>
+        <Text {...styles.nameText}>{this.props.paramId}</Text>
         <Text {...styles.labelText}>
           {this.state.label}
         </Text>
@@ -50,6 +51,14 @@ const styles = {
     'font-size': 16.0,
     'line-spacing': 1.6,
   },
+  nameText: {
+    'color': 'ff626262',
+    'font-size': 16.0,
+    'line-spacing': 1.6,
+  },
+  container:{
+    'flex-direction':'column'
+  }
 };
 
 export default Label;

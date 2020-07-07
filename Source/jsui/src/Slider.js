@@ -65,13 +65,13 @@ class Slider extends Component {
 
   _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
     // Component vectors
-    let dx = mouseX - mouseDownX;
+    // let dx = mouseX - mouseDownX;
     let dy = mouseDownY - mouseY;
 
     // Delta
-    let dm = dx + dy;
+    // let dm = dx + dy;
     let sensitivity = (1.0 / 200.0);
-    let value = Math.max(0.0, Math.min(1.0, this._valueAtDragStart + dm * sensitivity));
+    let value = Math.max(0.0, Math.min(1.0, this._valueAtDragStart + dy * sensitivity));
 
     if (typeof this.props.paramId === 'string' && this.props.paramId.length > 0) {
       global.setParameterValueNotifyingHost(this.props.paramId, value);
@@ -138,18 +138,18 @@ class Slider extends Component {
   }
 
   render() {
-    const {value, width, height} = this.state;
+    const { value, width, height } = this.state;
 
     return (
-      <View
-        {...this.props}
-        onMeasure={this._onMeasure}
-        onMouseDown={this._onMouseDown}
-        onMouseUp={this._onMouseUp}
-        onMouseDrag={this._onMouseDrag}>
-        <Image {...styles.canvas} source={this._renderVectorGraphics(value, width, height)} />
-        {this.props.children}
-      </View>
+        <View {...styles.container}
+          {...this.props}
+          onMeasure={this._onMeasure}
+          onMouseDown={this._onMouseDown}
+          onMouseUp={this._onMouseUp}
+          onMouseDrag={this._onMouseDrag}>
+          <Image {...styles.canvas} source={this._renderVectorGraphics(value, width, height)} />
+          {this.props.children}
+        </View>
     );
   }
 

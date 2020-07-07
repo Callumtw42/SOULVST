@@ -9,6 +9,7 @@
 #pragma once
 
 #include <JuceHeader.h>
+#include <functional>
 
 #include "../../SOUL/source/API/soul_patch/API/soul_patch.h"
 #include "../../SOUL/source/API/soul_patch/helper_classes/soul_patch_AudioPluginFormat.h"
@@ -65,10 +66,10 @@ public:
 private:
 	AudioProcessorPlayer* player;
 	AudioDeviceManager* manager;
-	soul::patch::SOULPatchAudioPluginFormat* patchFormat;
+	SOULPatchAudioPluginFormat* patchFormat;
 	bool isPlayable;
 	AudioProcessorEditor* editor;
-
+	PluginDescription* desc;
 	//==============================================================================
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DefaultpluginAudioProcessor)
 };
