@@ -5,28 +5,40 @@ juce::String message;
 DefaultpluginAudioProcessorEditor::DefaultpluginAudioProcessorEditor(DefaultpluginAudioProcessor& p)
 	: AudioProcessorEditor(&p), audioProcessor(p)
 {
+	setResizable(true, true);
 	setSize(400, 300);
+	//addAndMakeVisible(appRoot);
+
+	juce::File UIPath("C:\\Users\\callu\\Desktop\\projects\\defaultplugin\\Source\\jsui\\build\\js\\main.js");
+	jassert(UIPath.existsAsFile());
+	appRoot.evaluate(UIPath);
 }
 
 DefaultpluginAudioProcessorEditor::~DefaultpluginAudioProcessorEditor() { }
 
-void DefaultpluginAudioProcessorEditor::updateParams()
+void DefaultpluginAudioProcessorEditor::updateParams(juce::String* error)
 {
-	setResizable(true, true);
-	addAndMakeVisible(appRoot);
-	juce::File UIPath("C:\\Users\\callu\\Desktop\\projects\\defaultplugin\\Source\\jsui\\build\\js\\main.js");
-	jassert(UIPath.existsAsFile());
-	appRoot.evaluate(UIPath);
-	bindNativeCallbacks();
-
+	removeChildComponent(getIndexOfChildComponent(&appRoot));
+	removeChildComponent(getIndexOfChildComponent(&errorText));
 	// Now our React application is up and running, so we can start dispatching events, such as current parameter values.
 	Logger::writeToLog("Loaded: " + audioProcessor.plugin->getName());
-	for (AudioProcessorParameter* p : audioProcessor.plugin->getParameters())
-	{
-		params.insert_or_assign(p->getName(100), p);
-		juce::Logger::writeToLog(p->getName(100));
-		p->addListener(this);
-		p->sendValueChangedMessageToListeners(p->getValue());
+	params.clear();
+	if (error->isEmpty()) {
+		for (AudioProcessorParameter* p : audioProcessor.plugin->getParameters())
+		{
+			params.insert_or_assign(p->getName(100), p);
+			juce::Logger::writeToLog(p->getName(100));
+			p->addListener(this);
+			p->sendValueChangedMessageToListeners(p->getValue());
+		}
+		bindNativeCallbacks();
+		addAndMakeVisible(appRoot);
+	}
+	else {
+		errorText.setText(*error, NotificationType());
+		addAndMakeVisible(errorText);
+		errorText.setBounds(getLocalBounds());
+		errorText.centreWithSize(getParentHeight(), getParentWidth());
 	}
 }
 
@@ -100,6 +112,8 @@ void DefaultpluginAudioProcessorEditor::parameterValueChanged(int parameterIndex
 void DefaultpluginAudioProcessorEditor::resized()
 {
 	appRoot.setBounds(getLocalBounds());
+	errorText.setBounds(getLocalBounds());
+	errorText.centreWithSize(getParentHeight(), getParentWidth());
 }
 
 

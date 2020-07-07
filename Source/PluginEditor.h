@@ -10,10 +10,11 @@ public:
 	void resized() override;
 	void parameterValueChanged(int parameterIndex, float newValue) override;
 	void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override {}
-	void updateParams();
+	void updateParams(juce::String* error);
 	void bindNativeCallbacks();
 	DefaultpluginAudioProcessor& audioProcessor;
 	blueprint::ReactApplicationRoot appRoot;
 	std::map<juce::String, juce::AudioProcessorParameter*> params;
+	Label errorText;
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DefaultpluginAudioProcessorEditor);
 };

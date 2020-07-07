@@ -14,7 +14,7 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 {
 	manager->initialiseWithDefaultDevices(2, 2);
 	manager->addAudioCallback(player);
-	juce::File patchPath("C:\\Users\\callu\\SOUL\\examples\\patches\\SineSynth\\SineSynth.soulpatch");
+	juce::File patchPath("C:\\Users\\callu\\Desktop\\projects\\defaultplugin\\Source\\soul\\SineSynth.soulpatch");
 	jassert(patchPath.existsAsFile());
 
 	desc->pluginFormatName = soul::patch::SOULPatchAudioProcessor::getPluginFormatName();
@@ -33,9 +33,12 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 		isPlayable = false;
 		player->setProcessor(nullptr);
 		patch.reinitialise();
-		plugin->prepareToPlay(getSampleRate(), getBlockSize());
-		static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams();
-		isPlayable = true;
+		juce::String error = patch.getCompileError();
+		if (error.isEmpty()) {
+			plugin->prepareToPlay(getSampleRate(), getBlockSize());
+			isPlayable = true;
+		}
+		static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams(&error);
 	};
 	juce::String dll("C:\\Users\\callu\\SOUL_PatchLoader.dll");
 	patchFormat = new SOULPatchAudioPluginFormat(dll, reinitialiseCallback);
