@@ -5,12 +5,15 @@ juce::String message;
 DefaultpluginAudioProcessorEditor::DefaultpluginAudioProcessorEditor(DefaultpluginAudioProcessor& p)
 	: AudioProcessorEditor(&p), audioProcessor(p)
 {
+	constrainer.setMinimumWidth(400);
+	constrainer.setMinimumHeight(300);
+	setConstrainer(&constrainer);
 	setResizable(true, true);
 	setSize(400, 300);
-	//addAndMakeVisible(appRoot);
 
 	juce::File UIPath("C:\\Users\\callu\\Desktop\\projects\\defaultplugin\\Source\\jsui\\build\\js\\main.js");
 	jassert(UIPath.existsAsFile());
+	appRoot.enableHotReloading();
 	appRoot.evaluate(UIPath);
 }
 

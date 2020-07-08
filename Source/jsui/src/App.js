@@ -14,11 +14,11 @@ class App extends Component {
     return (
       <View {...styles.container}>
         <View {...styles.content}>
-
-          <Slider paramId="volume" {...styles.knob}>
-            <Label paramId="volume" {...styles.label} />
-          </Slider>
-          
+          <Slider paramId="volume" {...styles.knob} />
+          <Slider paramId="ampAttack" {...styles.knob} />
+          <Slider paramId="ampDecay" {...styles.knob} />
+          <Slider paramId="ampSustain" {...styles.knob} />
+          <Slider paramId="ampRelease" {...styles.knob} />
         </View>
       </View>
     );
@@ -30,45 +30,16 @@ const styles = {
     'width': '100%',
     'height': '100%',
     'background-color': 'ff17191f',
-    'justify-content': 'center',
-    'align-items': 'center',
   },
   content: {
-    'flex': 1.0,
-    'flex-direction': 'column',
-    'justify-content': 'space-around',
-    'align-items': 'center',
-    'padding': 24.0,
+    'padding': 5.0,
     'max-width': 600,
-    'aspect-ratio': 400.0 / 240.0,
-  },
-  logo: {
-    'flex': 0.0,
-    'width': '80%',
-    'aspect-ratio': 281.6 / 35.0,
-    'placement': Image.PlacementFlags.centred,
+    'position': 'relative'
   },
   knob: {
-    'min-width': 100.0,
-    'min-height': 100.0,
-    'width': '50%',
-    'height': '50%',
-  },
-  label: {
-    'flex': 1.0,
-    'justify-content': 'center',
-    'align-items': 'center',
-    'interceptClickEvents': false,
-  },
-  meter: {
-    'flex': 0.0,
-    'width': 100.0,
-    'height': 16.0,
-  },
-  canvas: {
-    'flex': 0.0,
-    'width': 100.0,
-    'height': 2
+    'width': 50.0,
+    'height': 50.0,
+    // 'margin': 5.0
   },
 };
 

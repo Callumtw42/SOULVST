@@ -1,5 +1,6 @@
 import ParameterValueStore from './ParameterValueStore';
 import React, { Component } from 'react';
+import Label from './Label';
 import {
   Image,
   Text,
@@ -140,22 +141,32 @@ class Slider extends Component {
   render() {
     const { value, width, height } = this.state;
 
-    return (
-        <View {...styles.container}
-          {...this.props}
-          onMeasure={this._onMeasure}
-          onMouseDown={this._onMouseDown}
-          onMouseUp={this._onMouseUp}
-          onMouseDrag={this._onMouseDrag}>
-          <Image {...styles.canvas} source={this._renderVectorGraphics(value, width, height)} />
-          {this.props.children}
-        </View>
+    return (<View {...styles.container}>
+      <View
+        {...this.props}
+        onMeasure={this._onMeasure}
+        onMouseDown={this._onMouseDown}
+        onMouseUp={this._onMouseUp}
+        onMouseDrag={this._onMouseDrag}>
+        <Image {...styles.canvas} source={this._renderVectorGraphics(value, width, height)} />
+        <Label paramId={this.props.paramId} {...styles.label} />
+      </View>
+      <Text {...styles.nameText}>{this.props.paramId}</Text>
+    </View>
     );
   }
 
 }
 
 const styles = {
+  container:{
+    'flex-direction':'column',
+    // 'justify-content': 'center',
+    // 'align-items': 'center',
+    'position': 'relative',
+    'margin':5.0
+    // 'text-overflow':'ellipsis'
+  },
   canvas: {
     'flex': 1.0,
     'height': '100%',
@@ -165,6 +176,19 @@ const styles = {
     'top': 0.0,
     'interceptClickEvents': false,
     'transform-rotate': Math.PI * 1.25,
+  },
+  nameText: {
+    'position':'relative',
+    'color': 'ff626262',
+    'font-size': 12.0,
+    'line-spacing': 1.6,
+    'align-self':'center'
+  },
+  label: {
+    'flex': 1.0,
+    'justify-content': 'center',
+    'align-items': 'center',
+    'interceptClickEvents': false,
   },
 };
 

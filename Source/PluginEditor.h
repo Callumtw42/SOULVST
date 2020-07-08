@@ -16,5 +16,6 @@ public:
 	blueprint::ReactApplicationRoot appRoot;
 	std::map<juce::String, juce::AudioProcessorParameter*> params;
 	Label errorText;
+	ComponentBoundsConstrainer constrainer;
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DefaultpluginAudioProcessorEditor);
 };

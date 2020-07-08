@@ -36,7 +36,6 @@ class Label extends Component {
   render() {
     return (
       <View {...this.props} {...styles.container}>
-        <Text {...styles.nameText}>{this.props.paramId}</Text>
         <Text {...styles.labelText}>
           {this.state.label}
         </Text>
@@ -48,16 +47,15 @@ class Label extends Component {
 const styles = {
   labelText: {
     'color': 'ff626262',
-    'font-size': 16.0,
+    'font-size': 12.0,
     'line-spacing': 1.6,
-  },
-  nameText: {
-    'color': 'ff626262',
-    'font-size': 16.0,
-    'line-spacing': 1.6,
+    // 'justify-self':'center'
   },
   container:{
-    'flex-direction':'column'
+    // 'flex': 1.0,
+    // 'flex-direction':'row',
+    // 'align-items':'center',
+    // 'justify-content':'center'
   }
 };
 
