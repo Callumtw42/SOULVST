@@ -1,0 +1,82 @@
+/// PolyBlep oscillator - variable waveshape between 0.0 (saw) and 1.0 (square)
+processor PolyBlep
+{
+    input event float waveshape, detuneSemitones, detune;
+    input stream float frequencyIn;
+    input stream float gainIn; 
+    output stream float audioOut;
+
+    event waveshape (float f)
+    {
+        waveshapeValue = f * 0.01f;
+    }
+
+    event detuneSemitones (float f)
+    {
+        detuneSemitonesValue = f;
+        frequencyMultiplier = pow (2.0f, (detuneSemitonesValue + detuneValue) / 12.0f);
+    }
+
+    event detune (float f)
+    {
+        detuneValue = f * 0.01f;
+        frequencyMultiplier = pow (2.0f, (detuneSemitonesValue + detuneValue) / 12.0f);
+    }
+
+    let frequencyScaling = 1.0f / float(processor.frequency);
+
+    float normalisedPhase = 0.0f;
+    float normalisedPhaseIncrement = 0.0f;
+
+    float waveshapeValue = 0.0f;
+    float detuneSemitonesValue = 0.0f;
+    float detuneValue = 0.0f;
+    float frequencyMultiplier = 1.0f;
+
+    float blep (float t2)
+    {
+        float t = t2;
+
+        if (t < normalisedPhaseIncrement)
+        {
+            t /= normalisedPhaseIncrement;
+            return (t + t) - (t * t) - 1.0f;
+        }
+
+        if (t > (1.0f - normalisedPhaseIncrement))
+        {
+            t = (t - 1.0f) / normalisedPhaseIncrement;
+            return (t * t) + (t + t) + 1.0f;
+        }
+
+        return 0;
+    }
+
+    void run()
+    {
+        loop
+        {
+            // Generate phase increment from our input frequency
+            normalisedPhaseIncrement = frequencyIn * frequencyScaling * frequencyMultiplier;
+
+            while (normalisedPhase >= 1.0f)
+                normalisedPhase -= 1.0f;
+
+            var normalisedPhase2 = normalisedPhase + 0.5f;
+
+            if (normalisedPhase2 > 1.0f)
+                normalisedPhase2 -= 1.0f;
+
+            let sawValue = (2.0f * normalisedPhase) - 1.0f - blep (normalisedPhase);
+            var squareValue = -blep (normalisedPhase) + blep (normalisedPhase2);
+
+            squareValue += (normalisedPhase <= 0.5f) ? -1.0f : 1.0f;
+
+            // Mix the square and saw waves together
+            audioOut << gainIn * (squareValue * waveshapeValue + (sawValue * (1.0f - waveshapeValue)));
+
+            normalisedPhase += normalisedPhaseIncrement;
+            advance();
+        }
+    }
+}

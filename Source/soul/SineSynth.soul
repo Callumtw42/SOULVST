@@ -7,203 +7,34 @@
 
 graph SineSynth  [[ main ]]
 {
-    input smoothedGain.volume [[ label: "Volume", min: -40, max: 0, init: -6, step: 1 ]];
+    input smoothedGain.volume [[ label: "Volume", min: -40, max: 0, init: -6, step: 1, unit:"dB"]];
     input event soul::midi::Message midiIn;
+    input event
+    {
+        soul::note_events::NoteOn noteOn;
+        soul::note_events::NoteOff noteOff;
+        soul::note_events::PitchBend pitchBend;
+    }
     output stream float audioOut;
 
     let
     {
-        midiParser = soul::midi::MPEParser;
-
-        voices = Voice[8];
-        voiceAllocator = soul::voice_allocators::Basic(8);
-
         smoothedGain = soul::gain::SmoothedGainParameter (0.5f);
+        voices = Voice[8];
+        midiParser = soul::midi::MPEParser;
+        voiceAllocator = soul::voice_allocators::Basic(8);
         gainProcessor = soul::gain::DynamicGain (float);
-    }
+    } 
 
     connection
     {
         midiIn -> midiParser.parseMIDI;
-
         midiParser.eventOut -> voiceAllocator.eventIn;
-
-        // Plumb the voice allocator to the voices array
-        voiceAllocator.voiceEventOut -> voices.noteOn,
-                                        voices.noteOff,
-                                        voices.pitchBend;
-
-        // Sum the voices audio out to the output
-        voices.audioOut -> gainProcessor.in;
-        smoothedGain.gain -> gainProcessor.gain;
-        gainProcessor.out -> audioOut;
-    }
-}
-
-//==============================================================================
-processor SineOsc
-{
-    input event
-    {
-        soul::note_events::NoteOn noteOn;
-        soul::note_events::NoteOff noteOff;
-        soul::note_events::PitchBend pitchBend;
-    }
-
-    output stream float audioOut;
-
-    event noteOn (soul::note_events::NoteOn e)
-    {
-        notePitch = e.note;
-        bendSemitones = 0.0f;
-        calculatePhaseIncrement();
-    }
-
-    event noteOff (soul::note_events::NoteOff e) {}
-
-    event pitchBend (soul::note_events::PitchBend e)
-    {
-        bendSemitones = e.bendSemitones;
-        calculatePhaseIncrement();
-    }
-
-    float notePitch, bendSemitones, phase, phaseIncrement;
-
-    void calculatePhaseIncrement()
-    {
-        let noteFrequency  = soul::noteNumberToFrequency (notePitch + bendSemitones);
-        phaseIncrement = float (noteFrequency * twoPi * processor.period);
-    }
-
-    void run()
-    {
-        loop
-        {
-            phase = addModulo2Pi (phase, phaseIncrement);
-            audioOut << sin (phase);
-            advance();
-        }
-    }//
-}
-
-
-/// PolyBlep oscillator - variable waveshape between 0.0 (saw) and 1.0 (square)
-processor PolyBlep
-{
-    input event float waveshape, detuneSemitones, detune;
-    input stream float frequencyIn;
-    input event
-    {
-        soul::note_events::NoteOn noteOn;
-        soul::note_events::NoteOff noteOff;
-        soul::note_events::PitchBend pitchBend;
-    }
-    output stream float audioOut;
-
-    event waveshape (float f)
-    {
-        waveshapeValue = f * 0.01f;
-    }
-
-    event detuneSemitones (float f)
-    {
-        detuneSemitonesValue = f;
-        frequencyMultiplier = pow (2.0f, (detuneSemitonesValue + detuneValue) / 12.0f);
-    }
-
-    event detune (float f)
-    {
-        detuneValue = f * 0.01f;
-        frequencyMultiplier = pow (2.0f, (detuneSemitonesValue + detuneValue) / 12.0f);
-    }
-
-    let frequencyScaling = 1.0f / float(processor.frequency);
-
-    float normalisedPhase = 0.0f;
-    float normalisedPhaseIncrement = 0.0f;
-
-    float waveshapeValue = 0.0f;
-    float detuneSemitonesValue = 0.0f;
-    float detuneValue = 0.0f;
-    float frequencyMultiplier = 1.0f;
-
-    float blep (float t2)
-    {
-        float t = t2;
-
-        if (t < normalisedPhaseIncrement)
-        {
-            t /= normalisedPhaseIncrement;
-            return (t + t) - (t * t) - 1.0f;
-        }
-
-        if (t > (1.0f - normalisedPhaseIncrement))
-        {
-            t = (t - 1.0f) / normalisedPhaseIncrement;
-            return (t * t) + (t + t) + 1.0f;
-        }
-
-        return 0;
-    }
-
-    void run()
-    {
-        loop
-        {
-            // Generate phase increment from our input frequency
-            normalisedPhaseIncrement = frequencyIn * frequencyScaling * frequencyMultiplier;
-
-            while (normalisedPhase >= 1.0f)
-                normalisedPhase -= 1.0f;
-
-            var normalisedPhase2 = normalisedPhase + 0.5f;
-
-            if (normalisedPhase2 > 1.0f)
-                normalisedPhase2 -= 1.0f;
-
-            let sawValue = (2.0f * normalisedPhase) - 1.0f - blep (normalisedPhase);
-            var squareValue = -blep (normalisedPhase) + blep (normalisedPhase2);
-
-            squareValue += (normalisedPhase <= 0.5f) ? -1.0f : 1.0f;
-
-            // Mix the square and saw waves together
-            audioOut << squareValue * waveshapeValue + (sawValue * (1.0f - waveshapeValue));
-
-            normalisedPhase += normalisedPhaseIncrement;
-            advance();
-        }
+        voiceAllocator.voiceEventOut -> voices.eventIn;
+        voices.audioOut -> gainProcessor.in; 
+        smoothedGain.gain -> gainProcessor.gain; 
+        gainProcessor.out -> audioOut; 
     }
 }
 
 
-//==============================================================================
-graph Voice
-{
-    input event
-    {
-        soul::note_events::NoteOn noteOn;
-        soul::note_events::NoteOff noteOff;
-        soul::note_events::PitchBend pitchBend;
-    }
-
-    output stream float audioOut;
-
-    let
-    {
-        osc = SineOsc;
-        amplitudeEnvelope = soul::envelope::FixedAttackReleaseEnvelope (0.2f, 0.02f, 0.1f);
-        attenuator = soul::gain::DynamicGain (float);
-    }
-
-    connection
-    {
-        noteOn          -> osc.noteOn;
-        noteOff         -> osc.noteOff;
-        pitchBend       -> osc.pitchBend;
-        noteOn, noteOff -> amplitudeEnvelope.noteIn;
-
-        osc.audioOut                -> attenuator.in;
-        amplitudeEnvelope.levelOut  -> attenuator.gain;
-        attenuator.out              -> audioOut;
-    }
-}

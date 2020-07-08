@@ -1,0 +1,58 @@
+//==============================================================================
+/*
+    Voice control processor - receives NoteOn/NoteOff events, and generates control signals
+    for our oscillators/filters
+*/
+processor Controller
+{
+    input event (soul::note_events::NoteOn,
+                 soul::note_events::NoteOff,
+                 soul::note_events::PitchBend,
+                 soul::note_events::Pressure,
+                 soul::note_events::Slide) eventIn;
+
+    output stream float note1_noteOut, note1_frequencyOut, note1_velocity, note1_active,
+                        note2_frequencyOut, note1_pressure, note1_slide;
+
+    event eventIn (soul::note_events::NoteOn e)     { NoteHandler::addNote      (noteHandler, e.channel, e.note, e.velocity); }
+    event eventIn (soul::note_events::NoteOff e)    { NoteHandler::removeNote   (noteHandler, e.channel, e.note); }
+    event eventIn (soul::note_events::PitchBend e)  { NoteHandler::addPitchBend (noteHandler, e.channel, e.bendSemitones); }
+    event eventIn (soul::note_events::Pressure p)   { NoteHandler::addPressure  (noteHandler, p.channel, p.pressure); }
+    event eventIn (soul::note_events::Slide s)      { NoteHandler::addSlide     (noteHandler, s.channel, s.slide); }
+
+    NoteHandler::NoteHandler noteHandler;
+
+    void run()
+    {
+        float multiplier = 1.0f;
+        int sampleCount = 0;
+
+        noteHandler = NoteHandler::create();
+
+        loop
+        {
+            ++sampleCount;
+
+            if (sampleCount == 1000)
+            {
+                sampleCount = 0;
+                multiplier += 0.001f;
+
+                if (multiplier >= 1.01f)
+                    multiplier = 1.0f;
+            }
+
+            let noteFrequency = soul::noteNumberToFrequency (NoteHandler::getCurrentNote(noteHandler));
+
+            note1_noteOut      << NoteHandler::getCurrentNote(noteHandler);
+            note1_frequencyOut << noteFrequency;
+            note2_frequencyOut << noteFrequency * multiplier;
+            note1_velocity     << NoteHandler::getCurrentVelocity(noteHandler);
+            note1_active       << (NoteHandler::isNoteActive(noteHandler) ? NoteHandler::getCurrentVelocity(noteHandler) : 0.0f);
+            note1_pressure     << NoteHandler::getCurrentPressure(noteHandler);
+            note1_slide        << NoteHandler::getCurrentSlide(noteHandler);
+
+            advance();
+        }
+    }
+}

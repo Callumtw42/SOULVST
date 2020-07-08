@@ -3,7 +3,7 @@
         {
             "match": "\\.soul*",
             "isAsync": true,
-            "cmd": "soul generate --graph --output=${workspaceRoot}\\Source\\soul\\graph\\graph.html ${workspaceRoot}\\Source\\soul\\SineSynth.soul",
+            "cmd": "soul generate --graph --output=${workspaceRoot}\\Source\\soul\\graph\\graph.html ${workspaceRoot}\\Source\\soul\\SineSynth.soulpatch",
             "event": "onFileChange"
         }
     ]

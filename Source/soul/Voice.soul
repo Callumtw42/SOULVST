@@ -1,0 +1,86 @@
+graph Voice
+{
+    input event (soul::note_events::NoteOn,
+                 soul::note_events::NoteOff,
+                 soul::note_events::PitchBend,
+                 soul::note_events::Pressure,
+                 soul::note_events::Slide) eventIn;
+
+    input event float cutoffParam, resonanceParam,
+                      ampAttack, ampDecay, ampSustain, ampRelease, ampSensitivity,
+                      osc1waveshape, osc1detuneSemitones, osc1detune,
+                      osc2waveshape, osc2detuneSemitones, osc2detune,
+                      filterAttack, filterDecay, filterSustain, filterRelease, filterSensitivity,
+                      oscillatorMix,
+                      filterEnvMod, filterCutoffTrack;
+
+    output stream float audioOut;
+
+    let
+    {
+        osc1                = PolyBlep;
+        // osc2                = PolyBlep;
+        amplitudeEnvelope   = ADSREnvelope;
+        // cutoffEnvelope      = ADSREnvelope;
+        voiceController     = Controller;
+        // voiceOscillatorMix  = soul::mixers::DynamicMix (float, 100.0f);
+        // voiceCutoffHandler  = CutoffHandler;
+        // voiceLowPassFilter  = LowPassFilter;
+
+        // cutoff              = ParameterStream;
+        // resonance           = ParameterStream;
+        // oscillatorMixParam  = ParameterStream;
+        // cutoffEnvMod        = ParameterStream;
+        // cutoffKeytrackMod   = ParameterStream;
+    }
+
+    connection
+    {
+        // cutoffParam         -> cutoff.parameterUpdate;
+        // resonanceParam      -> resonance.parameterUpdate;
+        ampAttack           -> amplitudeEnvelope.attack;
+        ampDecay            -> amplitudeEnvelope.decay;
+        ampSustain          -> amplitudeEnvelope.sustain;
+        ampRelease          -> amplitudeEnvelope.release;
+        ampSensitivity      -> amplitudeEnvelope.sensitivity;
+        // osc1waveshape       -> osc1.waveshape;
+        // osc1detuneSemitones -> osc1.detuneSemitones;
+        // osc1detune          -> osc1.detune;
+        // osc2waveshape       -> osc2.waveshape;
+        // osc2detuneSemitones -> osc2.detuneSemitones;
+        // osc2detune          -> osc2.detune;
+        // filterAttack        -> cutoffEnvelope.attack;
+        // filterDecay         -> cutoffEnvelope.decay;
+        // filterSustain       -> cutoffEnvelope.sustain;
+        // filterRelease       -> cutoffEnvelope.release;
+        // filterSensitivity   -> cutoffEnvelope.sensitivity;
+        // oscillatorMix       -> oscillatorMixParam.parameterUpdate;
+        // filterEnvMod        -> cutoffEnvMod.parameterUpdate;
+        // filterCutoffTrack   -> cutoffKeytrackMod.parameterUpdate;
+
+        eventIn -> voiceController.eventIn;
+
+        voiceController.note1_frequencyOut -> osc1.frequencyIn;
+        // voiceController.note2_frequencyOut -> osc2.frequencyIn;
+        voiceController.note1_active       -> amplitudeEnvelope.triggerLevel;
+        //                                       cutoffEnvelope.triggerLevel;
+
+        // osc1.audioOut                -> voiceOscillatorMix.in1;
+        // osc2.audioOut                -> voiceOscillatorMix.in2;
+        // oscillatorMixParam.audioOut  -> voiceOscillatorMix.mix;
+
+        // cutoff.audioOut                     -> voiceCutoffHandler.cutoffIn;
+        // cutoffEnvelope.envelopeLevel        -> voiceCutoffHandler.envelopeIn;
+        // cutoffEnvMod.audioOut               -> voiceCutoffHandler.envelopeModIn;
+        // cutoffKeytrackMod.audioOut          -> voiceCutoffHandler.trackModIn;
+        // voiceController.note1_noteOut       -> voiceCutoffHandler.noteIn;
+        // voiceController.note1_slide         -> voiceCutoffHandler.modIn;
+
+        // voiceOscillatorMix.out          -> voiceLowPassFilter.audioIn;
+        // voiceCutoffHandler.cutoffOut    -> voiceLowPassFilter.cutoffIn;
+        // resonance.audioOut              -> voiceLowPassFilter.resonanceIn;
+        amplitudeEnvelope.envelopeLevel -> osc1.gainIn;
+
+        osc1.audioOut -> audioOut;
+    }
+}
