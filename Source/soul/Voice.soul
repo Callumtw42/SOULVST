@@ -8,17 +8,45 @@ graph Voice
 
     input event float cutoffParam, resonanceParam,
                       ampAttack, ampDecay, ampSustain, ampRelease, ampSensitivity,
-                      osc1waveshape, osc1detuneSemitones, osc1detune,
-                      osc2waveshape, osc2detuneSemitones, osc2detune,
+                      osc1waveshape, osc1detuneSemitones, detune,//osc1detune, osc2detune, osc3detune, osc4detune,
+                      osc2waveshape, osc2detuneSemitones,
                       filterAttack, filterDecay, filterSustain, filterRelease, filterSensitivity,
                       oscillatorMix,
                       filterEnvMod, filterCutoffTrack;
 
-    output stream float audioOut;
+    input event int voiceCount;
+
+    output stream float<2> audioOut;
+
+
 
     let
     {
         osc1                = PolyBlep;
+        osc2                = PolyBlep;
+        osc3                = PolyBlep;
+        osc4                = PolyBlep;
+        osc5                = PolyBlep;
+        osc6                = PolyBlep;
+        osc7                = PolyBlep;
+        osc8                = PolyBlep;
+        osc9                = PolyBlep;
+        osc10                = PolyBlep;
+        osc11                = PolyBlep;
+        osc12                = PolyBlep;
+        osc13                = PolyBlep;
+        osc14                = PolyBlep;
+        osc15                = PolyBlep;
+        osc16                = PolyBlep;
+        
+        detuner             = Detuner;
+
+        //  osc1detune = -1.0f * detune;
+        // osc2detune = -0.5f * detune;
+        // osc3detune = 0.5f * detune;
+        // osc4detune = 1.0f * detune;
+
+
         // osc2                = PolyBlep;
         amplitudeEnvelope   = ADSREnvelope;
         // cutoffEnvelope      = ADSREnvelope;
@@ -43,6 +71,29 @@ graph Voice
         ampSustain          -> amplitudeEnvelope.sustain;
         ampRelease          -> amplitudeEnvelope.release;
         ampSensitivity      -> amplitudeEnvelope.sensitivity;
+
+        detune -> detuner.detune; 
+
+        detuner.detuneOut1->osc1.detune; 
+        detuner.detuneOut2->osc2.detune;
+        detuner.detuneOut3->osc3.detune;
+        detuner.detuneOut4->osc4.detune;
+        detuner.detuneOut5->osc5.detune;
+        detuner.detuneOut6->osc6.detune;
+        detuner.detuneOut7->osc7.detune;
+        detuner.detuneOut8->osc8.detune;
+        detuner.detuneOut9->osc9.detune;
+        detuner.detuneOut10->osc10.detune;
+        detuner.detuneOut11->osc11.detune;
+        detuner.detuneOut12->osc12.detune;
+        detuner.detuneOut13->osc13.detune;
+        detuner.detuneOut14->osc14.detune;
+        detuner.detuneOut15->osc15.detune;
+        detuner.detuneOut16->osc16.detune;
+
+        // osc2detune->osc2.detune;
+        // osc3detune->osc3.detune;
+        // osc4detune->osc4.detune;
         // osc1waveshape       -> osc1.waveshape;
         // osc1detuneSemitones -> osc1.detuneSemitones;
         // osc1detune          -> osc1.detune;
@@ -61,6 +112,21 @@ graph Voice
         eventIn -> voiceController.eventIn;
 
         voiceController.note1_frequencyOut -> osc1.frequencyIn;
+        voiceController.note1_frequencyOut -> osc2.frequencyIn;
+        voiceController.note1_frequencyOut -> osc3.frequencyIn;
+        voiceController.note1_frequencyOut -> osc4.frequencyIn;
+        voiceController.note1_frequencyOut -> osc5.frequencyIn;
+        voiceController.note1_frequencyOut -> osc6.frequencyIn;
+        voiceController.note1_frequencyOut -> osc7.frequencyIn;
+        voiceController.note1_frequencyOut -> osc8.frequencyIn;
+        voiceController.note1_frequencyOut -> osc9.frequencyIn;
+        voiceController.note1_frequencyOut -> osc10.frequencyIn;
+        voiceController.note1_frequencyOut -> osc11.frequencyIn;
+        voiceController.note1_frequencyOut -> osc12.frequencyIn;
+        voiceController.note1_frequencyOut -> osc13.frequencyIn;
+        voiceController.note1_frequencyOut -> osc14.frequencyIn;
+        voiceController.note1_frequencyOut -> osc15.frequencyIn;
+        voiceController.note1_frequencyOut -> osc16.frequencyIn;
         // voiceController.note2_frequencyOut -> osc2.frequencyIn;
         voiceController.note1_active       -> amplitudeEnvelope.triggerLevel;
         //                                       cutoffEnvelope.triggerLevel;
@@ -80,7 +146,37 @@ graph Voice
         // voiceCutoffHandler.cutoffOut    -> voiceLowPassFilter.cutoffIn;
         // resonance.audioOut              -> voiceLowPassFilter.resonanceIn;
         amplitudeEnvelope.envelopeLevel -> osc1.gainIn;
+        amplitudeEnvelope.envelopeLevel -> osc2.gainIn;
+        amplitudeEnvelope.envelopeLevel -> osc3.gainIn;
+        amplitudeEnvelope.envelopeLevel -> osc4.gainIn;
+        amplitudeEnvelope.envelopeLevel -> osc5.gainIn;
+        amplitudeEnvelope.envelopeLevel -> osc6.gainIn;
+        amplitudeEnvelope.envelopeLevel -> osc7.gainIn;
+        amplitudeEnvelope.envelopeLevel -> osc8.gainIn;
+        amplitudeEnvelope.envelopeLevel -> osc9.gainIn;
+        amplitudeEnvelope.envelopeLevel -> osc10.gainIn;
+        amplitudeEnvelope.envelopeLevel -> osc11.gainIn;
+        amplitudeEnvelope.envelopeLevel -> osc12.gainIn;
+        amplitudeEnvelope.envelopeLevel -> osc13.gainIn;
+        amplitudeEnvelope.envelopeLevel -> osc14.gainIn;
+        amplitudeEnvelope.envelopeLevel -> osc15.gainIn;
+        amplitudeEnvelope.envelopeLevel -> osc16.gainIn;
 
         osc1.audioOut -> audioOut;
+        osc2.audioOut -> audioOut;
+        osc3.audioOut -> audioOut;
+        osc4.audioOut -> audioOut;
+        osc5.audioOut -> audioOut;
+        osc6.audioOut -> audioOut;
+        osc7.audioOut -> audioOut;
+        osc8.audioOut -> audioOut;
+        osc9.audioOut -> audioOut;
+        osc10.audioOut -> audioOut;
+        osc11.audioOut -> audioOut;
+        osc12.audioOut -> audioOut;
+        osc13.audioOut -> audioOut;
+        osc14.audioOut -> audioOut;
+        osc15.audioOut -> audioOut;
+        osc16.audioOut -> audioOut;
     }
 }

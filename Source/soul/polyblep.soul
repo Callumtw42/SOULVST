@@ -4,7 +4,7 @@ processor PolyBlep
     input event float waveshape, detuneSemitones, detune;
     input stream float frequencyIn;
     input stream float gainIn; 
-    output stream float audioOut;
+    output stream float<2> audioOut;
 
     event waveshape (float f)
     {
@@ -72,8 +72,11 @@ processor PolyBlep
 
             squareValue += (normalisedPhase <= 0.5f) ? -1.0f : 1.0f;
 
+            float left = 0.5 + detuneValue;
+            float right = 0.5 - detuneValue;
+            let amp = gainIn * (squareValue * waveshapeValue + (sawValue * (1.0f - waveshapeValue)));
             // Mix the square and saw waves together
-            audioOut << gainIn * (squareValue * waveshapeValue + (sawValue * (1.0f - waveshapeValue)));
+            audioOut << float<2>(amp * left, amp * right);
 
             normalisedPhase += normalisedPhaseIncrement;
             advance();

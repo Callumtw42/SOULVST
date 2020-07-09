@@ -19,6 +19,7 @@ class App extends Component {
           <Slider paramId="ampDecay" {...styles.knob} />
           <Slider paramId="ampSustain" {...styles.knob} />
           <Slider paramId="ampRelease" {...styles.knob} />
+          <Slider paramId="detune" {...styles.knob} />
         </View>
       </View>
     );

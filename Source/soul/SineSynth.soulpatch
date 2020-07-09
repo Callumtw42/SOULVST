@@ -9,7 +9,7 @@
         "manufacturer":     "soul.dev",
         "isInstrument":     true,
 
-        "source":           ["Voice.soul","SineSynth.soul", "polyblep.soul", "controller.soul", "_NoteHandler.soul", "adsrEnvelope.soul"]
+        "source":           ["Voice.soul","SineSynth.soul", "polyblep.soul", "controller.soul", "_NoteHandler.soul", "adsrEnvelope.soul", "detuner.soul"]
     }
 
 }

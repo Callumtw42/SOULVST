@@ -1,0 +1,91 @@
+processor Detuner
+{
+
+    input event float detune;
+    output event float detuneOut1;
+    output event float detuneOut2;
+    output event float detuneOut3;
+    output event float detuneOut4;
+    output event float detuneOut5;
+    output event float detuneOut6;
+    output event float detuneOut7;
+    output event float detuneOut8;
+    output event float detuneOut9;
+    output event float detuneOut10;
+    output event float detuneOut11;
+    output event float detuneOut12;
+    output event float detuneOut13;
+    output event float detuneOut14;
+    output event float detuneOut15;
+    output event float detuneOut16;
+
+
+    const int voiceCount = 16;
+
+    event detune (float f)
+    {
+        float amt = -1.0f;
+        if(voiceCount % 2 != 0)
+        {
+            float increment = 2.0f / (voiceCount-1);
+            for (int i = 0; i < voiceCount; i++)
+            {
+                detuneVals.at(i) = amt * f; 
+                amt += increment;
+            }
+        }
+        else
+        { 
+            float increment = 2.0f / voiceCount;
+            for (int i = 0; i < voiceCount; i++)
+            {
+                if(amt == 0) 
+                {
+                    amt += increment;
+                }
+                detuneVals.at(i) = amt * f;
+                amt += increment;
+            }
+        }
+        // detune1 = -1.0f * f;
+        // detune2 = -0.5f * f;
+        // detune3 =  0.5f * f;
+        // detune4 =  1.0f * f;
+    }
+
+    float<voiceCount> detuneVals; 
+    // float detune1 = 0.0f;
+    // float detune2 = 0.0f;
+    // float detune3 = 0.0f;
+    // float detune4 = 0.0f;
+
+    void run()
+    {
+        loop{
+            detuneOut1 << detuneVals.at(0);
+            detuneOut2 << detuneVals.at(1);
+            detuneOut3 << detuneVals.at(2);
+            detuneOut4 << detuneVals.at(3);
+            detuneOut5 << detuneVals.at(4);
+            detuneOut6 << detuneVals.at(5);
+            detuneOut7 << detuneVals.at(6);
+            detuneOut8 << detuneVals.at(7);
+            detuneOut9 << detuneVals.at(8);
+            detuneOut10 << detuneVals.at(9);
+            detuneOut11 << detuneVals.at(10);
+            detuneOut12 << detuneVals.at(11);
+            detuneOut13 << detuneVals.at(12);
+            detuneOut14 << detuneVals.at(13);
+            detuneOut15 << detuneVals.at(14);
+            detuneOut16 << detuneVals.at(15);
+
+
+
+            // detuneOut2 << detune2; 
+            // detuneOut3 << detune3; 
+            // detuneOut4 << detune4; 
+            // detuneOut << detuneVals;
+            advance();
+        }
+    }
+}
