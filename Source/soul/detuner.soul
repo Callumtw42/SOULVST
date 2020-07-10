@@ -1,67 +1,82 @@
 processor Detuner
 {
+    input event float detuneIn, voiceCountIn;
 
-    input event float detune;
-    output event float detuneOut1;
-    output event float detuneOut2;
-    output event float detuneOut3;
-    output event float detuneOut4;
-    output event float detuneOut5;
-    output event float detuneOut6;
-    output event float detuneOut7;
-    output event float detuneOut8;
-    output event float detuneOut9;
-    output event float detuneOut10;
-    output event float detuneOut11;
-    output event float detuneOut12;
-    output event float detuneOut13;
-    output event float detuneOut14;
-    output event float detuneOut15;
-    output event float detuneOut16;
+    output stream float 
+    logOut,
 
+    activeOut1, activeOut2, activeOut3, activeOut4,
+    activeOut5, activeOut6, activeOut7, activeOut8,
+    activeOut9, activeOut10, activeOut11, activeOut12,
+    activeOut13, activeOut14, activeOut15, activeOut16,
 
-    const int voiceCount = 16;
+    detuneOut1, detuneOut2, detuneOut3, detuneOut4,
+    detuneOut5, detuneOut6, detuneOut7, detuneOut8,
+    detuneOut9, detuneOut10, detuneOut11, detuneOut12,
+    detuneOut13, detuneOut14, detuneOut15, detuneOut16;
 
-    event detune (float f)
+    const int maxVoices = 16;
+
+    float<maxVoices> detuneVals; 
+    float <maxVoices> active;
+    float voiceCount = 16;
+    float detune;
+
+    event voiceCountIn(float count)
+    {
+        voiceCount = count;
+    }
+
+    event detuneIn (float f)
+    {
+        detune = f;
+    }
+
+    void setDetuneVals()
     {
         float amt = -1.0f;
         if(voiceCount % 2 != 0)
         {
-            float increment = 2.0f / (voiceCount-1);
-            for (int i = 0; i < voiceCount; i++)
-            {
-                detuneVals.at(i) = amt * f; 
-                amt += increment;
-            }
+            float increment = 2.0f / ((voiceCount-1));
+            for (int i = 0; i < maxVoices; i++)
+                setDetuneVal(i, detune, amt, increment);
         }
         else
         { 
             float increment = 2.0f / voiceCount;
-            for (int i = 0; i < voiceCount; i++)
+            for (int i = 0; i < maxVoices; i++)
             {
                 if(amt == 0) 
-                {
                     amt += increment;
-                }
-                detuneVals.at(i) = amt * f;
-                amt += increment;
+                setDetuneVal(i, detune, amt, increment);
             }
         }
-        // detune1 = -1.0f * f;
-        // detune2 = -0.5f * f;
-        // detune3 =  0.5f * f;
-        // detune4 =  1.0f * f;
     }
 
-    float<voiceCount> detuneVals; 
-    // float detune1 = 0.0f;
-    // float detune2 = 0.0f;
-    // float detune3 = 0.0f;
-    // float detune4 = 0.0f;
+    void setDetuneVal(int i, float detune, float& amt, float increment)
+    {
+        if(i < voiceCount)
+        {
+            detuneVals.at(i) = amt * detune;
+            amt += increment;
+        }
+        else
+            detuneVals.at(i) = 0;
+    }
+
 
     void run()
     {
-        loop{
+        loop
+        { 
+            for (int i = 0; i < voiceCount; i++)
+                active.at(i) = 1;
+
+            for (int j = voiceCount; j < maxVoices; j++)
+                active.at(j) = 0;
+
+            setDetuneVals();
+
             detuneOut1 << detuneVals.at(0);
             detuneOut2 << detuneVals.at(1);
             detuneOut3 << detuneVals.at(2);
@@ -79,12 +94,23 @@ processor Detuner
             detuneOut15 << detuneVals.at(14);
             detuneOut16 << detuneVals.at(15);
 
+            activeOut1 << active.at(0);
+            activeOut2 << active.at(1);
+            activeOut3 << active.at(2);
+            activeOut4 << active.at(3);
+            activeOut5 << active.at(4);
+            activeOut6 << active.at(5);
+            activeOut7 << active.at(6);
+            activeOut8 << active.at(7);
+            activeOut9 << active.at(8);
+            activeOut10 << active.at(9);
+            activeOut11 << active.at(10);
+            activeOut12 << active.at(11);
+            activeOut13 << active.at(12);
+            activeOut14 << active.at(13);
+            activeOut15 << active.at(14);
+            activeOut16 << active.at(15);
 
-
-            // detuneOut2 << detune2; 
-            // detuneOut3 << detune3; 
-            // detuneOut4 << detune4; 
-            // detuneOut << detuneVals;
             advance();
         }
     }

@@ -21,6 +21,9 @@ class App extends Component {
           <Slider paramId="ampRelease" {...styles.knob} />
           <Slider paramId="detune" {...styles.knob} />
         </View>
+        <View {...styles.content}>
+          <Slider paramId="voiceCount" {...styles.knob} />
+        </View>
       </View>
     );
   }
@@ -28,6 +31,7 @@ class App extends Component {
 
 const styles = {
   container: {
+    'flex-direction':'column',
     'width': '100%',
     'height': '100%',
     'background-color': 'ff17191f',

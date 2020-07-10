@@ -1,0 +1,1 @@
+soul play --inputs=2 --outputs=2 .\Source\soul\SineSynth.soulpatch

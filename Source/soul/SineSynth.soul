@@ -7,14 +7,18 @@
 
 graph SineSynth  [[ main ]]
 {
+    input event soul::midi::Message midiIn;
     input smoothedGain.volume [[ label: "Volume", min: -40, max: 0, init: -6, step: 1, unit:"dB"]];
+
     input event float ampAttack [[label: "Attack", min: 0.01f, max: 100.0f, init: 0.01f, step: 1.0f]];
     input event float ampDecay [[label: "Decay", min: 0.01f, max: 100.0f, init: 0.01f, step: 1.0f]];
     input event float ampSustain [[label: "Sustain", min: 0.01f, max: 100.0f, init: 100.0f, step: 1.0f]];
     input event float ampRelease [[label: "Release", min: 0.01f, max: 100.0f, init: 0.01f, step: 1.0f]];
     input event float detune [[label: "Detune", min: 0.00f, max: 50.0f, init: 0.00f, step: 1.0f]];
-    input event soul::midi::Message midiIn;
+    input event float voiceCountIn [[label: "voiceCount", min: 1, max: 16, init: 1, step: 1]];
+    
     output stream float<2> audioOut;
+    output stream float log;
 
     let
     {
@@ -28,14 +32,12 @@ graph SineSynth  [[ main ]]
     connection
     {
         detune  -> voices.detune;
-        // detune  -> voices.osc2detune;
-        // detune  -> voices.osc3detune;
-        // detune  -> voices.osc4detune;
-
+        voiceCountIn -> voices.voiceCountIn;
         ampAttack -> voices.ampAttack;
         ampDecay -> voices.ampDecay;
         ampSustain -> voices.ampSustain;
         ampRelease -> voices.ampRelease;
+
         midiIn -> midiParser.parseMIDI;
         midiParser.eventOut -> voiceAllocator.eventIn;
         voiceAllocator.voiceEventOut -> voices.eventIn;
