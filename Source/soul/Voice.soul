@@ -13,7 +13,7 @@ graph Voice
                       filterAttack, filterDecay, filterSustain, filterRelease, filterSensitivity,
                       oscillatorMix,
                       filterEnvMod, filterCutoffTrack,
-                      log, voiceCountIn;
+                      log, voiceCountIn, cutoffIn;
     
     output stream float<2> audioOut;
 
@@ -35,6 +35,8 @@ graph Voice
         osc14                = PolyBlep;
         osc15                = PolyBlep;
         osc16                = PolyBlep;
+
+        filter = Filter;
         
         detuner             = Detuner;
         amplitudeEnvelope   = ADSREnvelope;
@@ -43,8 +45,11 @@ graph Voice
 
     connection
     {
+        cutoffIn -> filter.cutoffIn;
         voiceController.note1_active -> amplitudeEnvelope.triggerLevel;
         eventIn -> voiceController.eventIn;
+
+        filter.audioOut -> audioOut;
 
         ampAttack           -> amplitudeEnvelope.attack;
         ampDecay            -> amplitudeEnvelope.decay;
@@ -123,21 +128,21 @@ graph Voice
         amplitudeEnvelope.envelopeLevel -> osc15.gainIn;
         amplitudeEnvelope.envelopeLevel -> osc16.gainIn;
 
-        osc1.audioOut -> audioOut;
-        osc2.audioOut -> audioOut;
-        osc3.audioOut -> audioOut;
-        osc4.audioOut -> audioOut;
-        osc5.audioOut -> audioOut;
-        osc6.audioOut -> audioOut;
-        osc7.audioOut -> audioOut;
-        osc8.audioOut -> audioOut;
-        osc9.audioOut -> audioOut;
-        osc10.audioOut -> audioOut;
-        osc11.audioOut -> audioOut;
-        osc12.audioOut -> audioOut;
-        osc13.audioOut -> audioOut;
-        osc14.audioOut -> audioOut;
-        osc15.audioOut -> audioOut;
-        osc16.audioOut -> audioOut;
+        osc1.audioOut -> filter.audioIn;
+        osc2.audioOut -> filter.audioIn;
+        osc3.audioOut -> filter.audioIn;
+        osc4.audioOut -> filter.audioIn;
+        osc5.audioOut -> filter.audioIn;
+        osc6.audioOut -> filter.audioIn;
+        osc7.audioOut -> filter.audioIn;
+        osc8.audioOut -> filter.audioIn;
+        osc9.audioOut -> filter.audioIn;
+        osc10.audioOut -> filter.audioIn;
+        osc11.audioOut -> filter.audioIn;
+        osc12.audioOut -> filter.audioIn;
+        osc13.audioOut -> filter.audioIn;
+        osc14.audioOut -> filter.audioIn;
+        osc15.audioOut -> filter.audioIn;
+        osc16.audioOut -> filter.audioIn;
     }
 }

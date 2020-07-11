@@ -1,0 +1,121 @@
+processor Filter
+{
+    input  stream float gainIn, resonanceIn; 
+    input stream float<2> audioIn;
+    input event float cutoffIn;
+    output stream float<2> audioOut;
+
+    let numTableEntries = 128;
+    let maxResonance = 100;
+    let samplesBetweenFactorUpdates = 64;
+    float cutoff = 128;
+
+    event cutoffIn(float f)
+    {
+        cutoff = f;
+    }
+
+    struct FilterTerms
+    {
+        float a, b, c;
+    }
+
+    struct FrequencySettings
+    {
+        FilterTerms[maxResonance + 1] resonance;
+    }
+
+    struct PrecalcTerms
+    {
+        FrequencySettings[numTableEntries] frequency;
+    }
+
+    PrecalcTerms precalcTerms;
+
+    FilterTerms calcTermEntry (float frequency, float resonance)
+    {
+        FilterTerms result;
+
+        let r = 1.4f - (resonance * 0.0135f);
+        let f = clamp (soul::noteNumberToFrequency(frequency), 0.0f, 20000.0f);
+        let c = 1.0f / tan (float(pi) * (10.0f + f) / float32(processor.frequency));
+
+        result.a = 1.0f / (1.0f + r * c + c * c);
+        result.b = 2.0f * (1.0f - c * c) * result.a;
+        result.c = (1.0f - r * c + c * c) * result.a;
+
+        return result;
+    }
+
+    void initialiseTerms()
+    {
+        for (int i = 0; i < numTableEntries; ++i)
+            for (int j = 0; j <= maxResonance; ++j)
+                precalcTerms.frequency.at(i).resonance.at(j) = calcTermEntry (float(i), float(j));
+    }
+
+    void updateFactors (float cut, float resonance)
+    {
+        cut    = clamp (cutoff, 0.0f, float(numTableEntries - 2));
+        resonance = clamp (resonance, 0.0f, float(maxResonance - 1));
+
+        // Interpolate the cutoff
+        let cutoffInterpolation = cutoff - int(cutoff);
+
+        let resonanceEntry = wrap<maxResonance>(int(resonance));
+        var cutoffEntry = wrap<numTableEntries>(int(cutoff));
+
+        let terms1_a = precalcTerms.frequency[cutoffEntry].resonance[resonanceEntry].a;
+        let terms1_b = precalcTerms.frequency[cutoffEntry].resonance[resonanceEntry].b;
+        let terms1_c = precalcTerms.frequency[cutoffEntry].resonance[resonanceEntry].c;
+
+        ++cutoffEntry;
+
+        let terms2_a = precalcTerms.frequency[cutoffEntry].resonance[resonanceEntry].a;
+        let terms2_b = precalcTerms.frequency[cutoffEntry].resonance[resonanceEntry].b;
+        let terms2_c = precalcTerms.frequency[cutoffEntry].resonance[resonanceEntry].c;
+
+        factor_a1 = terms1_a + (terms2_a - terms1_a) * cutoffInterpolation;
+        factor_a2 = 2.0f * factor_a1;
+        factor_b1 = terms1_b + (terms2_b - terms1_b) * cutoffInterpolation;
+        factor_b2 = terms1_c + (terms2_c - terms1_c) * cutoffInterpolation;
+    }
+
+    float factor_a1, factor_a2, factor_b1, factor_b2;
+
+    void run()
+    {
+        initialiseTerms();
+        float in_1, in_2, out_1, out_2;
+
+        loop
+        {
+            updateFactors(cutoff, resonanceIn);
+
+            loop (samplesBetweenFactorUpdates)
+            {
+                float<2> out;
+
+                for (int i = 0; i < 2; i++)
+                {
+                    let in = audioIn.at(i);
+
+                    let f = factor_a1 * (in + in_1)
+                            + factor_a2 * in_2
+                            - factor_b1 * out_1
+                            - factor_b2 * out_2;
+
+                    out_2 = out_1;
+                    out_1 = f;
+                    in_2 = in_1;
+                    in_1 = in;
+
+                    out.at(i) = f;
+                }
+
+                audioOut << float<2>(out.at(0) * 1 * 0.2f, out.at(1) * 1 * 0.2f);
+                advance();
+            }
+        }
+    }
+}

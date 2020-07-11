@@ -16,6 +16,7 @@ graph SineSynth  [[ main ]]
     input event float ampRelease [[label: "Release", min: 0.01f, max: 100.0f, init: 0.01f, step: 1.0f]];
     input event float detune [[label: "Detune", min: 0.00f, max: 50.0f, init: 0.00f, step: 1.0f]];
     input event float voiceCountIn [[label: "voiceCount", min: 1, max: 16, init: 1, step: 1]];
+    input event float cutoff [[label: "cutoff", min: 0, max: 127, init: 127, step: 1]];
     
     output stream float<2> audioOut;
     output stream float log;
@@ -31,6 +32,8 @@ graph SineSynth  [[ main ]]
 
     connection
     {
+
+        cutoff -> voices.cutoffIn;
         detune  -> voices.detune;
         voiceCountIn -> voices.voiceCountIn;
         ampAttack -> voices.ampAttack;
