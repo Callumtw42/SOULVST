@@ -1,0 +1,28 @@
+processor Logger
+{
+    // input event float<2> logIn;
+    input event float<2> logIn;
+    output event float<2> logOut;
+    // output event float<2> test;
+
+    float<2> log =float<2>(1, 0);
+
+    event logIn(float<2> f)
+    {
+        log = f;
+        // log.at(1) = 2;
+    }
+
+    void run()
+    {
+        loop
+        {
+            logOut << log;
+            loop (50000)
+            {
+                advance();
+            }
+            // test << log.at(1);
+        }
+    }
+}

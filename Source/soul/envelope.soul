@@ -1,11 +1,14 @@
-        //==============================================================================
+//==============================================================================
 // Runs an ADSR envelope using the input as a trigger
-processor ADSREnvelope
+processor Envelope
 {
     input stream float triggerLevel;
     output stream float envelopeLevel;
     input event float attack, decay, sustain, release, sensitivity;
 
+    input event float paramValIn, modAmtIn;
+
+    float paramVal, modAmt;
     const float sampleRate = float (processor.frequency);
     float64 attackRamp = 0.01;
     float64 decayMultiplier = 0.995;
@@ -14,6 +17,15 @@ processor ADSREnvelope
     float32 velocitySensitivity = 0.0f;
     float64 targetValue = 1.0;
 
+    event paramValIn (float f)
+    {
+        paramVal = f / 128;
+    }
+
+    event modAmtIn (float f)
+    {
+        modAmt = f;
+    }
     event attack (float f)
     {
         let seconds = 0.001 + 9.999 * pow (f * 0.01f, 4.0f);
@@ -65,8 +77,8 @@ processor ADSREnvelope
 
     void run()
     {
-        float64 value = 0;
 
+            float64 value = paramVal;
         loop
         {
             if (triggerLevel > 0)

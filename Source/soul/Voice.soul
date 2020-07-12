@@ -7,13 +7,15 @@ graph Voice
                  soul::note_events::Slide) eventIn;
 
     input event float cutoffParam, resonanceParam,
-                      ampAttack, ampDecay, ampSustain, ampRelease, ampSensitivity,
+                      ampAttack, ampDecay, ampSustain, ampRelease, ampSensitivity, oscGain,
                       osc1waveshape, osc1detuneSemitones, detune,
                       osc2waveshape, osc2detuneSemitones,
                       filterAttack, filterDecay, filterSustain, filterRelease, filterSensitivity,
                       oscillatorMix,
                       filterEnvMod, filterCutoffTrack,
-                      log, voiceCountIn, cutoffIn;
+                      log, voiceCountIn, 
+                      cutoffIn, cutoffModAmt, cutoffRelease, cutoffSustain, cutoffDecay,  cutoffAttack, cutoffSensitivity  
+                      ;
     
     output stream float<2> audioOut;
 
@@ -37,6 +39,7 @@ graph Voice
         osc16                = PolyBlep;
 
         filter = Filter;
+        filterEnv = Envelope;
         
         detuner             = Detuner;
         amplitudeEnvelope   = ADSREnvelope;
@@ -45,17 +48,26 @@ graph Voice
 
     connection
     {
-        cutoffIn -> filter.cutoffIn;
         voiceController.note1_active -> amplitudeEnvelope.triggerLevel;
         eventIn -> voiceController.eventIn;
 
         filter.audioOut -> audioOut;
 
-        ampAttack           -> amplitudeEnvelope.attack;
-        ampDecay            -> amplitudeEnvelope.decay;
-        ampSustain          -> amplitudeEnvelope.sustain;
-        ampRelease          -> amplitudeEnvelope.release;
-        ampSensitivity      -> amplitudeEnvelope.sensitivity;
+        ampAttack               -> amplitudeEnvelope.attack;
+        ampDecay                -> amplitudeEnvelope.decay;
+        ampSustain              -> amplitudeEnvelope.sustain;
+        ampRelease              -> amplitudeEnvelope.release;
+        ampSensitivity          -> amplitudeEnvelope.sensitivity;
+
+        cutoffAttack            -> filterEnv.attack;
+        cutoffDecay             -> filterEnv.decay;
+        cutoffSustain           -> filterEnv.sustain;
+        cutoffRelease           -> filterEnv.release;
+        cutoffSensitivity       -> filterEnv.sensitivity;
+        cutoffModAmt            -> filterEnv.modAmtIn;
+        cutoffIn                -> filterEnv.paramValIn;
+        voiceController.note1_active -> filterEnv.triggerLevel;
+        filterEnv.envelopeLevel -> filter.cutoffIn;
 
         voiceCountIn -> detuner.voiceCountIn;
         detune -> detuner.detuneIn; 

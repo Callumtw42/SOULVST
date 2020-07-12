@@ -2,6 +2,7 @@ import Label from './Label';
 import Meter from './Meter';
 import React, { Component } from 'react';
 import Slider from './Slider';
+import TestComponent from "./testcomponent" ;
 import {
   Canvas,
   Image,
@@ -23,6 +24,8 @@ class App extends Component {
         </View>
         <View {...styles.content}>
           <Slider paramId="voiceCount" {...styles.knob} />
+          {/* <TestComponent paramId = "x" {...styles.knob}/> */}
+          {/* <TestComponent paramId="myArray" {...styles.knob} /> */}
         </View>
       </View>
     );
