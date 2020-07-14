@@ -1,7 +1,9 @@
 /*
   ==============================================================================
 
-	This file contains the basic framework code for a JUCE plugin processor.
+	voice.h
+	Created: 13 Jul 2020 8:51:34am
+	Author:  callu
 
   ==============================================================================
 */
@@ -18,17 +20,16 @@
 #include "../../SOUL/source/API/soul_patch/helper_classes/soul_patch_AudioProcessor.h"
 #include "../../SOUL/examples/SOULPatchHostDemo/Source/PatchLoaderComponent.h"
 #include "lfo.h";
-#include "voice.h";
 
 using namespace juce;
 using namespace soul::patch;
 
-class DefaultpluginAudioProcessor : public juce::AudioProcessor
+class Voice : public juce::AudioProcessor
 {
 public:
 	//==============================================================================
-	DefaultpluginAudioProcessor();
-	~DefaultpluginAudioProcessor() override;
+	Voice();
+	~Voice() override;
 
 	//==============================================================================
 	void prepareToPlay(double sampleRate, int samplesPerBlock) override;
@@ -68,7 +69,6 @@ public:
 	std::unique_ptr<juce::AudioPluginInstance> plugin;
 
 private:
-	static const int voiceCount = 1;
 	AudioProcessorPlayer* player;
 	AudioDeviceManager* manager;
 	SOULPatchAudioPluginFormat* patchFormat;
@@ -78,8 +78,7 @@ private:
 	LFO* lfo;
 	AudioProcessorGraph graph;
 	std::unique_ptr<SOULPatchAudioProcessor> soulProcessor;
-	std::unique_ptr<Voice> voices[voiceCount];
 	//==============================================================================
-	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DefaultpluginAudioProcessor)
+	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Voice)
 };
 

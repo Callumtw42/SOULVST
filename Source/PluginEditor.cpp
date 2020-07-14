@@ -25,6 +25,7 @@ void DefaultpluginAudioProcessorEditor::updateParams(juce::String* error)
 	removeChildComponent(getIndexOfChildComponent(&errorText));
 	// Now our React application is up and running, so we can start dispatching events, such as current parameter values.
 	Logger::writeToLog("Loaded: " + audioProcessor.plugin->getName());
+
 	params.clear();
 	if (error->isEmpty()) {
 		for (AudioProcessorParameter* p : audioProcessor.plugin->getParameters())

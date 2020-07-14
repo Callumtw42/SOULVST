@@ -24,6 +24,7 @@ class App extends Component {
         </View>
         <View {...styles.content}>
           <Slider paramId="voiceCount" {...styles.knob} />
+          <Slider paramId="cutoff" {...styles.knob} />
           {/* <TestComponent paramId = "x" {...styles.knob}/> */}
           {/* <TestComponent paramId="myArray" {...styles.knob} /> */}
         </View>

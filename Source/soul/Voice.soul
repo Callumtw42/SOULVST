@@ -1,5 +1,5 @@
 graph Voice
-{
+{ 
     input event (soul::note_events::NoteOn,
                  soul::note_events::NoteOff,
                  soul::note_events::PitchBend,
