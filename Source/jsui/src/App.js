@@ -2,7 +2,7 @@ import Label from './Label';
 import Meter from './Meter';
 import React, { Component } from 'react';
 import Slider from './Slider';
-import TestComponent from "./testcomponent" ;
+import LFO from "./lfo";
 import {
   Canvas,
   Image,
@@ -25,8 +25,10 @@ class App extends Component {
         <View {...styles.content}>
           <Slider paramId="voiceCount" {...styles.knob} />
           <Slider paramId="cutoff" {...styles.knob} />
-          {/* <TestComponent paramId = "x" {...styles.knob}/> */}
-          {/* <TestComponent paramId="myArray" {...styles.knob} /> */}
+          <Slider paramId="lfoIn" {...styles.knob} />
+        </View>
+        <View {...styles.content}>
+          <LFO {...styles.knob} />
         </View>
       </View>
     );
@@ -35,7 +37,7 @@ class App extends Component {
 
 const styles = {
   container: {
-    'flex-direction':'column',
+    'flex-direction': 'column',
     'width': '100%',
     'height': '100%',
     'background-color': 'ff17191f',

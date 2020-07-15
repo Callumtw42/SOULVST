@@ -74,6 +74,8 @@ class Slider extends Component {
     let sensitivity = (1.0 / 200.0);
     let value = Math.max(0.0, Math.min(1.0, this._valueAtDragStart + dy * sensitivity));
 
+    console.log(value);
+
     if (typeof this.props.paramId === 'string' && this.props.paramId.length > 0) {
       global.setParameterValueNotifyingHost(this.props.paramId, value);
     }

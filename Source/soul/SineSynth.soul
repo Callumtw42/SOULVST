@@ -5,6 +5,32 @@
     envelope and voice-allocator.
 */
 
+processor LFO
+{
+    input event float in;
+    output event float<2> out;
+
+    float<2> profile = float<2>(0,0);
+    int index = 0;
+
+    event in (float f)
+    {
+        profile.at(index) = f;
+        index++;
+    }
+
+    void run()
+    {
+        loop
+        {
+            out << profile;
+            advance();
+            loop(50000);
+        }
+    }
+    
+}
+
 graph SineSynth  [[ main ]]
 {
     input event soul::midi::Message midiIn;
@@ -26,10 +52,12 @@ graph SineSynth  [[ main ]]
     input event float cutoffSustain [[label: "Sustain", min: 0.01f, max: 100.0f, init: 100.0f, step: 1.0f]];
     input event float cutoffRelease [[label: "Release", min: 0.01f, max: 100.0f, init: 0.01f, step: 1.0f]];
 
-    input event float<2> myArray [[label: "myArray" ]];
+    input event float lfoIn [[label: "lfo", min: 0.00f, max: 1.0f, init: 0.00f, step: 0.01f]];
+
+
 
     output stream float<2> audioOut;
-    output event float<2> log;
+    output event float<2> logOut;
 
     let
     {
@@ -39,12 +67,14 @@ graph SineSynth  [[ main ]]
         voiceAllocator = soul::voice_allocators::Basic(8);
         gainProcessor = soul::gain::DynamicGain (float<2>);
         logger = Logger;
+        lfo = LFO;
     } 
 
     connection
     {
-        myArray -> logger.logIn;
-        logger.logOut -> log;
+        lfoIn -> lfo.in;
+        lfo.out -> logger.in;
+        // logger.out -> logOut;
 
         cutoff          -> voices.cutoffIn;
         cutoffModAmt    -> voices.cutoffModAmt;

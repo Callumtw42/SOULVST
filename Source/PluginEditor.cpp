@@ -87,6 +87,15 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 		},
 		(void*)this
 			);
+
+	appRoot.engine.registerNativeMethod(
+		"log",
+		[](void* stash, const juce::var::NativeFunctionArgs& args) {
+			Logger::writeToLog(args.arguments[0].toString());
+			return juce::var::undefined();
+		},
+		(void*)this
+			);
 }
 
 void DefaultpluginAudioProcessorEditor::parameterValueChanged(int parameterIndex, float newValue)

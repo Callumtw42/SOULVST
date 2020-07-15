@@ -5,7 +5,8 @@
   "dependencies": {
     "@babel/runtime-corejs3": "^7.10.3",
     "juce-blueprint": "file:..\\..\\..\\..\\..\\blueprint\\packages\\juce-blueprint",
-    "react": "^16.6.3"
+    "react": "^16.6.3",
+    "txt-reader": "^1.4.5"
   },
   "devDependencies": {
     "@babel/core": "^7.2.0",

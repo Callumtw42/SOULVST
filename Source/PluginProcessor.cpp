@@ -12,46 +12,47 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 	desc(new PluginDescription)
 
 {
-	//manager->initialiseWithDefaultDevices(2, 2);
-	//manager->addAudioCallback(player);
-	//juce::File patchPath("C:\\Users\\callu\\Desktop\\projects\\defaultplugin\\Source\\soul\\SineSynth.soulpatch");
-	//jassert(patchPath.existsAsFile());
+	manager->initialiseWithDefaultDevices(2, 2);
+	manager->addAudioCallback(player);
+	juce::File patchPath("C:\\Users\\callu\\Desktop\\projects\\defaultplugin\\Source\\soul\\SineSynth.soulpatch");
+	jassert(patchPath.existsAsFile());
 
-	//desc->pluginFormatName = soul::patch::SOULPatchAudioProcessor::getPluginFormatName();
-	//desc->fileOrIdentifier = patchPath.getFullPathName();
+	desc->pluginFormatName = soul::patch::SOULPatchAudioProcessor::getPluginFormatName();
+	desc->fileOrIdentifier = patchPath.getFullPathName();
 
-	//auto setPlugin = [this](std::unique_ptr<juce::AudioPluginInstance> newPlugin,
-	//	const juce::String& error)
-	//{
-	//	player->setProcessor(nullptr);
-	//	plugin = std::move(newPlugin); //new graph with array of newPlugin->processor's all connected up
-	//	player->setProcessor(plugin.get());
-	//};
-
-	//auto reinitialiseCallback = [&setPlugin, this](soul::patch::SOULPatchAudioProcessor& patch)
-	//{
-	//	isPlayable = false;
-	//	player->setProcessor(nullptr);
-	//	patch.reinitialise();
-	//	juce::String error = patch.getCompileError();
-	//	if (error.isEmpty()) {
-	//		soulProcessor = std::unique_ptr<SOULPatchAudioProcessor>(&patch);
-	//		plugin->prepareToPlay(getSampleRate(), getBlockSize());
-	//		lfo = new LFO(plugin.get(), plugin.get()->getParameters()[0]);
-	//		isPlayable = true;
-	//	}
-	//	static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams(&error);
-	//};
-	//juce::String dll("C:\\Users\\callu\\SOUL_PatchLoader.dll");
-	//patchFormat = new SOULPatchAudioPluginFormat(dll, reinitialiseCallback);
-
-	//patchFormat->createPluginInstance(*desc, getSampleRate(), getBlockSize(), setPlugin);
-	for (int i = 0; i < voiceCount; i++)
+	auto setPlugin = [this](std::unique_ptr<juce::AudioPluginInstance> newPlugin,
+		const juce::String& error)
 	{
-		voices[i] = std::make_unique <Voice>();
-	}
+		player->setProcessor(nullptr);
+		plugin = std::move(newPlugin); //new graph with array of newPlugin->processor's all connected up
+		player->setProcessor(plugin.get());
+	};
 
-	initialiseGraph();
+	auto reinitialiseCallback = [&setPlugin, this](soul::patch::SOULPatchAudioProcessor& patch)
+	{
+		isPlayable = false;
+		player->setProcessor(nullptr);
+		patch.reinitialise();
+		juce::String error = patch.getCompileError();
+		if (error.isEmpty()) {
+			soulProcessor = std::unique_ptr<SOULPatchAudioProcessor>(&patch);
+			plugin->prepareToPlay(getSampleRate(), getBlockSize());
+			//lfo = new LFO(plugin.get(), plugin.get()->getParameters()[0]);
+			isPlayable = true;
+		}
+		static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams(&error);
+	};
+	juce::String dll("C:\\Users\\callu\\SOUL_PatchLoader.dll");
+	patchFormat = new SOULPatchAudioPluginFormat(dll, reinitialiseCallback);
+
+	patchFormat->createPluginInstance(*desc, getSampleRate(), getBlockSize(), setPlugin);
+
+	//for (int i = 0; i < voiceCount; i++)
+	//{
+	//	voices[i] = std::make_unique <Voice>();
+	//}
+
+	//initialiseGraph();
 }
 
 void DefaultpluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -61,13 +62,12 @@ void DefaultpluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
 	//if (isPlayable)lfo->process();
 
-	//if (isPlayable) { plugin->processBlock(buffer, midiMessages); }
-	graph.processBlock(buffer, midiMessages);
+	if (isPlayable) { plugin->processBlock(buffer, midiMessages); }
+	//graph.processBlock(buffer, midiMessages);
 }
 
 void DefaultpluginAudioProcessor::initialiseGraph()
 {
-	graph.addNode()
 }
 
 juce::AudioProcessorEditor* DefaultpluginAudioProcessor::createEditor() { return editor; }
