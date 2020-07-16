@@ -8,6 +8,8 @@ import {
 } from 'juce-blueprint';
 
 const pointRadius = 5;
+const canvasHeight = 100;
+const canvasWidth = 100;
 
 class Mouse {
   constructor(mouseX, mouseY) {
@@ -42,17 +44,18 @@ class LFO extends Component {
   componentDidMount() {
     this.state.points.push(
       {
-        x: 50,
-        y: 50,
+        x: 0,
+        y: canvasHeight / 2,
         radius: pointRadius,
-        isSelected: false
+        isSelected: false,
+        isBound: true
       },
-
       {
-        x: 25,
-        y: 25,
+        x: canvasWidth,
+        y: canvasHeight / 2,
         radius: pointRadius,
-        isSelected: false
+        isSelected: false,
+        isBound: true
       },
       {
         x: 75,
@@ -77,7 +80,7 @@ class LFO extends Component {
     let removing = false;
 
     for (const point of this.state.points) {
-      if (mouse.isOverlapping(point)) {
+      if (mouse.isOverlapping(point) && !point.isBound) {
         const index = this.state.points.indexOf(point);
         this.state.points.splice(index, 1);
         removing = true;
@@ -86,7 +89,7 @@ class LFO extends Component {
     }
 
     if (!removing) {
-      this.state.points.push(
+      this.state.points.push( //NEXT: Change this to insert a point depending on it's neighbours x value
         {
           x: mouseX,
           y: mouseY,
@@ -99,12 +102,18 @@ class LFO extends Component {
     this.setState(this.state);
   }
 
+  clamp(val, min, max) {
+    return val > max ? max : val < min ? min : val;
+  }
+
   _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
 
     this.state.points.forEach((point) => {
       if (point.isSelected) {
-        point.x = mouseX;
-        point.y = mouseY;
+        point.y = this.clamp(mouseY, 0, canvasHeight);
+        if (!point.isBound) {
+          point.x = this.clamp(mouseX, 0, canvasWidth);
+        }
       }
 
     })
@@ -143,7 +152,7 @@ class LFO extends Component {
     const img =
       `
       <svg width="0" height="0" viewBox="0 0 0 0" xmlns="http://www.w3.org/2000/svg">
-        <rect x="${0}" y="${0}" stroke="green" stroke-width="1" fill="red" width="100" height="100" />
+        <rect x="${0}" y="${0}" stroke="green" stroke-width="1" fill="red" width="${canvasHeight}" height="${canvasWidth}" />
       ${circles}
       </svg>
 
@@ -169,8 +178,8 @@ class LFO extends Component {
 const styles = {
   container: {
     'flex-direction': 'column',
-    'height': 100.0,
-    'width': 100.0,
+    'height': canvasHeight,
+    'width': canvasWidth,
     // 'justify-content': 'center',
     // 'align-items': 'center',
     'position': 'relative',
@@ -179,8 +188,8 @@ const styles = {
   },
   canvas: {
     'flex': 1.0,
-    'height': 100.0,
-    'width': 100.0,
+    'height': canvasHeight,
+    'width': canvasWidth,
     'position': 'absolute',
     'left': 0.0,
     'top': 0.0,
