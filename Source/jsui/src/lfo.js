@@ -7,68 +7,104 @@ import {
   View,
 } from 'juce-blueprint';
 
+const pointRadius = 5;
+
+class Mouse {
+  constructor(mouseX, mouseY) {
+    this.x = mouseX;
+    this.y = mouseY;
+  };
+  isOverlapping(point) {
+    if (
+      this.x > point.x - point.radius
+      && this.x < point.x + point.radius
+      && this.y > point.y - point.radius
+      && this.y < point.y + point.radius
+    )
+      return true
+    else return false;
+  }
+}
+
 class LFO extends Component {
   constructor(props) {
     super(props);
     this._onMouseDown = this._onMouseDown.bind(this);
     this._onMouseDrag = this._onMouseDrag.bind(this);
     this._onMouseUp = this._onMouseUp.bind(this);
+    this._onMouseDoubleClick = this._onMouseDoubleClick.bind(this);
     // this.log = this.log.bind(this);
     this.state = {
-      points: [
-        {
-          x: 50,
-          y: 50,
-          radius: 10,
-          isSelected: false
-        },
-
-        {
-          x: 25,
-          y: 25,
-          radius: 10,
-          isSelected: false
-        }
-      ]
+      points: []
     }
   }
 
   componentDidMount() {
-    // this.state.points.push(
-    //   {
-    //     x: 50,
-    //     y: 50,
-    //     radius: 10,
-    //     isSelected: false
-    //   },
+    this.state.points.push(
+      {
+        x: 50,
+        y: 50,
+        radius: pointRadius,
+        isSelected: false
+      },
 
-    //   {
-    //     x: 25,
-    //     y: 25,
-    //     radius: 10,
-    //     isSelected: false
-    //   }
-    // )
+      {
+        x: 25,
+        y: 25,
+        radius: pointRadius,
+        isSelected: false
+      },
+      {
+        x: 75,
+        y: 75,
+        radius: pointRadius,
+        isSelected: false
+      }
+    )
+    this.setState(this.state);
   }
 
   componentWillUnmount() {
   }
 
-
-
   log(s) {
     global.log(s);
   }
 
-  _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
+  _onMouseDoubleClick(mouseX, mouseY) {
 
-    let dx = (mouseX - mouseDownX) / 25; //
-    let dy = (mouseY - mouseDownY) / 25;
+    let mouse = new Mouse(mouseX, mouseY);
+    let removing = false;
+
+    for (const point of this.state.points) {
+      if (mouse.isOverlapping(point)) {
+        const index = this.state.points.indexOf(point);
+        this.state.points.splice(index, 1);
+        removing = true;
+        break;
+      }
+    }
+
+    if (!removing) {
+      this.state.points.push(
+        {
+          x: mouseX,
+          y: mouseY,
+          radius: pointRadius,
+          isSelected: false
+        }
+      )
+    }
+
+    this.setState(this.state);
+  }
+
+  _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
 
     this.state.points.forEach((point) => {
       if (point.isSelected) {
-        point.x += dx;
-        point.y += dy;
+        point.x = mouseX;
+        point.y = mouseY;
       }
 
     })
@@ -77,24 +113,12 @@ class LFO extends Component {
   }
 
   _onMouseDown(mouseX, mouseY) {
-
-    let mouseIsOverlapping = (point) => {
-      if (
-        mouseX > point.x - point.radius
-        && mouseX < point.x + point.radius
-        && mouseY > point.y - point.radius
-        && mouseY < point.y + point.radius
-      )
-        return true
-      else return false;
-    }
-
+    let mouse = new Mouse(mouseX, mouseY);
     this.state.points.forEach((point) => {
-      if (mouseIsOverlapping(point)) {
+      if (mouse.isOverlapping(point)) {
         point.isSelected = true;
-        log("SELECTED");
       }
-    })
+    });
   }
 
   _onMouseUp(mouseX, mouseY) {
@@ -134,6 +158,7 @@ class LFO extends Component {
         onMouseDown={this._onMouseDown}
         onMouseUp={this._onMouseUp}
         onMouseDrag={this._onMouseDrag}
+        onMouseDoubleClick={this._onMouseDoubleClick}
       >
         <Image {...styles.canvas} source={this._svg()} />
       </View>
