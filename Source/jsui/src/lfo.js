@@ -1,6 +1,5 @@
 import ParameterValueStore from './ParameterValueStore';
 import React, { Component } from 'react';
-// import Point from "./point"
 import {
   Image,
   Text,
@@ -28,6 +27,59 @@ class Mouse {
   }
 }
 
+class NodeList {
+  constructor(head, tail) {
+    this.list = [head, tail];
+    head.rightNeighbour = tail;
+    head.leftNeighbour = null;
+    tail.rightNeighbour = null;
+    tail.leftNeighbour = head;
+  }
+
+  insertAfter(index, node) {
+    this.list.splice(
+      index + 1,
+      0,
+      node
+    )
+    node.leftNeighbour = this.list[index];
+    node.leftNeighbour.rightNeighbour = node;
+
+    node.rightNeighbour = (this.list[index + 2]) ? this.list[index + 2] : null;
+    node.rightNeighbour.leftNeighbour = node;
+  }
+
+  remove(index) {
+    const point = this.list[index];
+    const leftNeighbour = point.leftNeighbour;
+    const rightNeighbour = point.rightNeighbour;
+
+    this.list.splice(index, 1);
+    this.list[index].leftNeighbour = leftNeighbour;
+    this.list[index - 1].rightNeighbour = rightNeighbour;
+  }
+
+  forEach(...args) {
+    return this.list.forEach(...args);
+  }
+
+  indexOf(...args) {
+    return this.list.indexOf(...args);
+  }
+
+  splice(...args) {
+    return this.list.splice(...args);
+  }
+
+  map(...args) {
+    return this.list.map(...args);
+  }
+
+  get() {
+    return this.list;
+  }
+}
+
 class LFO extends Component {
   constructor(props) {
     super(props);
@@ -35,34 +87,45 @@ class LFO extends Component {
     this._onMouseDrag = this._onMouseDrag.bind(this);
     this._onMouseUp = this._onMouseUp.bind(this);
     this._onMouseDoubleClick = this._onMouseDoubleClick.bind(this);
-    // this.log = this.log.bind(this);
+
+    this.nodeList = new NodeList(
+      {
+        x: 0,
+        y: canvasHeight,
+        radius: pointRadius,
+        isSelected: false,
+        isBound: true,
+        leftNeighbour: null,
+        rightNeighbour: null
+      },
+      {
+        x: canvasWidth,
+        y: canvasHeight,
+        radius: pointRadius,
+        isSelected: false,
+        isBound: true,
+        leftNeighbour: null,
+        rightNeighbour: null
+      }
+    )
+
     this.state = {
-      points: []
+      points: this.nodeList
     }
   }
 
   componentDidMount() {
-    this.state.points.push(
+
+    this.nodeList.insertAfter(0,
       {
-        x: 0,
-        y: canvasHeight / 2,
+        x: canvasWidth / 2,
+        y: 0,
         radius: pointRadius,
         isSelected: false,
-        isBound: true
+        isBound: false,
+        leftNeighbour: null,
+        rightNeighbour: null
       },
-      {
-        x: canvasWidth,
-        y: canvasHeight / 2,
-        radius: pointRadius,
-        isSelected: false,
-        isBound: true
-      },
-      {
-        x: 75,
-        y: 75,
-        radius: pointRadius,
-        isSelected: false
-      }
     )
     this.setState(this.state);
   }
@@ -71,31 +134,47 @@ class LFO extends Component {
   }
 
   log(s) {
-    global.log(s);
+    global.log();
   }
 
   _onMouseDoubleClick(mouseX, mouseY) {
+    const { points } = this.state;
 
     let mouse = new Mouse(mouseX, mouseY);
     let removing = false;
 
-    for (const point of this.state.points) {
+    for (const point of points.get()) {
       if (mouse.isOverlapping(point) && !point.isBound) {
-        const index = this.state.points.indexOf(point);
-        this.state.points.splice(index, 1);
+        const index = points.indexOf(point);
+        points.remove(index);
         removing = true;
         break;
       }
     }
 
     if (!removing) {
-      this.state.points.push( //NEXT: Change this to insert a point depending on it's neighbours x value
+      let leftNeighbour = points.get()[0];
+      let shortestLeftPath = mouse.x - leftNeighbour.x;
+
+      for (const point of points.get()) {
+        let leftPath = mouse.x - point.x;
+        if (leftPath < 0)
+          break;
+        else if (leftPath <= shortestLeftPath) {
+          leftNeighbour = point;
+        }
+      }
+      const index = points.indexOf(leftNeighbour);
+      log(index);
+
+      points.insertAfter(
+        index,
         {
           x: mouseX,
           y: mouseY,
           radius: pointRadius,
-          isSelected: false
-        }
+          isSelected: false,
+        }//
       )
     }
 
@@ -122,8 +201,9 @@ class LFO extends Component {
   }
 
   _onMouseDown(mouseX, mouseY) {
+    const points = this.state.points;
     let mouse = new Mouse(mouseX, mouseY);
-    this.state.points.forEach((point) => {
+    points.forEach((point) => {
       if (mouse.isOverlapping(point)) {
         point.isSelected = true;
       }
@@ -139,19 +219,23 @@ class LFO extends Component {
   }
 
   _svg() {
+    const { points } = this.state;
 
-    const circles = this.state.points.map((point) => {
-      return `<circle cx="${point.x}" cy="${point.y}" r="${point.radius}" stroke="green" stroke-width="1" fill="yellow" />`
+    const paths = points.map((point) => {
+      if (point.rightNeighbour) return `<path d="M${point.x} ${point.y} L${point.rightNeighbour.x} ${point.rightNeighbour.y} Z" stroke="blue" stroke-width="3"/>`
+      else return ``;
     })
 
-    // [
-
-    //   `<circle cx="${50}" cy="${50}" r="10" stroke="green" stroke-width="1" fill="yellow" />`,
-    //   `<circle cx="${25}" cy="${25}" r="10" stroke="green" stroke-width="1" fill="yellow" />`
-    // ]
+    const circles = points.map((point, index) => {
+      return `
+      <circle cx="${point.x}" cy="${point.y}" r="${point.radius}" stroke="green" stroke-width="1" fill="yellow" />
+      ${paths[index]}
+        `
+    })
+    //NEXT: Use Neighbour system to create paths and clamps
     const img =
       `
-      <svg width="0" height="0" viewBox="0 0 0 0" xmlns="http://www.w3.org/2000/svg">
+      <svg width="${canvasWidth}" height="${canvasHeight}" viewBox="0 0 0 0" xmlns="http://www.w3.org/2000/svg">
         <rect x="${0}" y="${0}" stroke="green" stroke-width="1" fill="red" width="${canvasHeight}" height="${canvasWidth}" />
       ${circles}
       </svg>
