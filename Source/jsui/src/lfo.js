@@ -6,9 +6,10 @@ import {
   View,
 } from 'juce-blueprint';
 
-const pointRadius = 5;
+const pointRadius = 4;
 const canvasHeight = 100;
 const canvasWidth = 100;
+const plotResolution = 128;
 
 class Mouse {
   constructor(mouseX, mouseY) {
@@ -87,6 +88,7 @@ class LFO extends Component {
     this._onMouseDrag = this._onMouseDrag.bind(this);
     this._onMouseUp = this._onMouseUp.bind(this);
     this._onMouseDoubleClick = this._onMouseDoubleClick.bind(this);
+    this.initialised = false;
 
     this.nodeList = new NodeList(
       {
@@ -110,7 +112,8 @@ class LFO extends Component {
     )
 
     this.state = {
-      points: this.nodeList
+      points: this.nodeList,
+      plot: new Array(plotResolution)
     }
   }
 
@@ -165,7 +168,7 @@ class LFO extends Component {
         }
       }
       const index = points.indexOf(leftNeighbour);
-      log(index);
+      // log(index);
 
       points.insertAfter(
         index,
@@ -191,7 +194,7 @@ class LFO extends Component {
       if (point.isSelected) {
         point.y = this.clamp(mouseY, 0, canvasHeight);
         if (!point.isBound) {
-          point.x = this.clamp(mouseX, 0, canvasWidth);
+          point.x = this.clamp(mouseX, point.leftNeighbour.x, point.rightNeighbour.x);
         }
       }
 
@@ -201,6 +204,8 @@ class LFO extends Component {
   }
 
   _onMouseDown(mouseX, mouseY) {
+    this.initialised = true;
+    
     const points = this.state.points;
     let mouse = new Mouse(mouseX, mouseY);
     points.forEach((point) => {
@@ -218,34 +223,64 @@ class LFO extends Component {
     })
   }
 
+  generatePlot() {
+    const { points, plot } = this.state;
+
+    let startIndex = 0;
+    points.forEach((point, index) => {
+
+      if (point.rightNeighbour != null) {
+        const rightNeighbourY = point.rightNeighbour.y / canvasHeight;
+        const rightNeighbourX = point.rightNeighbour.x / canvasWidth;
+        const x = point.x / canvasWidth;
+        const y = point.y / canvasHeight;
+
+        const targetIndex = Math.round(rightNeighbourX * plotResolution);
+        const dy = (rightNeighbourY - y) / (rightNeighbourX - x) / plotResolution;
+        let value = y;
+        for (let i = startIndex; i < targetIndex; i++) {
+          plot[i] = 1 - value;
+          value += dy;
+        }
+        startIndex = targetIndex;
+      }
+    })
+
+    if (this.initialised) global.sendPlot("lfoIn", plot.toString());//
+    // log("#############################################################################");
+    // plot.forEach((p, i) => {
+    //   log(plot[i]); //
+    // })
+    // log("#############################################################################");
+  }
+
   _svg() {
-    const { points } = this.state;
+    const { points, plot } = this.state;
+
+    this.generatePlot();
 
     const paths = points.map((point) => {
-      if (point.rightNeighbour) return `<path d="M${point.x} ${point.y} L${point.rightNeighbour.x} ${point.rightNeighbour.y} Z" stroke="blue" stroke-width="3"/>`
+      if (point.rightNeighbour) return `<path d="M${point.x} ${point.y} L${point.rightNeighbour.x} ${point.rightNeighbour.y} Z" stroke="#3ade3a" stroke-width="2"/>`
       else return ``;
     })
 
     const circles = points.map((point, index) => {
       return `
-      <circle cx="${point.x}" cy="${point.y}" r="${point.radius}" stroke="green" stroke-width="1" fill="yellow" />
+      <circle cx="${point.x}" cy="${point.y}" r="${point.radius}" fill="#3ade3a" />
       ${paths[index]}
         `
     })
-    //NEXT: Use Neighbour system to create paths and clamps
     const img =
       `
       <svg width="${canvasWidth}" height="${canvasHeight}" viewBox="0 0 0 0" xmlns="http://www.w3.org/2000/svg">
-        <rect x="${0}" y="${0}" stroke="green" stroke-width="1" fill="red" width="${canvasHeight}" height="${canvasWidth}" />
-      ${circles}
+        <rect x="${0}" y="${0}" stroke="green" stroke-width="1" fill="#2a302a" width="${canvasHeight}" height="${canvasWidth}" />
+        ${circles}
       </svg>
-
-    `
+      `
     return img;
   }
 
   render() {
-    // log("Hello");
     return (
       <View {...styles.container}
         onMouseDown={this._onMouseDown}

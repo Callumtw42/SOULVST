@@ -52,7 +52,7 @@ graph SineSynth  [[ main ]]
     input event float cutoffSustain [[label: "Sustain", min: 0.01f, max: 100.0f, init: 100.0f, step: 1.0f]];
     input event float cutoffRelease [[label: "Release", min: 0.01f, max: 100.0f, init: 0.01f, step: 1.0f]];
 
-    input event float lfoIn [[label: "lfo", min: 0.00f, max: 1.0f, init: 0.00f, step: 0.01f]];
+    input event float lfoIn [[label: "lfoIn", min: 0.00f, max: 1.0f, init: 0.00f, step: 0.01f]];
 
 
 

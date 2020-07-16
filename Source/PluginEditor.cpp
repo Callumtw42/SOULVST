@@ -89,6 +89,22 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 			);
 
 	appRoot.engine.registerNativeMethod(
+		"sendPlot",
+		[](void* stash, const juce::var::NativeFunctionArgs& args) {
+			//auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
+			const juce::String& paramId = args.arguments[0].toString();
+			juce::String value = args.arguments[1];
+
+
+			Logger::writeToLog(juce::String(value));
+			//if (auto* parameter = self->params[paramId])
+			//	parameter->setValueNotifyingHost(value);
+			return juce::var::undefined();
+		},
+		(void*)this
+			);
+
+	appRoot.engine.registerNativeMethod(
 		"log",
 		[](void* stash, const juce::var::NativeFunctionArgs& args) {
 			Logger::writeToLog(args.arguments[0].toString());
