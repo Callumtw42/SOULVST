@@ -8,9 +8,9 @@
 processor LFO
 {
     input event float in;
-    output event float<2> out;
+    output event float<128> out;
 
-    float<2> profile = float<2>(0,0);
+    float<128> profile;
     int index = 0;
 
     event in (float f)
@@ -57,7 +57,7 @@ graph SineSynth  [[ main ]]
 
 
     output stream float<2> audioOut;
-    output event float<2> logOut;
+    output event float<128> logOut;
 
     let
     {
@@ -74,7 +74,7 @@ graph SineSynth  [[ main ]]
     {
         lfoIn -> lfo.in;
         lfo.out -> logger.in;
-        // logger.out -> logOut;
+        logger.out -> logOut;
 
         cutoff          -> voices.cutoffIn;
         cutoffModAmt    -> voices.cutoffModAmt;

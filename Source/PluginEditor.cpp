@@ -19,16 +19,16 @@ DefaultpluginAudioProcessorEditor::DefaultpluginAudioProcessorEditor(Defaultplug
 
 DefaultpluginAudioProcessorEditor::~DefaultpluginAudioProcessorEditor() { }
 
-void DefaultpluginAudioProcessorEditor::updateParams(juce::String* error)
+void DefaultpluginAudioProcessorEditor::updateParams(juce::String* error, int index)
 {
 	removeChildComponent(getIndexOfChildComponent(&appRoot));
 	removeChildComponent(getIndexOfChildComponent(&errorText));
 	// Now our React application is up and running, so we can start dispatching events, such as current parameter values.
-	Logger::writeToLog("Loaded: " + audioProcessor.plugin->getName());
+	Logger::writeToLog("Loaded: " + audioProcessor.plugin[index]->getName());
 
 	params.clear();
 	if (error->isEmpty()) {
-		for (AudioProcessorParameter* p : audioProcessor.plugin->getParameters())
+		for (AudioProcessorParameter* p : audioProcessor.plugin[index]->getParameters())
 		{
 			params.insert_or_assign(p->getName(100), p);
 			juce::Logger::writeToLog(p->getName(100));
@@ -91,14 +91,15 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 	appRoot.engine.registerNativeMethod(
 		"sendPlot",
 		[](void* stash, const juce::var::NativeFunctionArgs& args) {
-			//auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
+			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
-			juce::String value = args.arguments[1];
 
-
-			Logger::writeToLog(juce::String(value));
-			//if (auto* parameter = self->params[paramId])
-			//	parameter->setValueNotifyingHost(value);
+			//if (auto* parameter = self->params[paramId]) {
+			//	for (int i = 0; i < args.arguments[1].size(); i++) {
+			//		//parameter->setValue(args.arguments[1][i]);
+			//		//std::this_thread::sleep_for(std::chrono::milliseconds(1));
+			//	}
+			//}
 			return juce::var::undefined();
 		},
 		(void*)this
@@ -116,26 +117,28 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 
 void DefaultpluginAudioProcessorEditor::parameterValueChanged(int parameterIndex, float newValue)
 {
-	const auto& p = audioProcessor.plugin->getParameters()[parameterIndex];
-	juce::String id = p->getName(100);
+	if (audioProcessor.isPlayable) {
+		const auto& p = audioProcessor.plugin[MAXVOICES - 1]->getParameters()[parameterIndex];
+		juce::String id = p->getName(100);
 
-	if (auto* x = dynamic_cast<AudioProcessorParameterWithID*>(p))
-		id = x->paramID;
+		if (auto* x = dynamic_cast<AudioProcessorParameterWithID*>(p))
+			id = x->paramID;
 
-	float defaultValue = p->getDefaultValue();
-	juce::String stringValue = p->getText(newValue, 0);
+		float defaultValue = p->getDefaultValue();
+		juce::String stringValue = p->getText(newValue, 0);
 
-	Component::SafePointer<blueprint::ReactApplicationRoot> safeAppRoot(&appRoot);
+		Component::SafePointer<blueprint::ReactApplicationRoot> safeAppRoot(&appRoot);
 
-	juce::MessageManager::callAsync([=]() {
-		if (blueprint::ReactApplicationRoot* root = safeAppRoot.getComponent())
-			root->dispatchEvent("parameterValueChange",
-				parameterIndex,
-				id,
-				defaultValue,
-				newValue,
-				stringValue);
-		});
+		juce::MessageManager::callAsync([=]() {
+			if (blueprint::ReactApplicationRoot* root = safeAppRoot.getComponent())
+				root->dispatchEvent("parameterValueChange",
+					parameterIndex,
+					id,
+					defaultValue,
+					newValue,
+					stringValue);
+			});
+	}
 }
 
 void DefaultpluginAudioProcessorEditor::resized()

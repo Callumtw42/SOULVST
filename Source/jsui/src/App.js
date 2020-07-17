@@ -25,7 +25,7 @@ class App extends Component {
         <View {...styles.content}>
           <Slider paramId="voiceCount" {...styles.knob} />
           <Slider paramId="cutoff" {...styles.knob} />
-          <Slider paramId="lfoIn" {...styles.knob} />
+          {/* <Slider paramId="lfoIn" {...styles.knob} /> */}
         </View>
         <View {...styles.content}>
           <LFO {...styles.knob} />

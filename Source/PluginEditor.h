@@ -10,7 +10,7 @@ public:
 	void resized() override;
 	void parameterValueChanged(int parameterIndex, float newValue) override;
 	void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override {}
-	void updateParams(juce::String* error);
+	void updateParams(juce::String* error, int index);
 	void bindNativeCallbacks();
 	DefaultpluginAudioProcessor& audioProcessor;
 	blueprint::ReactApplicationRoot appRoot;

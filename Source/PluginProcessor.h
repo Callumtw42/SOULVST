@@ -20,6 +20,7 @@
 #include "lfo.h";
 #include "voice.h";
 
+static const int MAXVOICES = 12;
 using namespace juce;
 using namespace soul::patch;
 
@@ -65,20 +66,20 @@ public:
 
 	void initialiseGraph();
 
-	std::unique_ptr<juce::AudioPluginInstance> plugin;
-
+	std::unique_ptr<juce::AudioPluginInstance> plugin[MAXVOICES];
+	int voicesSet = 0;
+	int voicesInitialised = 0;
+	bool isPlayable;
 private:
-	static const int voiceCount = 1;
 	AudioProcessorPlayer* player;
 	AudioDeviceManager* manager;
 	SOULPatchAudioPluginFormat* patchFormat;
-	bool isPlayable;
 	AudioProcessorEditor* editor;
 	PluginDescription* desc;
 	LFO* lfo;
 	AudioProcessorGraph graph;
 	std::unique_ptr<SOULPatchAudioProcessor> soulProcessor;
-	std::unique_ptr<Voice> voices[voiceCount];
+	std::unique_ptr<Voice> voices[MAXVOICES];
 	//==============================================================================
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DefaultpluginAudioProcessor)
 };

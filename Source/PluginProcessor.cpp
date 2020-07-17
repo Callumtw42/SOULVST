@@ -11,7 +11,7 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 	editor(new DefaultpluginAudioProcessorEditor(*this)),
 	desc(new PluginDescription)
 
-{
+{//NEXT: Run this in a for loop to generate list of patches
 	manager->initialiseWithDefaultDevices(2, 2);
 	manager->addAudioCallback(player);
 	juce::File patchPath("C:\\Users\\callu\\Desktop\\projects\\defaultplugin\\Source\\soul\\SineSynth.soulpatch");
@@ -20,32 +20,55 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 	desc->pluginFormatName = soul::patch::SOULPatchAudioProcessor::getPluginFormatName();
 	desc->fileOrIdentifier = patchPath.getFullPathName();
 
+
 	auto setPlugin = [this](std::unique_ptr<juce::AudioPluginInstance> newPlugin,
 		const juce::String& error)
 	{
+		int index = voicesSet % MAXVOICES;
 		player->setProcessor(nullptr);
-		plugin = std::move(newPlugin); //new graph with array of newPlugin->processor's all connected up
-		player->setProcessor(plugin.get());
+		plugin[index] = std::move(newPlugin); 
+		player->setProcessor(plugin[index].get());
+		voicesSet++;
 	};
 
 	auto reinitialiseCallback = [&setPlugin, this](soul::patch::SOULPatchAudioProcessor& patch)
 	{
+		int index = voicesInitialised % MAXVOICES;
 		isPlayable = false;
 		player->setProcessor(nullptr);
 		patch.reinitialise();
 		juce::String error = patch.getCompileError();
 		if (error.isEmpty()) {
 			soulProcessor = std::unique_ptr<SOULPatchAudioProcessor>(&patch);
-			plugin->prepareToPlay(getSampleRate(), getBlockSize());
+			//plugin[index]->prepareToPlay(getSampleRate(), getBlockSize());
+			PluginDescription d = patch.getPluginDescription();
+			for (int i = 0; i < MAXVOICES; i++)
+			{
+				try {
+					if (patch.getPluginDescription().uid == plugin[i]->getPluginDescription().uid) //NEXT: Find out why plugins have no desc
+						plugin[i]->prepareToPlay(getSampleRate(), getBlockSize());
+				}
+				catch (const std::exception& e)
+				{
+					//continue;
+				}
+			}
 			//lfo = new LFO(plugin.get(), plugin.get()->getParameters()[0]);
-			isPlayable = true;
+			voicesInitialised++;
+			if (index == MAXVOICES - 1)
+			{
+				isPlayable = true;
+			}
 		}
-		static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams(&error);
+		static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams(&error, index);
 	};
 	juce::String dll("C:\\Users\\callu\\SOUL_PatchLoader.dll");
 	patchFormat = new SOULPatchAudioPluginFormat(dll, reinitialiseCallback);
 
-	patchFormat->createPluginInstance(*desc, getSampleRate(), getBlockSize(), setPlugin);
+	for (int i = 0; i < MAXVOICES; i++) {
+		//desc->createIdentifierString();
+		patchFormat->createPluginInstance(*desc, getSampleRate(), getBlockSize(), setPlugin);
+	}
 
 	//for (int i = 0; i < voiceCount; i++)
 	//{
@@ -62,7 +85,7 @@ void DefaultpluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
 	//if (isPlayable)lfo->process();
 
-	if (isPlayable) { plugin->processBlock(buffer, midiMessages); }
+	if (isPlayable) { plugin[MAXVOICES - 1]->processBlock(buffer, midiMessages); }
 	//graph.processBlock(buffer, midiMessages);
 }
 
@@ -134,7 +157,7 @@ bool DefaultpluginAudioProcessor::isBusesLayoutSupported(const BusesLayout& layo
 	if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
 		return false;
 #endif 
-	return true;
+		return true;
 #endif
 }
 #endif

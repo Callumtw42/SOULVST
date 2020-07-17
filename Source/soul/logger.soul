@@ -1,13 +1,13 @@
 processor Logger
 {
     // input event float<2> logIn;
-    input event float<2> in;
-    output event float<2> out;
+    input event float<128> in;
+    output event float<128> out;
     // output event float<2> test;
 
-    float<2> log =float<2>(1, 0);
+    float<128> log; 
 
-    event in(float<2> f)
+    event in(float<128> f)
     {
         log = f;
         // log.at(1) = 2;

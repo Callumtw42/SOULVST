@@ -93,7 +93,7 @@ class LFO extends Component {
     this.nodeList = new NodeList(
       {
         x: 0,
-        y: canvasHeight,
+        y: 0,
         radius: pointRadius,
         isSelected: false,
         isBound: true,
@@ -102,7 +102,7 @@ class LFO extends Component {
       },
       {
         x: canvasWidth,
-        y: canvasHeight,
+        y: 0,
         radius: pointRadius,
         isSelected: false,
         isBound: true,
@@ -122,7 +122,7 @@ class LFO extends Component {
     this.nodeList.insertAfter(0,
       {
         x: canvasWidth / 2,
-        y: 0,
+        y: canvasHeight,
         radius: pointRadius,
         isSelected: false,
         isBound: false,
@@ -205,7 +205,7 @@ class LFO extends Component {
 
   _onMouseDown(mouseX, mouseY) {
     this.initialised = true;
-    
+
     const points = this.state.points;
     let mouse = new Mouse(mouseX, mouseY);
     points.forEach((point) => {
@@ -246,7 +246,7 @@ class LFO extends Component {
       }
     })
 
-    if (this.initialised) global.sendPlot("lfoIn", plot.toString());//
+    if (this.initialised) global.sendPlot("lfoIn", plot);
     // log("#############################################################################");
     // plot.forEach((p, i) => {
     //   log(plot[i]); //
