@@ -7,10 +7,47 @@ import {
   View,
 } from 'juce-blueprint';
 
+import LFO from "./lfo";
+
 
 class Slider extends Component {
   constructor(props) {
     super(props);
+
+    const { paramId, x, y } = props;
+
+    const styles = {
+      container: {
+        'flex-direction': 'column',
+        'justify-content': 'center',
+        'background-color': '0f62ffff',
+        'position': 'absolute',
+      },
+      canvas: {
+        'height': '100%',
+        'width': '100%',
+        'top': 10.0,
+        'interceptClickEvents': false,
+        'transform-rotate': Math.PI * 1.25,
+        'position': 'absolute'
+      },
+      nameText: {
+        'color': 'ff626262',
+        'font-size': 12.0,
+        'line-spacing': 1.6,
+        'left': 5
+      },
+      label: {
+        'flex': 1.0,
+        'justify-content': 'center',
+        'align-items': 'center',
+        'interceptClickEvents': false,
+        'top': 10
+      },
+    };
+    this.styles = styles;
+    this.styles.container.left = x + "%";
+    this.styles.container.top = y + "%";
 
     this._onMeasure = this._onMeasure.bind(this);
     this._onMouseDown = this._onMouseDown.bind(this);
@@ -18,6 +55,7 @@ class Slider extends Component {
     this._onMouseDrag = this._onMouseDrag.bind(this);
     this._renderVectorGraphics = this._renderVectorGraphics.bind(this);
     this._onParameterValueChange = this._onParameterValueChange.bind(this);
+    this._onMouseDoubleClick = this._onMouseDoubleClick.bind(this);
 
     // During a drag, we hold the value at which the drag started here to
     // ensure smooth behavior while the component state is being updated.
@@ -48,6 +86,11 @@ class Slider extends Component {
     );
   }
 
+  _onMouseDoubleClick(mouseX, mouseY) {
+    global.log(mouseX);
+    global.log(mouseY);
+  }
+
   _onMeasure(width, height) {
     this.setState({
       width: width,
@@ -74,7 +117,6 @@ class Slider extends Component {
     let sensitivity = (1.0 / 200.0);
     let value = Math.max(0.0, Math.min(1.0, this._valueAtDragStart + dy * sensitivity));
 
-    console.log(value);
 
     if (typeof this.props.paramId === 'string' && this.props.paramId.length > 0) {
       global.setParameterValueNotifyingHost(this.props.paramId, value);
@@ -143,55 +185,27 @@ class Slider extends Component {
   render() {
     const { value, width, height } = this.state;
 
-    return (<View {...styles.container}>
+    return (<View {...this.styles.container}>
+
       <View
         {...this.props}
         onMeasure={this._onMeasure}
         onMouseDown={this._onMouseDown}
         onMouseUp={this._onMouseUp}
-        onMouseDrag={this._onMouseDrag}>
-        <Image {...styles.canvas} source={this._renderVectorGraphics(value, width, height)} />
-        <Label paramId={this.props.paramId} {...styles.label} />
+        onMouseDrag={this._onMouseDrag}
+        onMouseDoubleClick={this._onMouseDoubleClick}>
+        <Image {...this.styles.canvas} source={this._renderVectorGraphics(value, width, height)} />
+        <Label paramId={this.props.paramId} {...this.styles.label} />
       </View>
-      <Text {...styles.nameText}>{this.props.paramId}</Text>
+      <Text {...this.styles.nameText}>{this.props.paramId}</Text>
     </View>
     );
   }
 
 }
 
-const styles = {
-  container:{
-    'flex-direction':'column',
-    // 'justify-content': 'center',
-    // 'align-items': 'center',
-    'position': 'relative',
-    'margin':5.0
-    // 'text-overflow':'ellipsis'
-  },
-  canvas: {
-    'flex': 1.0,
-    'height': '100%',
-    'width': '100%',
-    'position': 'absolute',
-    'left': 0.0,
-    'top': 0.0,
-    'interceptClickEvents': false,
-    'transform-rotate': Math.PI * 1.25,
-  },
-  nameText: {
-    'position':'relative',
-    'color': 'ff626262',
-    'font-size': 12.0,
-    'line-spacing': 1.6,
-    'align-self':'center'
-  },
-  label: {
-    'flex': 1.0,
-    'justify-content': 'center',
-    'align-items': 'center',
-    'interceptClickEvents': false,
-  },
-};
+
+
+
 
 export default Slider;

@@ -5,11 +5,11 @@ juce::String message;
 DefaultpluginAudioProcessorEditor::DefaultpluginAudioProcessorEditor(DefaultpluginAudioProcessor& p)
 	: AudioProcessorEditor(&p), processor(p)
 {
-	constrainer.setMinimumWidth(400);
-	constrainer.setMinimumHeight(300);
+	constrainer.setMinimumWidth(WIDTH);
+	constrainer.setMinimumHeight(HEIGHT);
 	setConstrainer(&constrainer);
 	setResizable(true, true);
-	setSize(400, 300);
+	setSize(WIDTH, HEIGHT);
 
 	juce::File UIPath("C:\\Users\\callu\\Desktop\\projects\\defaultplugin\\Source\\jsui\\build\\js\\main.js");
 	jassert(UIPath.existsAsFile());
@@ -94,8 +94,7 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
 			for (int i = 0; i < LFORES; i++) {
-				self->processor.LFOPlot[i] = static_cast<double>(args.arguments[1][i]);
-				//Logger::writeToLog(juce::String(self->processor.LFOPlot[i]));
+				self->processor.LFOPlot[i] = static_cast<double>(args.arguments[1]["p"][i]);
 			}
 			return juce::var::undefined();
 		},

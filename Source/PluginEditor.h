@@ -2,6 +2,9 @@
 
 #include "PluginProcessor.h"
 
+static const int WIDTH = 700;
+static const int HEIGHT = 500;
+
 class DefaultpluginAudioProcessorEditor : public juce::AudioProcessorEditor, public juce::AudioProcessorParameter::Listener
 {
 public:

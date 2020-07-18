@@ -7,7 +7,7 @@ import {
 } from 'juce-blueprint';
 
 const pointRadius = 4;
-const canvasHeight = 100;
+const canvasHeight = 75;
 const canvasWidth = 100;
 const plotResolution = 128;
 
@@ -246,16 +246,14 @@ class LFO extends Component {
       }
     })
 
-    if (this.initialised) global.sendPlot("lfoIn", plot);
-    // log("#############################################################################");
-    // plot.forEach((p, i) => {
-    //   log(plot[i]); //
-    // })
-    // log("#############################################################################");
+    if (this.initialised) global.sendPlot("lfoIn", { p: plot });
   }
+
 
   _svg() {
     const { points, plot } = this.state;
+
+    // styles.canvas.height = 20;
 
     this.generatePlot();
 
@@ -273,61 +271,38 @@ class LFO extends Component {
     const img =
       `
       <svg width="${canvasWidth}" height="${canvasHeight}" viewBox="0 0 0 0" xmlns="http://www.w3.org/2000/svg">
-        <rect x="${0}" y="${0}" stroke="green" stroke-width="1" fill="#2a302a" width="${canvasHeight}" height="${canvasWidth}" />
+        <rect x="${0}" y="${0}" stroke="green" stroke-width="1" fill="#2a302a" width="${canvasWidth}" height="${canvasHeight}" />
         ${circles}
       </svg>
       `
     return img;
   }
 
+
   render() {
     return (
-      <View {...styles.container}
+      // <View>
+      <Image
         onMouseDown={this._onMouseDown}
         onMouseUp={this._onMouseUp}
         onMouseDrag={this._onMouseDrag}
         onMouseDoubleClick={this._onMouseDoubleClick}
-      >
-        <Image {...styles.canvas} source={this._svg()} />
-      </View>
+        {...styles.canvas} source={this._svg()} />
+      // </View>
     );
   }
 }
 
-const styles = {
-  container: {
-    'flex-direction': 'column',
-    'height': canvasHeight,
-    'width': canvasWidth,
-    // 'justify-content': 'center',
-    // 'align-items': 'center',
-    'position': 'relative',
-    'margin': 5.0
-    // 'text-overflow':'ellipsis'
-  },
+let styles = {
   canvas: {
-    'flex': 1.0,
+    // 'flex': 1.0,
     'height': canvasHeight,
     'width': canvasWidth,
     'position': 'absolute',
-    'left': 0.0,
-    'top': 0.0,
-    'interceptClickEvents': false,
-    // 'transform-rotate': Math.PI * 1.25,
-  },
-  text: {
-    'position': 'relative',
-    'color': 'ff626262',
-    'font-size': 100.0,
-    'line-spacing': 1.6,
-    'align-self': 'center'
-  },
-  label: {
-    'flex': 1.0,
-    'justify-content': 'center',
-    'align-items': 'center',
-    'interceptClickEvents': false,
+    'interceptClickEvents': true,
+    // 'margin-left': 80,
   },
 };
+
 
 export default LFO;

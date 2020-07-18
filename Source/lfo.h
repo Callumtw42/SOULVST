@@ -18,10 +18,6 @@ class LFO
 public:
 	LFO(AudioProcessorParameter* param, double* lfoPlot) : parameter(param), table(lfoPlot)
 	{
-		//for (int i = 0; i < 128; i++)
-		//{
-		//	table[i] = std::sin((2 * M_PI / 128) * i);
-		//}
 	};
 
 	~LFO() {};
