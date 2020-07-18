@@ -61,7 +61,7 @@ graph SineSynth  [[ main ]]
 
     let
     {
-        smoothedGain = soul::gain::SmoothedGainParameter (0.5f);
+        smoothedGain = soul::gain::SmoothedGainParameter (0.01f);
         voices = Voice[8];
         midiParser = soul::midi::MPEParser;
         voiceAllocator = soul::voice_allocators::Basic(8);

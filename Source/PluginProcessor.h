@@ -18,11 +18,37 @@
 #include "../../SOUL/source/API/soul_patch/helper_classes/soul_patch_AudioProcessor.h"
 #include "../../SOUL/examples/SOULPatchHostDemo/Source/PatchLoaderComponent.h"
 #include "lfo.h";
-#include "voice.h";
 
 static const int MAXVOICES = 12;
+static const int LFORES = 128;
+
 using namespace juce;
 using namespace soul::patch;
+
+class SoulVoice
+{
+public:
+	SoulVoice() {};
+	~SoulVoice() {};
+
+	void connectLFOs(double lfoPlot[LFORES])
+	{
+		lfos.clear();
+		for (AudioProcessorParameter* p : processor->getParameters())
+		{
+			lfos.add(new LFO(p, lfoPlot));
+		}
+	}
+
+	void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
+	{
+		lfos[0]->process();
+		processor->processBlock(buffer, midiMessages);
+	}
+
+	SOULPatchAudioProcessor* processor = nullptr;
+	juce::Array<LFO*> lfos;
+};
 
 class DefaultpluginAudioProcessor : public juce::AudioProcessor
 {
@@ -64,23 +90,22 @@ public:
 	void getStateInformation(juce::MemoryBlock& destData) override;
 	void setStateInformation(const void* data, int sizeInBytes) override;
 
-	void initialiseGraph();
 
-	std::unique_ptr<juce::AudioPluginInstance> plugin[MAXVOICES];
+	std::unique_ptr<juce::AudioPluginInstance> pluginInstances[MAXVOICES];
+	std::map<juce::String, juce::AudioProcessorParameter*> params;
 	int voicesSet = 0;
 	int voicesInitialised = 0;
 	bool isPlayable;
+	double LFOPlot[LFORES] = { 0 };
 private:
 	AudioProcessorPlayer* player;
 	AudioDeviceManager* manager;
 	SOULPatchAudioPluginFormat* patchFormat;
 	AudioProcessorEditor* editor;
 	PluginDescription* desc;
-	LFO* lfo;
-	AudioProcessorGraph graph;
-	std::unique_ptr<SOULPatchAudioProcessor> soulProcessor;
-	std::unique_ptr<Voice> voices[MAXVOICES];
+	SoulVoice* soulVoices[MAXVOICES];
 	//==============================================================================
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DefaultpluginAudioProcessor)
 };
+
 

@@ -9,29 +9,30 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 	manager(new AudioDeviceManager()),
 	isPlayable(false),
 	editor(new DefaultpluginAudioProcessorEditor(*this)),
-	desc(new PluginDescription)
+	desc(new PluginDescription())
 
-{//NEXT: Run this in a for loop to generate list of patches
+{
+	for (int i = 0; i < MAXVOICES; i++)
+	{
+		soulVoices[i] = new SoulVoice();
+	}
+
 	manager->initialiseWithDefaultDevices(2, 2);
 	manager->addAudioCallback(player);
 	juce::File patchPath("C:\\Users\\callu\\Desktop\\projects\\defaultplugin\\Source\\soul\\SineSynth.soulpatch");
 	jassert(patchPath.existsAsFile());
-
-	desc->pluginFormatName = soul::patch::SOULPatchAudioProcessor::getPluginFormatName();
-	desc->fileOrIdentifier = patchPath.getFullPathName();
-
 
 	auto setPlugin = [this](std::unique_ptr<juce::AudioPluginInstance> newPlugin,
 		const juce::String& error)
 	{
 		int index = voicesSet % MAXVOICES;
 		player->setProcessor(nullptr);
-		plugin[index] = std::move(newPlugin); 
-		player->setProcessor(plugin[index].get());
+		pluginInstances[index] = std::move(newPlugin);
+		player->setProcessor(pluginInstances[index].get());
 		voicesSet++;
 	};
 
-	auto reinitialiseCallback = [&setPlugin, this](soul::patch::SOULPatchAudioProcessor& patch)
+	auto reinitialiseCallback = [this](soul::patch::SOULPatchAudioProcessor& patch)
 	{
 		int index = voicesInitialised % MAXVOICES;
 		isPlayable = false;
@@ -39,21 +40,9 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 		patch.reinitialise();
 		juce::String error = patch.getCompileError();
 		if (error.isEmpty()) {
-			soulProcessor = std::unique_ptr<SOULPatchAudioProcessor>(&patch);
-			//plugin[index]->prepareToPlay(getSampleRate(), getBlockSize());
-			PluginDescription d = patch.getPluginDescription();
-			for (int i = 0; i < MAXVOICES; i++)
-			{
-				try {
-					if (patch.getPluginDescription().uid == plugin[i]->getPluginDescription().uid) //NEXT: Find out why plugins have no desc
-						plugin[i]->prepareToPlay(getSampleRate(), getBlockSize());
-				}
-				catch (const std::exception& e)
-				{
-					//continue;
-				}
-			}
-			//lfo = new LFO(plugin.get(), plugin.get()->getParameters()[0]);
+			soulVoices[index]->processor = &patch;
+			soulVoices[index]->connectLFOs(LFOPlot);
+			soulVoices[index]->processor->prepareToPlay(getSampleRate(), getBlockSize());
 			voicesInitialised++;
 			if (index == MAXVOICES - 1)
 			{
@@ -62,20 +51,15 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 		}
 		static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams(&error, index);
 	};
+
 	juce::String dll("C:\\Users\\callu\\SOUL_PatchLoader.dll");
 	patchFormat = new SOULPatchAudioPluginFormat(dll, reinitialiseCallback);
+	desc->pluginFormatName = soul::patch::SOULPatchAudioProcessor::getPluginFormatName();
+	desc->fileOrIdentifier = patchPath.getFullPathName();
 
 	for (int i = 0; i < MAXVOICES; i++) {
-		//desc->createIdentifierString();
 		patchFormat->createPluginInstance(*desc, getSampleRate(), getBlockSize(), setPlugin);
 	}
-
-	//for (int i = 0; i < voiceCount; i++)
-	//{
-	//	voices[i] = std::make_unique <Voice>();
-	//}
-
-	//initialiseGraph();
 }
 
 void DefaultpluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
@@ -83,14 +67,7 @@ void DefaultpluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 	for (int i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
 		buffer.clear(i, 0, buffer.getNumSamples());
 
-	//if (isPlayable)lfo->process();
-
-	if (isPlayable) { plugin[MAXVOICES - 1]->processBlock(buffer, midiMessages); }
-	//graph.processBlock(buffer, midiMessages);
-}
-
-void DefaultpluginAudioProcessor::initialiseGraph()
-{
+	if (isPlayable) { soulVoices[MAXVOICES - 1]->processBlock(buffer, midiMessages); }
 }
 
 juce::AudioProcessorEditor* DefaultpluginAudioProcessor::createEditor() { return editor; }
@@ -157,7 +134,7 @@ bool DefaultpluginAudioProcessor::isBusesLayoutSupported(const BusesLayout& layo
 	if (layouts.getMainOutputChannelSet() != layouts.getMainInputChannelSet())
 		return false;
 #endif 
-		return true;
+	return true;
 #endif
 }
 #endif
