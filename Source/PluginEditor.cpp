@@ -80,7 +80,7 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 		[](void* stash, const juce::var::NativeFunctionArgs& args) {
 			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
-			Logger::writeToLog(paramId);
+			//Logger::writeToLog(paramId);
 			if (auto* parameter = self->processor.params[paramId])
 				parameter->endChangeGesture();
 			return juce::var::undefined();
@@ -109,6 +109,25 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 		},
 		(void*)this
 			);
+
+	appRoot.engine.registerNativeMethod(
+		"getMouseX",
+		[](void* stash, const juce::var::NativeFunctionArgs& args) {
+			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
+			return var(self->getMouseXYRelative().getX());
+		},
+		(void*)this
+			);
+
+	appRoot.engine.registerNativeMethod(
+		"getMouseY",
+		[](void* stash, const juce::var::NativeFunctionArgs& args) {
+			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
+			return var(self->getMouseXYRelative().getY());
+		},
+		(void*)this
+			);
+
 }
 
 void DefaultpluginAudioProcessorEditor::parameterValueChanged(int parameterIndex, float newValue)

@@ -2,7 +2,7 @@ import Label from './Label';
 import Meter from './Meter';
 import React, { Component } from 'react';
 import Slider from './Slider';
-import LFO from "./lfo";
+import { LFO, lfoHeight, lfoWidth } from "./lfo";
 import {
   Canvas,
   Image,
@@ -10,48 +10,77 @@ import {
   Text,
 } from 'juce-blueprint';
 
+const dialHeight = 50;
+const dialWidth = 50;
+
 class App extends Component {
+  constructor() {
+    super()
+    this.state = {
+      lfoProps: {},
+      lfos: [],
+    }
+    this.sliderCallBacks = {
+      spawnLFO: this.spawnLFO.bind(this),
+    }
+  }
+
+  spawnLFO(paramId, x, y) {
+    this.state.lfoProps = {
+      x: x - lfoWidth - dialWidth / 2,
+      y: y - lfoHeight - dialHeight / 2,
+      activeLFO: paramId
+    }
+    this.setState(this.state);
+  }
+
+
   render() {
     return (
       <View {...styles.container}>
-        <LFO></LFO>
-        <Slider paramId="volume" id="volume" x={30} y={30} {...styles.knob} />
-        <Slider paramId="ampAttack" x={35} y={35} {...styles.knob} />
-        <Slider paramId="ampDecay" x={40} y={40}{...styles.knob} />
-        <Slider paramId="ampSustain" x={45} y={45}{...styles.knob} />
-        <Slider paramId="ampRelease" x={50} y={50}{...styles.knob} />
-        <Slider paramId="detune" x={55} y={55}{...styles.knob} />
-        {/* <Slider paramId="voiceCount" {...styles.knob} />
-          <Slider paramId="cutoff" {...styles.knob} /> */}
-        {/* <Slider paramId="lfoIn" {...styles.knob} /> */}
+        <View {...styles.dials}>
+          <Slider {...this.sliderCallBacks} paramId="volume"  {...styles.dial} />
+          <Slider {...this.sliderCallBacks} paramId="ampAttack"  {...styles.dial} />
+          <Slider {...this.sliderCallBacks} paramId="ampDecay" {...styles.dial} />
+          <Slider {...this.sliderCallBacks} paramId="ampSustain" {...styles.dial} />
+          <Slider {...this.sliderCallBacks} paramId="ampRelease" {...styles.dial} />
+          <Slider {...this.sliderCallBacks} paramId="detune" {...styles.dial} />
+        </View >
+        <View {...styles.dials}>
+          <Slider {...this.sliderCallBacks} paramId="voiceCount" {...styles.dial} />
+          <Slider {...this.sliderCallBacks} paramId="cutoff" {...styles.dial} />
+        </View >
+        < LFO paramId={"volume"} {...this.state.lfoProps} ></LFO >
+        < LFO paramId={"ampAttack"} {...this.state.lfoProps} ></LFO >
+        < LFO paramId={"ampDecay"} {...this.state.lfoProps} ></LFO >
+        < LFO paramId={"ampSustain"} {...this.state.lfoProps} ></LFO >
+        < LFO paramId={"ampRelease"} {...this.state.lfoProps} ></LFO >
+        < LFO paramId={"detune"} {...this.state.lfoProps} ></LFO >
+        < LFO paramId={"voiceCount"} {...this.state.lfoProps} ></LFO >
+        < LFO paramId={"cutoff"} {...this.state.lfoProps} ></LFO >
       </View >
     );
   }
 }
 
 const styles = {
+
   container: {
-    // 'flex-direction': 'column',
     'width': '100%',
     'height': '100%',
     'background-color': 'ff17191f',
-    // 'justify-content': 'center',
+    'justify-content': 'center',
+    'flex-direction': 'column'
   },
-  content: {
+  dials: {
     'border-style': 'solid',
     'border-color': 'red',
     'justify-content': 'center',
-    'padding': 25.0,
-    // 'position': 'sticky',
-    // 'max-width': 600,
-    // 'height': 100, 
     'background-color': 'ff171910',
-    // 'position': 'relative',
   },
-  knob: {
-    'width': 50.0,
-    'height': 50.0,
-    // 'margin': 5.0
+  dial: {
+    'width': dialWidth,
+    'height': dialHeight,
   },
 };
 

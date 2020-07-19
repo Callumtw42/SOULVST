@@ -45,7 +45,7 @@ Voice::Voice()
 		if (error.isEmpty()) {
 			soulProcessor = std::unique_ptr<SOULPatchAudioProcessor>(&patch);
 			plugin->prepareToPlay(getSampleRate(), getBlockSize());
-			lfo = new LFO(plugin.get(), plugin.get()->getParameters()[0]);
+			//lfo = new LFO(plugin.get(), plugin.get()->getParameters()[0]);
 			isPlayable = true;
 		}
 		//static_cast<Voice*>(editor)->updateParams(&error);

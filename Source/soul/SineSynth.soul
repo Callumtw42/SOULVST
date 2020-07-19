@@ -74,7 +74,7 @@ graph SineSynth  [[ main ]]
     {
         lfoIn -> lfo.in;
         lfo.out -> logger.in;
-        logger.out -> logOut;
+        // logger.out -> logOut;
 
         cutoff          -> voices.cutoffIn;
         cutoffModAmt    -> voices.cutoffModAmt;

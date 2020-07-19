@@ -84,42 +84,41 @@ class NodeList {
 class LFO extends Component {
   constructor(props) {
     super(props);
+
     this._onMouseDown = this._onMouseDown.bind(this);
     this._onMouseDrag = this._onMouseDrag.bind(this);
     this._onMouseUp = this._onMouseUp.bind(this);
     this._onMouseDoubleClick = this._onMouseDoubleClick.bind(this);
     this.initialised = false;
 
-    this.nodeList = new NodeList(
-      {
-        x: 0,
-        y: 0,
-        radius: pointRadius,
-        isSelected: false,
-        isBound: true,
-        leftNeighbour: null,
-        rightNeighbour: null
-      },
-      {
-        x: canvasWidth,
-        y: 0,
-        radius: pointRadius,
-        isSelected: false,
-        isBound: true,
-        leftNeighbour: null,
-        rightNeighbour: null
-      }
-    )
-
     this.state = {
-      points: this.nodeList,
+      points: new NodeList(
+        {
+          x: 0,
+          y: 0,
+          radius: pointRadius,
+          isSelected: false,
+          isBound: true,
+          leftNeighbour: null,
+          rightNeighbour: null
+        },
+        {
+          x: canvasWidth,
+          y: 0,
+          radius: pointRadius,
+          isSelected: false,
+          isBound: true,
+          leftNeighbour: null,
+          rightNeighbour: null
+        }
+      ),
       plot: new Array(plotResolution)
     }
   }
 
   componentDidMount() {
 
-    this.nodeList.insertAfter(0,
+    this.state.points.insertAfter(0,
       {
         x: canvasWidth / 2,
         y: canvasHeight,
@@ -204,6 +203,7 @@ class LFO extends Component {
   }
 
   _onMouseDown(mouseX, mouseY) {
+
     this.initialised = true;
 
     const points = this.state.points;
@@ -280,29 +280,37 @@ class LFO extends Component {
 
 
   render() {
-    return (
-      // <View>
-      <Image
-        onMouseDown={this._onMouseDown}
-        onMouseUp={this._onMouseUp}
-        onMouseDrag={this._onMouseDrag}
-        onMouseDoubleClick={this._onMouseDoubleClick}
-        {...styles.canvas} source={this._svg()} />
-      // </View>
-    );
+
+    // global.log(this.props.paramId);
+    global.log(this.props.activeLFO);
+    styles.canvas.left = this.props.x;
+    styles.canvas.top = this.props.y;
+    if (this.props.paramId == this.props.activeLFO) {
+      return (
+        // <View>
+        <Image
+          onMouseDown={this._onMouseDown}
+          onMouseUp={this._onMouseUp}
+          onMouseDrag={this._onMouseDrag}
+          onMouseDoubleClick={this._onMouseDoubleClick}
+          {...styles.canvas} source={this._svg()} />
+        // </View>
+      );
+    }
+    else return <Text>{"ERROR"}</Text>
   }
 }
 
+
 let styles = {
   canvas: {
-    // 'flex': 1.0,
     'height': canvasHeight,
     'width': canvasWidth,
     'position': 'absolute',
     'interceptClickEvents': true,
-    // 'margin-left': 80,
+    'left': 0,
+    'top': 0
   },
 };
 
-
-export default LFO;
+export { LFO, canvasHeight as lfoHeight, canvasWidth as lfoWidth };

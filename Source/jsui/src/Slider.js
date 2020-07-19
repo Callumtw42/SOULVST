@@ -14,41 +14,6 @@ class Slider extends Component {
   constructor(props) {
     super(props);
 
-    const { paramId, x, y } = props;
-
-    const styles = {
-      container: {
-        'flex-direction': 'column',
-        'justify-content': 'center',
-        'background-color': '0f62ffff',
-        'position': 'absolute',
-      },
-      canvas: {
-        'height': '100%',
-        'width': '100%',
-        'top': 10.0,
-        'interceptClickEvents': false,
-        'transform-rotate': Math.PI * 1.25,
-        'position': 'absolute'
-      },
-      nameText: {
-        'color': 'ff626262',
-        'font-size': 12.0,
-        'line-spacing': 1.6,
-        'left': 5
-      },
-      label: {
-        'flex': 1.0,
-        'justify-content': 'center',
-        'align-items': 'center',
-        'interceptClickEvents': false,
-        'top': 10
-      },
-    };
-    this.styles = styles;
-    this.styles.container.left = x + "%";
-    this.styles.container.top = y + "%";
-
     this._onMeasure = this._onMeasure.bind(this);
     this._onMouseDown = this._onMouseDown.bind(this);
     this._onMouseUp = this._onMouseUp.bind(this);
@@ -87,8 +52,9 @@ class Slider extends Component {
   }
 
   _onMouseDoubleClick(mouseX, mouseY) {
-    global.log(mouseX);
-    global.log(mouseY);
+    const x = global.getMouseX();
+    const y = global.getMouseY();
+    this.props.spawnLFO(this.props.paramId, x, y)
   }
 
   _onMeasure(width, height) {
@@ -184,8 +150,9 @@ class Slider extends Component {
 
   render() {
     const { value, width, height } = this.state;
+    // this.props.addLFO(this.props.paramId);
 
-    return (<View {...this.styles.container}>
+    return (<View {...styles.container}>
 
       <View
         {...this.props}
@@ -194,17 +161,43 @@ class Slider extends Component {
         onMouseUp={this._onMouseUp}
         onMouseDrag={this._onMouseDrag}
         onMouseDoubleClick={this._onMouseDoubleClick}>
-        <Image {...this.styles.canvas} source={this._renderVectorGraphics(value, width, height)} />
-        <Label paramId={this.props.paramId} {...this.styles.label} />
+        <Image {...styles.canvas} source={this._renderVectorGraphics(value, width, height)} />
+        <Label paramId={this.props.paramId} {...styles.label} />
       </View>
-      <Text {...this.styles.nameText}>{this.props.paramId}</Text>
+      <Text {...styles.nameText}>{this.props.paramId}</Text>
     </View>
     );
   }
 
 }
 
-
+const styles = {
+  container: {
+    'flex-direction': 'column',
+    'background-color': '0f62ffff',
+  },
+  canvas: {
+    'height': '100%',
+    'width': '100%',
+    'top': 10.0,
+    'interceptClickEvents': false,
+    'transform-rotate': Math.PI * 1.25,
+    'position': 'absolute'
+  },
+  nameText: {
+    'color': 'ff626262',
+    'font-size': 12.0,
+    'line-spacing': 1.6,
+    'left': 7
+  },
+  label: {
+    'flex': 1.0,
+    'justify-content': 'center',
+    'align-items': 'center',
+    'interceptClickEvents': false,
+    'top': 10
+  },
+};
 
 
 
