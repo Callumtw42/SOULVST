@@ -40,19 +40,19 @@ graph SineSynth  [[ main ]]
     input event float ampDecay [[label: "Decay", min: 0.01f, max: 100.0f, init: 0.01f, step: 1.0f]];
     input event float ampSustain [[label: "Sustain", min: 0.01f, max: 100.0f, init: 100.0f, step: 1.0f]];
     input event float ampRelease [[label: "Release", min: 0.01f, max: 100.0f, init: 0.01f, step: 1.0f]];
-    input event float oscGain [[label: "oscGain", min: 0.00f, max: 1.0f, init: 0.00f, step: 0.01f]];
+    // input event float oscGain [[label: "oscGain", min: 0.00f, max: 1.0f, init: 0.00f, step: 0.01f]];
 
     input event float detune [[label: "Detune", min: 0.00f, max: 50.0f, init: 0.00f, step: 1.0f]];
-    input event float voiceCountIn [[label: "voiceCount", min: 1, max: 16, init: 1, step: 1]];
+    input event float voiceCount [[label: "voiceCount", min: 1, max: 16, init: 1, step: 1]];
 
-    input event float cutoff [[label: "cutoff", min: 0, max: 127, init: 127, step: 1]];
-    input event float cutoffModAmt [[label: "cutoffModAmt", min: 0.00f, max: 1.0f, init: 0.00f, step: 0.01f]];
-    input event float cutoffAttack [[label: "Attack", min: 0.01f, max: 100.0f, init: 0.01f, step: 1.0f]];
-    input event float cutoffDecay [[label: "Decay", min: 0.01f, max: 100.0f, init: 0.01f, step: 1.0f]];
-    input event float cutoffSustain [[label: "Sustain", min: 0.01f, max: 100.0f, init: 100.0f, step: 1.0f]];
-    input event float cutoffRelease [[label: "Release", min: 0.01f, max: 100.0f, init: 0.01f, step: 1.0f]];
+    input event float cutoff [[label: "cutoff", min: 0.0f, max: 127.0f, init: 127.0f, step: 1.0f]];
+    // input event float cutoffModAmt [[label: "cutoffModAmt", min: 0.00f, max: 1.0f, init: 0.00f, step: 0.01f]];
+    // input event float cutoffAttack [[label: "Attack", min: 0.01f, max: 100.0f, init: 0.01f, step: 1.0f]];
+    // input event float cutoffDecay [[label: "Decay", min: 0.01f, max: 100.0f, init: 0.01f, step: 1.0f]];
+    // input event float cutoffSustain [[label: "Sustain", min: 0.01f, max: 100.0f, init: 100.0f, step: 1.0f]];
+    // input event float cutoffRelease [[label: "Release", min: 0.01f, max: 100.0f, init: 0.01f, step: 1.0f]];
 
-    input event float lfoIn [[label: "lfoIn", min: 0.00f, max: 1.0f, init: 0.00f, step: 0.01f]];
+    // input event float lfoIn [[label: "lfoIn", min: 0.00f, max: 1.0f, init: 0.00f, step: 0.01f]];
 
 
 
@@ -72,27 +72,27 @@ graph SineSynth  [[ main ]]
 
     connection
     {
-        lfoIn -> lfo.in;
-        lfo.out -> logger.in;
+        // lfoIn -> lfo.in;
+        // lfo.out -> logger.in;
         // logger.out -> logOut;
 
         cutoff          -> voices.cutoffIn;
-        cutoffModAmt    -> voices.cutoffModAmt;
-        cutoffRelease   -> voices.cutoffRelease;
-        cutoffSustain   -> voices.cutoffSustain;
-        cutoffDecay     -> voices.cutoffDecay;
-        cutoffAttack    -> voices.cutoffAttack;
-        cutoffModAmt    -> voices.cutoffModAmt;
+        // cutoffModAmt    -> voices.cutoffModAmt;
+        // cutoffRelease   -> voices.cutoffRelease;
+        // cutoffSustain   -> voices.cutoffSustain;
+        // cutoffDecay     -> voices.cutoffDecay;
+        // cutoffAttack    -> voices.cutoffAttack;
+        // cutoffModAmt    -> voices.cutoffModAmt;
 
 
         detune  -> voices.detune;
-        voiceCountIn -> voices.voiceCountIn;
+        voiceCount -> voices.voiceCountIn;
 
         ampAttack -> voices.ampAttack;
         ampDecay -> voices.ampDecay;
         ampSustain -> voices.ampSustain;
         ampRelease -> voices.ampRelease;
-        oscGain -> voices.oscGain;
+        // oscGain -> voices.oscGain;
 
         midiIn -> midiParser.parseMIDI;
         midiParser.eventOut -> voiceAllocator.eventIn;

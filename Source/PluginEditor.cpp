@@ -26,14 +26,18 @@ void DefaultpluginAudioProcessorEditor::updateParams(juce::String* error, int in
 	// Now our React application is up and running, so we can start dispatching events, such as current parameter values.
 	Logger::writeToLog("Loaded: " + processor.pluginInstances[index]->getName());
 
-	processor.params.clear();
+	//if (processor.params) processor.params->clear();
 	if (error->isEmpty()) {
 		for (AudioProcessorParameter* p : processor.pluginInstances[index]->getParameters())
 		{
-			processor.params.insert_or_assign(p->getName(100), p);
-			juce::Logger::writeToLog(p->getName(100));
-			p->addListener(this);
-			p->sendValueChangedMessageToListeners(p->getValue());
+			processor.params.set(p->getName(100), new Param(p));
+			Param* mainParam = processor.params.getReference(p->getName(100));
+			processor.addParameter(mainParam);
+
+			//processor.LFOPlots.insert_or_assign(p->getName(100), defaultPlot);
+			//juce::Logger::writeToLog(p->getName(100));
+			mainParam->addListener(this);
+			mainParam->sendValueChangedMessageToListeners(p->getValue());
 		}
 		bindNativeCallbacks();
 		addAndMakeVisible(appRoot);
@@ -44,6 +48,7 @@ void DefaultpluginAudioProcessorEditor::updateParams(juce::String* error, int in
 		errorText.setBounds(getLocalBounds());
 		errorText.centreWithSize(getParentHeight(), getParentWidth());
 	}
+
 }
 
 void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
@@ -54,7 +59,7 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 		[](void* stash, const juce::var::NativeFunctionArgs& args) {
 			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
-			if (auto* parameter = self->processor.params[paramId])
+			if (Param* parameter = self->processor.params.getReference(paramId))
 				parameter->beginChangeGesture();
 			return juce::var::undefined();
 		},
@@ -68,8 +73,9 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 			const juce::String& paramId = args.arguments[0].toString();
 			const double value = args.arguments[1];
 
-			if (auto* parameter = self->processor.params[paramId])
+			if (Param* parameter = self->processor.params.getReference(paramId)) {
 				parameter->setValueNotifyingHost(value);
+			}
 			return juce::var::undefined();
 		},
 		(void*)this
@@ -81,7 +87,7 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
 			//Logger::writeToLog(paramId);
-			if (auto* parameter = self->processor.params[paramId])
+			if (Param* parameter = self->processor.params.getReference(paramId))
 				parameter->endChangeGesture();
 			return juce::var::undefined();
 		},
@@ -94,7 +100,8 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
 			for (int i = 0; i < LFORES; i++) {
-				self->processor.LFOPlot[i] = static_cast<double>(args.arguments[1]["p"][i]);
+				double inVal = static_cast<double>(args.arguments[1][i]);
+				self->processor.params.getReference(paramId)->plot[i] = inVal;
 			}
 			return juce::var::undefined();
 		},
@@ -133,7 +140,8 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 void DefaultpluginAudioProcessorEditor::parameterValueChanged(int parameterIndex, float newValue)
 {
 	if (processor.isPlayable) {
-		const auto& p = processor.pluginInstances[MAXVOICES - 1]->getParameters()[parameterIndex];
+		//const auto& p = processor.pluginInstances[MAXVOICES - 1]->getParameters()[parameterIndex];
+		const auto& p = processor.getParameters()[parameterIndex];
 		juce::String id = p->getName(100);
 
 		if (auto* x = dynamic_cast<AudioProcessorParameterWithID*>(p))

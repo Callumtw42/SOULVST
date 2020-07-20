@@ -246,7 +246,7 @@ class LFO extends Component {
       }
     })
 
-    if (this.initialised) global.sendPlot("lfoIn", { p: plot });
+    if (this.initialised) global.sendPlot(this.props.paramId, plot);
   }
 
 
@@ -282,7 +282,7 @@ class LFO extends Component {
   render() {
 
     // global.log(this.props.paramId);
-    global.log(this.props.activeLFO);
+    // global.log(this.props.activeLFO);
     styles.canvas.left = this.props.x;
     styles.canvas.top = this.props.y;
     if (this.props.paramId == this.props.activeLFO) {
@@ -297,7 +297,7 @@ class LFO extends Component {
         // </View>
       );
     }
-    else return <Text>{"ERROR"}</Text>
+    else return <></>
   }
 }
 

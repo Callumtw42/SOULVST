@@ -59,15 +59,15 @@ graph Voice
         ampRelease              -> amplitudeEnvelope.release;
         ampSensitivity          -> amplitudeEnvelope.sensitivity;
 
-        cutoffAttack            -> filterEnv.attack;
-        cutoffDecay             -> filterEnv.decay;
-        cutoffSustain           -> filterEnv.sustain;
-        cutoffRelease           -> filterEnv.release;
-        cutoffSensitivity       -> filterEnv.sensitivity;
-        cutoffModAmt            -> filterEnv.modAmtIn;
-        cutoffIn                -> filterEnv.paramValIn;
+        // cutoffAttack            -> filterEnv.attack;
+        // cutoffDecay             -> filterEnv.decay;
+        // cutoffSustain           -> filterEnv.sustain;
+        // cutoffRelease           -> filterEnv.release;
+        // cutoffSensitivity       -> filterEnv.sensitivity;
+        // cutoffModAmt            -> filterEnv.modAmtIn;
+        cutoffIn                -> filter.cutoffIn;
         voiceController.note1_active -> filterEnv.triggerLevel;
-        filterEnv.envelopeLevel -> filter.cutoffIn;
+        // filterEnv.envelopeLevel -> filter.cutoffIn;
 
         voiceCountIn -> detuner.voiceCountIn;
         detune -> detuner.detuneIn; 

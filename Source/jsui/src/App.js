@@ -26,10 +26,14 @@ class App extends Component {
   }
 
   spawnLFO(paramId, x, y) {
-    this.state.lfoProps = {
-      x: x - lfoWidth - dialWidth / 2,
-      y: y - lfoHeight - dialHeight / 2,
-      activeLFO: paramId
+    if (this.state.lfoProps.activeLFO == paramId)
+      this.state.lfoProps.activeLFO = "";
+    else {
+      this.state.lfoProps = {
+        x: x - lfoWidth - dialWidth / 2,
+        y: y - lfoHeight - dialHeight / 2,
+        activeLFO: paramId
+      }
     }
     this.setState(this.state);
   }

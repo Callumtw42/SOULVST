@@ -2,13 +2,18 @@ processor Filter
 {
     input  stream float gainIn, resonanceIn; 
     input stream float<2> audioIn;
-    input stream float cutoffIn;
+    input event float cutoffIn;
     output stream float<2> audioOut;
 
     let numTableEntries = 128;
     let maxResonance = 100;
     let samplesBetweenFactorUpdates = 64;
-    float cutoff = 128;
+    float cutoff = 0;
+
+    event cutoffIn (float f)
+    {
+        cutoff = f;
+    }
 
     struct FilterTerms
     {
@@ -25,7 +30,7 @@ processor Filter
         FrequencySettings[numTableEntries] frequency;
     }
 
-    PrecalcTerms precalcTerms;
+    PrecalcTerms precalcTerms; //
 
     FilterTerms calcTermEntry (float frequency, float resonance)
     {
@@ -51,7 +56,7 @@ processor Filter
 
     void updateFactors (float cut, float resonance)
     {
-        cut    = clamp (cut, 0.0f, float(numTableEntries - 2));
+        cut    = clamp (cut, 0.0f, float(numTableEntries - 1));
         resonance = clamp (resonance, 0.0f, float(maxResonance - 1));
 
         // Interpolate the cutoff
@@ -85,7 +90,7 @@ processor Filter
 
         loop
         {
-            updateFactors(cutoffIn*128, resonanceIn);
+            updateFactors(cutoff, resonanceIn);
 
             loop (samplesBetweenFactorUpdates)
             {

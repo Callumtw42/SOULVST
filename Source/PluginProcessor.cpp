@@ -41,15 +41,17 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 		juce::String error = patch.getCompileError();
 		if (error.isEmpty()) {
 			soulVoices[index]->processor = &patch;
-			soulVoices[index]->connectLFOs(LFOPlot);
+			soulVoices[index]->mainParams = &params;
 			soulVoices[index]->processor->prepareToPlay(getSampleRate(), getBlockSize());
 			voicesInitialised++;
 			if (index == MAXVOICES - 1)
 			{
+				Logger::writeToLog(juce::String(getParameters().size()));
 				isPlayable = true;
+				static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams(&error, index);
+				soulVoices[index]->connectLFOs();
 			}
 		}
-		static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams(&error, index);
 	};
 
 	juce::String dll("C:\\Users\\callu\\SOUL_PatchLoader.dll");
@@ -67,7 +69,10 @@ void DefaultpluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 	for (int i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
 		buffer.clear(i, 0, buffer.getNumSamples());
 
-	if (isPlayable) { soulVoices[MAXVOICES - 1]->processBlock(buffer, midiMessages); }
+
+	if (isPlayable) {
+		soulVoices[MAXVOICES - 1]->processBlock(buffer, midiMessages);
+	}
 }
 
 juce::AudioProcessorEditor* DefaultpluginAudioProcessor::createEditor() { return editor; }
@@ -138,5 +143,4 @@ bool DefaultpluginAudioProcessor::isBusesLayoutSupported(const BusesLayout& layo
 #endif
 }
 #endif
-
 

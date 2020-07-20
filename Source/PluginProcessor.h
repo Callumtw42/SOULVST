@@ -17,7 +17,6 @@
 #include "../../SOUL/source/API/soul_patch/helper_classes/soul_patch_CompilerCacheFolder.h"
 #include "../../SOUL/source/API/soul_patch/helper_classes/soul_patch_AudioProcessor.h"
 #include "../../SOUL/examples/SOULPatchHostDemo/Source/PatchLoaderComponent.h"
-#include "lfo.h";
 
 static const int MAXVOICES = 12;
 static const int LFORES = 128;
@@ -25,27 +24,102 @@ static const int LFORES = 128;
 using namespace juce;
 using namespace soul::patch;
 
+class Param : public AudioProcessorParameter
+{
+public:
+	Param(AudioProcessorParameter* param) : soulParameter(param)
+	{
+		//mainProcessor->addParameter(this);
+		value = soulParameter->getValue();
+		plot.fill(0.0);
+	};
+	~Param() {};
+
+	//void setValue(double val)
+	//{
+	//	value = val;
+	//}
+
+	AudioProcessorParameter* soulParameter;
+	//DefaultpluginAudioProcessor* mainProcessor;
+	std::array<double, LFORES> plot;
+	double modAmt = 0;
+	double value = 0;
+
+	// Inherited via AudioProcessorParameter
+	float getValue() const override { return soulParameter->getValue(); };
+	void setValue(float newValue) override { value = newValue; sendValueChangedMessageToListeners(value); };
+	float getDefaultValue() const override { return soulParameter->getDefaultValue(); };
+	juce::String getName(int maximumStringLength) const override { return soulParameter->getName(100); };
+	juce::String getLabel() const override { return soulParameter->getLabel(); };
+	float getValueForText(const juce::String& text) const override { return soulParameter->getValueForText(text); };
+	juce::String getText(float newValue, int i)const override { return soulParameter->getText(newValue, i); };
+	//float getText() const override {};
+};
+
+class LFO
+{
+public:
+	LFO(AudioProcessorParameter* soulParam, HashMap<juce::String, Param*>* params) : soulParam(soulParam), mainParams(params)
+	{
+	};
+
+	~LFO() {};
+
+	void process()
+	{
+
+		//Logger::writeToLog("##############################################");
+		//Logger::writeToLog(juce::String(inVal));
+		//Logger::writeToLog("##############################################");
+		Param* mainParam = mainParams->getReference(soulParam->getName(100));
+		double lfoVal = mainParam->plot[position % LFORES];
+		double mainVal = mainParam->value;
+		double outVal = std::clamp(mainVal + lfoVal, 0.0, 1.0);;
+		soulParam->setValue(outVal);
+		position++;
+	}
+
+	int position = 0;
+	HashMap<juce::String, Param*>* mainParams;
+	AudioProcessorParameter* soulParam;
+	static constexpr size_t lfoUpdateRate = 100;
+	size_t lfoUpdateCounter = lfoUpdateRate;
+};
+
 class SoulVoice
 {
 public:
 	SoulVoice() {};
 	~SoulVoice() {};
 
-	void connectLFOs(double lfoPlot[LFORES])
+	void connectLFOs()
 	{
 		lfos.clear();
-		for (AudioProcessorParameter* p : processor->getParameters())
+		for (AudioProcessorParameter* soulParam : processor->getParameters())
 		{
-			lfos.add(new LFO(p, lfoPlot));
+			juce::String paramName = soulParam->getName(100);
+			//Logger::writeToLog(params[paramName]->parameter->getName(100));
+			//Logger::writeToLog(paramName);
+			lfos.add(new LFO(soulParam, mainParams));
 		}
 	}
 
 	void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 	{
-		lfos[0]->process();
+		//juce::String 
+		//double plotVal = mainParams->getReference(processor->getParameters()[0]->getName(100))->plot[processCount % LFORES];
+		//Logger::writeToLog(juce::String(plotVal));
+		//processCount++;
+
+		for (LFO* lfo : lfos)
+			lfo->process();
 		processor->processBlock(buffer, midiMessages);
 	}
 
+	//std::map<juce::String, Param*> mainParams;
+	juce::HashMap<juce::String, Param*>* mainParams;
+	int processCount = 0;
 	SOULPatchAudioProcessor* processor = nullptr;
 	juce::Array<LFO*> lfos;
 };
@@ -92,18 +166,23 @@ public:
 
 
 	std::unique_ptr<juce::AudioPluginInstance> pluginInstances[MAXVOICES];
-	std::map<juce::String, juce::AudioProcessorParameter*> params;
+	//std::map<juce::String, juce::AudioProcessorParameter*> params;
+	//const std::map < juce::String, Param*> params;
+	HashMap<juce::String, Param*> params;
 	int voicesSet = 0;
 	int voicesInitialised = 0;
 	bool isPlayable;
-	double LFOPlot[LFORES] = { 0 };
+	SoulVoice* soulVoices[MAXVOICES];
+	//std::map < juce::String, double* [LFORES] > LFOPlots;
+	//double* defaultPlot[LFORES] = { 0 };
+
 private:
 	AudioProcessorPlayer* player;
 	AudioDeviceManager* manager;
 	SOULPatchAudioPluginFormat* patchFormat;
 	AudioProcessorEditor* editor;
 	PluginDescription* desc;
-	SoulVoice* soulVoices[MAXVOICES];
+	int processCount = 0;
 	//==============================================================================
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(DefaultpluginAudioProcessor)
 };
