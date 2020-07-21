@@ -29,24 +29,16 @@ class Param : public AudioProcessorParameter
 public:
 	Param(AudioProcessorParameter* param) : soulParameter(param)
 	{
-		//mainProcessor->addParameter(this);
 		value = soulParameter->getValue();
 		plot.fill(0.0);
 	};
 	~Param() {};
 
-	//void setValue(double val)
-	//{
-	//	value = val;
-	//}
-
 	AudioProcessorParameter* soulParameter;
-	//DefaultpluginAudioProcessor* mainProcessor;
 	std::array<double, LFORES> plot;
 	double modAmt = 0;
 	double value = 0;
 
-	// Inherited via AudioProcessorParameter
 	float getValue() const override { return soulParameter->getValue(); };
 	void setValue(float newValue) override { value = newValue; sendValueChangedMessageToListeners(value); };
 	float getDefaultValue() const override { return soulParameter->getDefaultValue(); };
@@ -54,24 +46,20 @@ public:
 	juce::String getLabel() const override { return soulParameter->getLabel(); };
 	float getValueForText(const juce::String& text) const override { return soulParameter->getValueForText(text); };
 	juce::String getText(float newValue, int i)const override { return soulParameter->getText(newValue, i); };
-	//float getText() const override {};
 };
 
-class LFO
+class LFO : Timer
 {
 public:
 	LFO(AudioProcessorParameter* soulParam, HashMap<juce::String, Param*>* params) : soulParam(soulParam), mainParams(params)
 	{
+		startTimer(1);
 	};
 
 	~LFO() {};
 
 	void process()
 	{
-
-		//Logger::writeToLog("##############################################");
-		//Logger::writeToLog(juce::String(inVal));
-		//Logger::writeToLog("##############################################");
 		Param* mainParam = mainParams->getReference(soulParam->getName(100));
 		double lfoVal = mainParam->plot[position % LFORES];
 		double mainVal = mainParam->value;
@@ -85,6 +73,27 @@ public:
 	AudioProcessorParameter* soulParam;
 	static constexpr size_t lfoUpdateRate = 100;
 	size_t lfoUpdateCounter = lfoUpdateRate;
+private:
+	int rate = 1;
+	int counter = 0;
+
+	// Inherited via Timer
+	void timerCallback() override
+	{
+
+		//NEXT::Use timer to draw array into SOUL
+
+		//int interval = std::ceil(1 / rate);
+		//if (counter % 1 == 0)
+		//process();
+		if (soulParam->getName(100).equalsIgnoreCase("volume")) {
+			if (counter % 100 == 0)
+				soulParam->setValue(1);
+			else
+				soulParam->setValue(0);
+		}
+		counter++;
+	};
 };
 
 class SoulVoice
@@ -112,8 +121,8 @@ public:
 		//Logger::writeToLog(juce::String(plotVal));
 		//processCount++;
 
-		for (LFO* lfo : lfos)
-			lfo->process();
+		//for (LFO* lfo : lfos)
+		//	lfo->process();
 		processor->processBlock(buffer, midiMessages);
 	}
 
