@@ -99,9 +99,10 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 		[](void* stash, const juce::var::NativeFunctionArgs& args) {
 			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
+			Param* param = self->processor.params.getReference(paramId);
 			for (int i = 0; i < LFORES; i++) {
 				double inVal = static_cast<double>(args.arguments[1][i]);
-				self->processor.params.getReference(paramId)->plot[i] = inVal;
+				param->plot[i] = inVal;
 			}
 			return juce::var::undefined();
 		},

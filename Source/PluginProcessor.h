@@ -18,7 +18,7 @@
 #include "../../SOUL/source/API/soul_patch/helper_classes/soul_patch_AudioProcessor.h"
 #include "../../SOUL/examples/SOULPatchHostDemo/Source/PatchLoaderComponent.h"
 
-static const int MAXVOICES = 12;
+static const int MAXVOICES = 1;
 static const int LFORES = 128;
 
 using namespace juce;
@@ -48,24 +48,33 @@ public:
 	juce::String getText(float newValue, int i)const override { return soulParameter->getText(newValue, i); };
 };
 
-class LFO : Timer
+class LFO
 {
 public:
 	LFO(AudioProcessorParameter* soulParam, HashMap<juce::String, Param*>* params) : soulParam(soulParam), mainParams(params)
 	{
-		startTimer(1);
+		//startTimer(10);
+		//if (soulParam->getName(100).contains("LFOIn"))
+			//isLFOParam = true;
 	};
 
 	~LFO() {};
 
 	void process()
 	{
+		//juce::MessageManager::callAsync([&]() {
+
+		//juce::String lfoName = soulParam->getName(100);
+		//Logger::writeToLog(lfoName);
+		//AudioProcessorParameter* lfoParam = mainParams->getReference(lfoName);
+		//Logger::writeToLog(lfoParam->getName(100));
 		Param* mainParam = mainParams->getReference(soulParam->getName(100));
 		double lfoVal = mainParam->plot[position % LFORES];
 		double mainVal = mainParam->value;
 		double outVal = std::clamp(mainVal + lfoVal, 0.0, 1.0);;
 		soulParam->setValue(outVal);
 		position++;
+		//});
 	}
 
 	int position = 0;
@@ -73,27 +82,6 @@ public:
 	AudioProcessorParameter* soulParam;
 	static constexpr size_t lfoUpdateRate = 100;
 	size_t lfoUpdateCounter = lfoUpdateRate;
-private:
-	int rate = 1;
-	int counter = 0;
-
-	// Inherited via Timer
-	void timerCallback() override
-	{
-
-		//NEXT::Use timer to draw array into SOUL
-
-		//int interval = std::ceil(1 / rate);
-		//if (counter % 1 == 0)
-		//process();
-		if (soulParam->getName(100).equalsIgnoreCase("volume")) {
-			if (counter % 100 == 0)
-				soulParam->setValue(1);
-			else
-				soulParam->setValue(0);
-		}
-		counter++;
-	};
 };
 
 class SoulVoice
@@ -116,13 +104,7 @@ public:
 
 	void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 	{
-		//juce::String 
-		//double plotVal = mainParams->getReference(processor->getParameters()[0]->getName(100))->plot[processCount % LFORES];
-		//Logger::writeToLog(juce::String(plotVal));
-		//processCount++;
-
-		//for (LFO* lfo : lfos)
-		//	lfo->process();
+		for (auto lfo : lfos)lfo->process();
 		processor->processBlock(buffer, midiMessages);
 	}
 
