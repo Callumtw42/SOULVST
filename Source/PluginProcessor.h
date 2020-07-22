@@ -56,27 +56,38 @@ public:
 		//startTimer(10);
 		//if (soulParam->getName(100).contains("LFOIn"))
 			//isLFOParam = true;
+		std::thread proc([this]()
+			{
+				while (true) {
+					//auto start = std::chrono::high_resolution_clock::now();
+					process();
+					std::this_thread::sleep_for(std::chrono::microseconds(interval));
+					//auto end = std::chrono::high_resolution_clock::now();
+					//std::chrono::duration<float>duration = end - start;
+					//Logger::writeToLog(juce::String(duration.count() * 1000000));
+				}
+			});
+		proc.detach();
 	};
 
 	~LFO() {};
 
 	void process()
 	{
-		//juce::MessageManager::callAsync([&]() {
+		std::chrono::duration<float> elapsedTime = std::chrono::high_resolution_clock::now() - startTime;
+		float microseconds = elapsedTime.count() * 1000000;
+		int index = std::ceil(microseconds / interval);
 
-		//juce::String lfoName = soulParam->getName(100);
-		//Logger::writeToLog(lfoName);
-		//AudioProcessorParameter* lfoParam = mainParams->getReference(lfoName);
-		//Logger::writeToLog(lfoParam->getName(100));
 		Param* mainParam = mainParams->getReference(soulParam->getName(100));
-		double lfoVal = mainParam->plot[position % LFORES];
+		double lfoVal = mainParam->plot[index % LFORES];
 		double mainVal = mainParam->value;
 		double outVal = std::clamp(mainVal + lfoVal, 0.0, 1.0);;
 		soulParam->setValue(outVal);
 		position++;
 		//});
 	}
-
+	int interval = 1000;
+	std::chrono::steady_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 	int position = 0;
 	HashMap<juce::String, Param*>* mainParams;
 	AudioProcessorParameter* soulParam;
@@ -104,7 +115,7 @@ public:
 
 	void processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 	{
-		for (auto lfo : lfos)lfo->process();
+		//for (auto lfo : lfos)lfo->process();
 		processor->processBlock(buffer, midiMessages);
 	}
 
