@@ -1,85 +1,18 @@
-import ParameterValueStore from './ParameterValueStore';
 import React, { Component } from 'react';
+import { clamp } from "../functions"
 import {
   Image,
-  Text,
-  View,
+  View
 } from 'juce-blueprint';
+import Mouse from "./mouse"
+import NodeList from "./nodelist"
+import Slider from "./slider"
 
 const pointRadius = 4;
-const canvasHeight = 75;
+const viewHeight = 75;
+const canvasHeight = 85;
 const canvasWidth = 100;
 const plotResolution = 128;
-
-class Mouse {
-  constructor(mouseX, mouseY) {
-    this.x = mouseX;
-    this.y = mouseY;
-  };
-  isOverlapping(point) {
-    if (
-      this.x > point.x - point.radius
-      && this.x < point.x + point.radius
-      && this.y > point.y - point.radius
-      && this.y < point.y + point.radius
-    )
-      return true
-    else return false;
-  }
-}
-
-class NodeList {
-  constructor(head, tail) {
-    this.list = [head, tail];
-    head.rightNeighbour = tail;
-    head.leftNeighbour = null;
-    tail.rightNeighbour = null;
-    tail.leftNeighbour = head;
-  }
-
-  insertAfter(index, node) {
-    this.list.splice(
-      index + 1,
-      0,
-      node
-    )
-    node.leftNeighbour = this.list[index];
-    node.leftNeighbour.rightNeighbour = node;
-
-    node.rightNeighbour = (this.list[index + 2]) ? this.list[index + 2] : null;
-    node.rightNeighbour.leftNeighbour = node;
-  }
-
-  remove(index) {
-    const point = this.list[index];
-    const leftNeighbour = point.leftNeighbour;
-    const rightNeighbour = point.rightNeighbour;
-
-    this.list.splice(index, 1);
-    this.list[index].leftNeighbour = leftNeighbour;
-    this.list[index - 1].rightNeighbour = rightNeighbour;
-  }
-
-  forEach(...args) {
-    return this.list.forEach(...args);
-  }
-
-  indexOf(...args) {
-    return this.list.indexOf(...args);
-  }
-
-  splice(...args) {
-    return this.list.splice(...args);
-  }
-
-  map(...args) {
-    return this.list.map(...args);
-  }
-
-  get() {
-    return this.list;
-  }
-}
 
 class LFO extends Component {
   constructor(props) {
@@ -121,7 +54,7 @@ class LFO extends Component {
     this.state.points.insertAfter(0,
       {
         x: canvasWidth / 2,
-        y: canvasHeight,
+        y: viewHeight,
         radius: pointRadius,
         isSelected: false,
         isBound: false,
@@ -167,7 +100,6 @@ class LFO extends Component {
         }
       }
       const index = points.indexOf(leftNeighbour);
-      // log(index);
 
       points.insertAfter(
         index,
@@ -176,24 +108,21 @@ class LFO extends Component {
           y: mouseY,
           radius: pointRadius,
           isSelected: false,
-        }//
+        }
       )
     }
 
     this.setState(this.state);
   }
 
-  clamp(val, min, max) {
-    return val > max ? max : val < min ? min : val;
-  }
 
   _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
 
     this.state.points.forEach((point) => {
       if (point.isSelected) {
-        point.y = this.clamp(mouseY, 0, canvasHeight);
+        point.y = clamp(mouseY, 0, viewHeight);
         if (!point.isBound) {
-          point.x = this.clamp(mouseX, point.leftNeighbour.x, point.rightNeighbour.x);
+          point.x = clamp(mouseX, point.leftNeighbour.x, point.rightNeighbour.x);
         }
       }
 
@@ -230,11 +159,10 @@ class LFO extends Component {
     points.forEach((point, index) => {
 
       if (point.rightNeighbour != null) {
-        const rightNeighbourY = point.rightNeighbour.y / canvasHeight;
+        const rightNeighbourY = point.rightNeighbour.y / viewHeight;
         const rightNeighbourX = point.rightNeighbour.x / canvasWidth;
         const x = point.x / canvasWidth;
-        const y = point.y / canvasHeight;
-
+        const y = point.y / viewHeight;
         const targetIndex = Math.round(rightNeighbourX * plotResolution);
         const dy = (rightNeighbourY - y) / (rightNeighbourX - x) / plotResolution;
         let value = y;
@@ -245,23 +173,16 @@ class LFO extends Component {
         startIndex = targetIndex;
       }
     })
-
     if (this.initialised) global.sendPlot(this.props.paramId, plot);
   }
 
-
   _svg() {
     const { points, plot } = this.state;
-
-    // styles.canvas.height = 20;
-
     this.generatePlot();
-
     const paths = points.map((point) => {
       if (point.rightNeighbour) return `<path d="M${point.x} ${point.y} L${point.rightNeighbour.x} ${point.rightNeighbour.y} Z" stroke="#3ade3a" stroke-width="2"/>`
       else return ``;
     })
-
     const circles = points.map((point, index) => {
       return `
       <circle cx="${point.x}" cy="${point.y}" r="${point.radius}" fill="#3ade3a" />
@@ -270,47 +191,51 @@ class LFO extends Component {
     })
     const img =
       `
-      <svg width="${canvasWidth}" height="${canvasHeight}" viewBox="0 0 0 0" xmlns="http://www.w3.org/2000/svg">
-        <rect x="${0}" y="${0}" stroke="green" stroke-width="1" fill="#2a302a" width="${canvasWidth}" height="${canvasHeight}" />
+      <svg width="${canvasWidth}" height="${viewHeight}" viewBox="0 0 0 0" xmlns="http://www.w3.org/2000/svg">
+        <rect x="${0}" y="${0}" stroke="green" stroke-width="1" fill="#2a302a" width="${canvasWidth}" height="${viewHeight}" />
         ${circles}
       </svg>
       `
     return img;
   }
 
-
   render() {
-
-    // global.log(this.props.paramId);
-    // global.log(this.props.activeLFO);
-    styles.canvas.left = this.props.x;
-    styles.canvas.top = this.props.y;
+    styles.container.left = this.props.x;
+    styles.container.top = this.props.y;
     if (this.props.paramId == this.props.activeLFO) {
       return (
-        // <View>
-        <Image
-          onMouseDown={this._onMouseDown}
-          onMouseUp={this._onMouseUp}
-          onMouseDrag={this._onMouseDrag}
-          onMouseDoubleClick={this._onMouseDoubleClick}
-          {...styles.canvas} source={this._svg()} />
-        // </View>
+        <View {...styles.container}>
+          <Image
+            onMouseDown={this._onMouseDown}
+            onMouseUp={this._onMouseUp}
+            onMouseDrag={this._onMouseDrag}
+            onMouseDoubleClick={this._onMouseDoubleClick}
+            {...styles.canvas} source={this._svg()} />
+          <Slider {...styles.slider} paramId={this.props.paramId}></Slider>
+        </View>
       );
     }
     else return <></>
   }
 }
 
-
 let styles = {
   canvas: {
-    'height': canvasHeight,
+    'height': viewHeight,
     'width': canvasWidth,
-    'position': 'absolute',
+    // 'position': 'absolute',
     'interceptClickEvents': true,
+  },
+  slider: {
+    'width': canvasWidth,
+    'height': canvasHeight - viewHeight,
+  },
+  container: {
+    'flex-direction': 'column',
+    'position': 'absolute',
     'left': 0,
     'top': 0
   },
 };
 
-export { LFO, canvasHeight as lfoHeight, canvasWidth as lfoWidth };
+export { LFO, canvasHeight as lfoHeight, canvasWidth as lfoWidth, viewHeight as lfoViewHeight };

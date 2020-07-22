@@ -1,13 +1,8 @@
-import Label from './Label';
-import Meter from './Meter';
 import React, { Component } from 'react';
-import Slider from './Slider';
-import { LFO, lfoHeight, lfoWidth } from "./lfo";
+import Dial from './dial';
+import { LFO, lfoHeight, lfoWidth } from "./lfo/lfo";
 import {
-  Canvas,
-  Image,
   View,
-  Text,
 } from 'juce-blueprint';
 
 const dialHeight = 50;
@@ -43,16 +38,16 @@ class App extends Component {
     return (
       <View {...styles.container}>
         <View {...styles.dials}>
-          <Slider {...this.sliderCallBacks} paramId="volume"  {...styles.dial} />
-          <Slider {...this.sliderCallBacks} paramId="ampAttack"  {...styles.dial} />
-          <Slider {...this.sliderCallBacks} paramId="ampDecay" {...styles.dial} />
-          <Slider {...this.sliderCallBacks} paramId="ampSustain" {...styles.dial} />
-          <Slider {...this.sliderCallBacks} paramId="ampRelease" {...styles.dial} />
-          <Slider {...this.sliderCallBacks} paramId="detune" {...styles.dial} />
+          <Dial {...this.sliderCallBacks} paramId="volume"  {...styles.dial} />
+          <Dial {...this.sliderCallBacks} paramId="ampAttack"  {...styles.dial} />
+          <Dial {...this.sliderCallBacks} paramId="ampDecay" {...styles.dial} />
+          <Dial {...this.sliderCallBacks} paramId="ampSustain" {...styles.dial} />
+          <Dial {...this.sliderCallBacks} paramId="ampRelease" {...styles.dial} />
+          <Dial {...this.sliderCallBacks} paramId="detune" {...styles.dial} />
         </View >
         <View {...styles.dials}>
-          <Slider {...this.sliderCallBacks} paramId="voiceCount" {...styles.dial} />
-          <Slider {...this.sliderCallBacks} paramId="cutoff" {...styles.dial} />
+          <Dial {...this.sliderCallBacks} paramId="voiceCount" {...styles.dial} />
+          <Dial {...this.sliderCallBacks} paramId="cutoff" {...styles.dial} />
         </View >
         < LFO paramId={"volume"} {...this.state.lfoProps} ></LFO >
         < LFO paramId={"ampAttack"} {...this.state.lfoProps} ></LFO >
@@ -85,7 +80,7 @@ const styles = {
   dial: {
     'width': dialWidth,
     'height': dialHeight,
-  },
+  }
 };
 
 export default App;

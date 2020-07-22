@@ -7,10 +7,7 @@ import {
   View,
 } from 'juce-blueprint';
 
-import LFO from "./lfo";
-
-
-class Slider extends Component {
+class Dial extends Component {
   constructor(props) {
     super(props);
 
@@ -201,4 +198,4 @@ const styles = {
 
 
 
-export default Slider;
+export default Dial;

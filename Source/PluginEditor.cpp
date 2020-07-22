@@ -110,6 +110,18 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 			);
 
 	appRoot.engine.registerNativeMethod(
+		"sendLFOSpeed",
+		[](void* stash, const juce::var::NativeFunctionArgs& args) {
+			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
+			const juce::String& paramId = args.arguments[0].toString();
+			Param* param = self->processor.params.getReference(paramId);
+			param->lfoSpeed = args.arguments[1];
+			return juce::var::undefined();
+		},
+		(void*)this
+			);
+
+	appRoot.engine.registerNativeMethod(
 		"log",
 		[](void* stash, const juce::var::NativeFunctionArgs& args) {
 			Logger::writeToLog(args.arguments[0].toString());

@@ -38,6 +38,8 @@ public:
 	std::array<double, LFORES> plot;
 	double modAmt = 0;
 	double value = 0;
+	double lfoSpeed = 0;
+	//std::unique_ptr<LFO> lfo;
 
 	float getValue() const override { return soulParameter->getValue(); };
 	void setValue(float newValue) override { value = newValue; sendValueChangedMessageToListeners(value); };
