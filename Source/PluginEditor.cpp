@@ -102,7 +102,7 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 			Param* param = self->processor.params.getReference(paramId);
 			for (int i = 0; i < LFORES; i++) {
 				double inVal = static_cast<double>(args.arguments[1][i]);
-				param->plot[i] = inVal;
+				param->lfo->plot[i] = inVal;
 			}
 			return juce::var::undefined();
 		},
@@ -115,7 +115,7 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
 			Param* param = self->processor.params.getReference(paramId);
-			param->lfoSpeed = args.arguments[1];
+			param->lfo->speed = args.arguments[1];
 			return juce::var::undefined();
 		},
 		(void*)this

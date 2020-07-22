@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="fqXiv5" name="defaultplugin" projectType="audioplug" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" pluginFormats="buildStandalone,buildVST3"
-              cppLanguageStandard="17" pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn">
+              addUsingNamespaceToJuceHeader="1" displaySplashScreen="1" pluginFormats="buildStandalone,buildVST3"
+              cppLanguageStandard="17" pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn"
+              headerPath="C:/Users/callu/SOUL/source/API/soul_patch/API/soul_patch.h;&#10;C:/Users/callu/SOUL/source/API/soul_patch/helper_classes/soul_patch_AudioPluginFormat.h;&#10;C:/Users/callu/SOUL/source/API/soul_patch/helper_classes/soul_patch_Utilities.h;&#10;C:/Users/callu/SOUL/source/API/soul_patch/helper_classes/soul_patch_CompilerCacheFolder.h;&#10;C:/Users/callu/SOUL/source/API/soul_patch/helper_classes/soul_patch_AudioProcessor.h;&#10;C:/Users/callu/SOUL/examples/SOULPatchHostDemo/Source/PatchLoaderComponent.h;">
   <MAINGROUP id="tPqceN" name="defaultplugin">
     <GROUP id="{1BF8D3CB-F9A7-43D2-B317-640F5BCEBB19}" name="Source">
-      <FILE id="bKGnD9" name="voice.cpp" compile="1" resource="0" file="Source/voice.cpp"/>
-      <FILE id="thlun9" name="voice.h" compile="0" resource="0" file="Source/voice.h"/>
+      <FILE id="bNT5JW" name="soulvoice.h" compile="0" resource="0" file="Source/soulvoice.h"/>
+      <FILE id="B4diM5" name="param.h" compile="0" resource="0" file="Source/param.h"/>
       <FILE id="WrJICZ" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
-      <FILE id="IRh9oG" name="lfo.cpp" compile="1" resource="0" file="Source/lfo.cpp"/>
       <FILE id="rOdEgE" name="lfo.h" compile="0" resource="0" file="Source/lfo.h"/>
       <FILE id="dw2dL8" name="PluginProcessor.h" compile="0" resource="0"
             file="Source/PluginProcessor.h"/>
@@ -41,6 +41,7 @@
         <MODULEPATH id="juce_gui_extra" path="../../../JUCE/modules"/>
         <MODULEPATH id="blueprint" path="C:\Users\callu\blueprint"/>
         <MODULEPATH id="juce_dsp" path="../../../JUCE/modules"/>
+        <MODULEPATH id="soul_includes" path="."/>
       </MODULEPATHS>
     </VS2019>
   </EXPORTFORMATS>
@@ -60,6 +61,7 @@
     <MODULE id="juce_graphics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_gui_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_gui_extra" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
+    <MODULE id="soul_includes" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
   </MODULES>
   <LIVE_SETTINGS>
     <WINDOWS/>

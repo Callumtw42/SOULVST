@@ -20,7 +20,7 @@ class Slider extends Component {
         this.state = {
             width: this.props.width,
             height: this.props.height,
-            value: 0.0
+            value: 0.01
         };
     }
 

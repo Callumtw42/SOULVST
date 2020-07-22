@@ -49,7 +49,6 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 				Logger::writeToLog(juce::String(getParameters().size()));
 				isPlayable = true;
 				static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams(&error, index);
-				soulVoices[index]->connectLFOs();
 			}
 		}
 	};
