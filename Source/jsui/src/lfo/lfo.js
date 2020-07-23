@@ -2,17 +2,22 @@ import React, { Component } from 'react';
 import { clamp } from "../functions"
 import {
   Image,
-  View
+  View,
+  Canvas
 } from 'juce-blueprint';
 import Mouse from "./mouse"
 import NodeList from "./nodelist"
 import Slider from "./slider"
 
+const boxHeight = 85;
+const boxWidth = 100;
+const plotHeight = 75;
+const plotWidth = 100;
 const pointRadius = 4;
-const viewHeight = 75;
-const canvasHeight = 85;
-const canvasWidth = 100;
 const plotResolution = 128;
+const MAX_GRID_RES = 16;
+
+const GRID_COLOR = "rgba(122, 129, 132, 0.25)"
 
 class LFO extends Component {
   constructor(props) {
@@ -36,7 +41,7 @@ class LFO extends Component {
           rightNeighbour: null
         },
         {
-          x: canvasWidth,
+          x: plotWidth,
           y: 0,
           radius: pointRadius,
           isSelected: false,
@@ -45,7 +50,8 @@ class LFO extends Component {
           rightNeighbour: null
         }
       ),
-      plot: new Array(plotResolution)
+      plot: new Array(plotResolution),
+      gridRes: 16
     }
   }
 
@@ -53,8 +59,8 @@ class LFO extends Component {
 
     this.state.points.insertAfter(0,
       {
-        x: canvasWidth / 2,
-        y: viewHeight,
+        x: plotWidth / 2,
+        y: plotHeight,
         radius: pointRadius,
         isSelected: false,
         isBound: false,
@@ -64,14 +70,7 @@ class LFO extends Component {
     )
     this.setState(this.state);
   }
-
-  componentWillUnmount() {
-  }
-
-  log(s) {
-    global.log();
-  }
-
+  
   _onMouseDoubleClick(mouseX, mouseY) {
     const { points } = this.state;
 
@@ -117,12 +116,19 @@ class LFO extends Component {
 
 
   _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
+    const { gridRes } = this.state
+    const dx = plotWidth / gridRes
+    const dy = plotHeight / gridRes
+    const x = Math.round((mouseX / plotWidth) * gridRes) * dx
+    const y = Math.round((mouseY / plotHeight) * gridRes) * dy
+
+    global.log(x);
 
     this.state.points.forEach((point) => {
       if (point.isSelected) {
-        point.y = clamp(mouseY, 0, viewHeight);
+        point.y = clamp(y, 0, plotHeight);
         if (!point.isBound) {
-          point.x = clamp(mouseX, point.leftNeighbour.x, point.rightNeighbour.x);
+          point.x = clamp(x, point.leftNeighbour.x, point.rightNeighbour.x);
         }
       }
 
@@ -134,7 +140,7 @@ class LFO extends Component {
   _onMouseDown(mouseX, mouseY) {
 
     this.initialised = true;
-
+    global.log(mouseX)
     const points = this.state.points;
     let mouse = new Mouse(mouseX, mouseY);
     points.forEach((point) => {
@@ -159,10 +165,10 @@ class LFO extends Component {
     points.forEach((point, index) => {
 
       if (point.rightNeighbour != null) {
-        const rightNeighbourY = point.rightNeighbour.y / viewHeight;
-        const rightNeighbourX = point.rightNeighbour.x / canvasWidth;
-        const x = point.x / canvasWidth;
-        const y = point.y / viewHeight;
+        const rightNeighbourY = point.rightNeighbour.y / plotHeight;
+        const rightNeighbourX = point.rightNeighbour.x / plotWidth;
+        const x = point.x / plotWidth;
+        const y = point.y / plotHeight;
         const targetIndex = Math.round(rightNeighbourX * plotResolution);
         const dy = (rightNeighbourY - y) / (rightNeighbourX - x) / plotResolution;
         let value = y;
@@ -176,8 +182,25 @@ class LFO extends Component {
     if (this.initialised) global.sendPlot(this.props.paramId, plot);
   }
 
+  grid() {
+    const { gridRes } = this.state
+    const verticalPaths = new Array(gridRes)
+    const horizontalPaths = new Array(gridRes)
+    let dx = plotWidth / gridRes
+    let dy = plotHeight / gridRes
+    for (let i = 0; i < gridRes; i++) {
+      verticalPaths[i] = `<path d="M${dx * i} ${0} L${dx * i} ${plotHeight} Z" stroke="${GRID_COLOR}" stroke-width="1"/>`
+      horizontalPaths[i] = `<path d="M${0} ${dy * i} L${plotWidth} ${dy * i} Z" stroke="${GRID_COLOR}" stroke-width="1"/>`
+    }
+    return {
+      gridX: verticalPaths,
+      gridY: horizontalPaths
+    }
+  }
+
   _svg() {
     const { points, plot } = this.state;
+    const { gridX, gridY } = this.grid();
     this.generatePlot();
     const paths = points.map((point) => {
       if (point.rightNeighbour) return `<path d="M${point.x} ${point.y} L${point.rightNeighbour.x} ${point.rightNeighbour.y} Z" stroke="#3ade3a" stroke-width="2"/>`
@@ -189,14 +212,26 @@ class LFO extends Component {
       ${paths[index]}
         `
     })
+
     const img =
       `
-      <svg width="${canvasWidth}" height="${viewHeight}" viewBox="0 0 0 0" xmlns="http://www.w3.org/2000/svg">
-        <rect x="${0}" y="${0}" stroke="green" stroke-width="1" fill="#2a302a" width="${canvasWidth}" height="${viewHeight}" />
+      <svg width="${boxWidth}" height="${boxWidth}" viewBox="0 0 0 0" xmlns="http://www.w3.org/2000/svg">
+        <rect x="${0}" y="${0}" stroke="green" stroke-width="1" fill="#2a302a" width="${boxWidth}" height="${plotHeight}" />
+        ${gridX}
+        ${gridY}
         ${circles}
       </svg>
       `
     return img;
+  }
+
+  setSpeed(value) {
+    global.sendLFOSpeed(this.props.paramId, value);
+  }
+
+  setGridRes(value) {
+    const newValue = clamp(Math.round(value * MAX_GRID_RES), 1, 16)
+    this.setState({ gridRes: newValue })
   }
 
   render() {
@@ -210,8 +245,9 @@ class LFO extends Component {
             onMouseUp={this._onMouseUp}
             onMouseDrag={this._onMouseDrag}
             onMouseDoubleClick={this._onMouseDoubleClick}
-            {...styles.canvas} source={this._svg()} />
-          <Slider {...styles.slider} paramId={this.props.paramId}></Slider>
+            {...styles.plot} source={this._svg()} />
+          <Slider {...styles.slider} callBack={this.setSpeed.bind(this)}></Slider>
+          <Slider {...styles.slider} callBack={this.setGridRes.bind(this)}></Slider>
         </View>
       );
     }
@@ -220,15 +256,15 @@ class LFO extends Component {
 }
 
 let styles = {
-  canvas: {
-    'height': viewHeight,
-    'width': canvasWidth,
+  plot: {
+    'height': plotHeight,
+    'width': plotWidth,
     // 'position': 'absolute',
     'interceptClickEvents': true,
   },
   slider: {
-    'width': canvasWidth,
-    'height': canvasHeight - viewHeight,
+    'width': boxWidth,
+    'height': boxHeight - plotHeight,
   },
   container: {
     'flex-direction': 'column',
@@ -238,4 +274,4 @@ let styles = {
   },
 };
 
-export { LFO, canvasHeight as lfoHeight, canvasWidth as lfoWidth, viewHeight as lfoViewHeight };
+export { LFO, boxHeight as lfoHeight, boxWidth as lfoWidth, plotHeight as lfoViewHeight };

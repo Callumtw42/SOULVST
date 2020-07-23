@@ -16,7 +16,7 @@ class Slider extends Component {
 
         this._onMouseDown = this._onMouseDown.bind(this);
         this._onMouseDrag = this._onMouseDrag.bind(this);
-        const paramState = ParameterValueStore.getParameterState(this.props.paramId);
+        // const paramState = ParameterValueStore.getParameterState(this.props.paramId);
         this.state = {
             width: this.props.width,
             height: this.props.height,
@@ -26,12 +26,14 @@ class Slider extends Component {
 
     _onMouseDown(mouseX, mouseY) {
         this.setState({ value: clamp(mouseX / this.state.width, 0, 1) });
-        global.sendLFOSpeed(this.props.paramId, this.state.value);
+        // global.sendLFOSpeed(this.props.paramId, this.state.value);
+        this.props.callBack(this.state.value);
     }
 
     _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
         this.setState({ value: clamp(mouseX / this.state.width, 0, 1) });
-        global.sendLFOSpeed(this.props.paramId, this.state.value);
+        // global.sendLFOSpeed(this.props.paramId, this.state.value);
+        this.props.callBack(this.state.value);
     }
 
     _renderVectorGraphics(value, width, height) {
