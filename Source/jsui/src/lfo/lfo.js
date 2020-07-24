@@ -247,7 +247,10 @@ class LFO extends Component {
             {...styles.plot} source={this._svg()} />
           {/* <Slider {...styles.slider} callBack={this.setSpeed.bind(this)}></Slider> */}
           {/* <Slider {...styles.slider} {...this.props} min={1} max={16} step={1} callBack={this.setGridRes.bind(this)} ></Slider> */}
-          <Dial {...styles.dial} {...this.props} min={1} max={16} step={1} callBack={this.setGridRes.bind(this)} ></Dial>
+          <View {...styles.dials}>
+            <Dial {...styles.dial} {...this.props} min={1} max={16} step={1} label={"Grid"} callBack={this.setGridRes.bind(this)} ></Dial>
+            <Dial {...styles.dial} {...this.props} min={4} max={1 / 64} step={1} skew={2} label={"Speed"} callBack={(value) => { }} ></Dial>
+          </View>
         </View>
       );
     }
@@ -270,6 +273,9 @@ let styles = {
     'width': boxWidth / 4,
     'height': boxWidth / 4,
     // 'transform-rotate': Math.PI * 1.25,
+  },
+  dials: {
+    'flex-direction': 'row'
   },
   container: {
     'flex-direction': 'column',

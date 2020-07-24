@@ -24,9 +24,16 @@ class Slider extends Component {
         };
     }
 
-    snap(value, minSteps, maxSteps, minVal, maxVal) {
-        const v = Math.round((value / (maxVal - minVal)) * maxSteps)
-        return clamp(v, minSteps, maxSteps);
+    snap(value, maxVal, stepSize, minStep, maxStep) {
+        const { skew } = this.props
+        const vRel = value / maxVal
+        const range = maxStep - minStep
+        const snapped = Math.round(vRel * range) * stepSize + minStep
+        global.log(snapped)
+        const skewed = skew ? Math.pow(skew, snapped) : snapped
+        const clamped = clamp(skewed, Math.min(maxStep, minStep), Math.max(maxStep, minStep));
+        return clamped
+        // return clamped
     }
 
     _onMouseUp(mouseX, mouseY) {
@@ -34,18 +41,18 @@ class Slider extends Component {
     }
 
     _onMouseDown(mouseX, mouseY) {
-        const { max, min, steps } = this.props;
+        const { max, min, step } = this.props;
         const { height, width, value } = this.state
-        const newVal = this.snap(mouseX, min, max, 0, this.state.width)
+        const newVal = this.snap(mouseX, width, step, min, max)
         this.setState({ value: newVal })
         this.props.callBack(value);
         this.props.spawnLabel(global.getMouseX() - mouseX + width / 2, global.getMouseY() - mouseY + height, value)
     }
 
     _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
-        const { max, min, steps } = this.props;
+        const { max, min, step } = this.props;
         const { height, width, value } = this.state
-        const newVal = this.snap(mouseX, min, max, 0, this.state.width)
+        const newVal = this.snap(mouseX, width, step, min, max)
         this.setState({ value: newVal })
         this.props.callBack(value);
         this.props.spawnLabel(global.getMouseX() - mouseX + width / 2, global.getMouseY() - mouseY + height, value)
@@ -90,6 +97,8 @@ class Slider extends Component {
         );
     }
 }
+
+Slider.defaultProps = { skew: null }
 
 const styles = {
     container: {
