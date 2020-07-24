@@ -44,7 +44,7 @@ public:
 	}
 	int minInterval = 1000;
 	int maxInterval = 100000;
-	double speed = 0.00;
+	double speed = 0.9;
 	std::chrono::steady_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 	std::array<double, LFORES> plot;
 	double* paramSliderValue;

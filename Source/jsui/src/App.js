@@ -1,23 +1,54 @@
 import React, { Component } from 'react';
-import Dial from './dial';
+import ParamDial from './paramdial';
 import { LFO, lfoHeight, lfoWidth } from "./lfo/lfo";
 import {
   View,
+  Text
 } from 'juce-blueprint';
 
 const dialHeight = 50;
 const dialWidth = 50;
 
+function SliderLabel(props) {
+  // global.log(text)
+  const styles = {
+    text: {
+      "top": props.y,
+      "left": props.x,
+      "color": "ff62ffff",
+      "position": "absolute"
+    }
+  }
+  return <Text {...styles.text}>{props.text}</Text>
+}
+
 class App extends Component {
   constructor() {
     super()
     this.state = {
-      lfoProps: {},
-      lfos: [],
+      lfoProps: {
+        spawnLabel: this.spawnLabel.bind(this),
+      },
+      labelProps: {
+        x: 0,
+        y: 0,
+        text: ""
+      }
     }
     this.sliderCallBacks = {
       spawnLFO: this.spawnLFO.bind(this),
     }
+  }
+
+  spawnLabel(x, y, text) {
+    global.log(y)
+    this.setState({
+      labelProps: {
+        x: x,
+        y: y,
+        text: text
+      }
+    })
   }
 
   spawnLFO(paramId, x, y) {
@@ -27,7 +58,8 @@ class App extends Component {
       this.state.lfoProps = {
         x: x - lfoWidth - dialWidth / 2,
         y: y - lfoHeight - dialHeight / 2,
-        activeLFO: paramId
+        activeLFO: paramId,
+        spawnLabel: this.spawnLabel.bind(this),
       }
     }
     this.setState(this.state);
@@ -35,28 +67,30 @@ class App extends Component {
 
 
   render() {
+    const { lfoProps, labelProps } = this.state
     return (
       <View {...styles.container}>
         <View {...styles.dials}>
-          <Dial {...this.sliderCallBacks} paramId="volume"  {...styles.dial} />
-          <Dial {...this.sliderCallBacks} paramId="ampAttack"  {...styles.dial} />
-          <Dial {...this.sliderCallBacks} paramId="ampDecay" {...styles.dial} />
-          <Dial {...this.sliderCallBacks} paramId="ampSustain" {...styles.dial} />
-          <Dial {...this.sliderCallBacks} paramId="ampRelease" {...styles.dial} />
-          <Dial {...this.sliderCallBacks} paramId="detune" {...styles.dial} />
+          <ParamDial {...this.sliderCallBacks} paramId="volume"  {...styles.dial} />
+          <ParamDial {...this.sliderCallBacks} paramId="ampAttack"  {...styles.dial} />
+          <ParamDial {...this.sliderCallBacks} paramId="ampDecay" {...styles.dial} />
+          <ParamDial {...this.sliderCallBacks} paramId="ampSustain" {...styles.dial} />
+          <ParamDial {...this.sliderCallBacks} paramId="ampRelease" {...styles.dial} />
+          <ParamDial {...this.sliderCallBacks} paramId="detune" {...styles.dial} />
         </View >
         <View {...styles.dials}>
-          <Dial {...this.sliderCallBacks} paramId="voiceCount" {...styles.dial} />
-          <Dial {...this.sliderCallBacks} paramId="cutoff" {...styles.dial} />
+          <ParamDial {...this.sliderCallBacks} paramId="voiceCount" {...styles.dial} />
+          <ParamDial {...this.sliderCallBacks} paramId="cutoff" {...styles.dial} />
         </View >
-        < LFO paramId={"volume"} {...this.state.lfoProps} ></LFO >
-        < LFO paramId={"ampAttack"} {...this.state.lfoProps} ></LFO >
-        < LFO paramId={"ampDecay"} {...this.state.lfoProps} ></LFO >
-        < LFO paramId={"ampSustain"} {...this.state.lfoProps} ></LFO >
-        < LFO paramId={"ampRelease"} {...this.state.lfoProps} ></LFO >
-        < LFO paramId={"detune"} {...this.state.lfoProps} ></LFO >
-        < LFO paramId={"voiceCount"} {...this.state.lfoProps} ></LFO >
-        < LFO paramId={"cutoff"} {...this.state.lfoProps} ></LFO >
+        < LFO paramId={"volume"} {...lfoProps} ></LFO >
+        < LFO paramId={"ampAttack"} {...lfoProps} ></LFO >
+        < LFO paramId={"ampDecay"} {...lfoProps} ></LFO >
+        < LFO paramId={"ampSustain"} {...lfoProps} ></LFO >
+        < LFO paramId={"ampRelease"} {...lfoProps} ></LFO >
+        < LFO paramId={"detune"} {...lfoProps} ></LFO >
+        < LFO paramId={"voiceCount"} {...lfoProps} ></LFO >
+        < LFO paramId={"cutoff"} {...lfoProps} ></LFO >
+        <SliderLabel {...labelProps}></SliderLabel>
       </View >
     );
   }

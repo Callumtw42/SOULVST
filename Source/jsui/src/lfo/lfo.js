@@ -8,11 +8,12 @@ import {
 import Mouse from "./mouse"
 import NodeList from "./nodelist"
 import Slider from "./slider"
+import Dial from "./dial"
 
-const boxHeight = 85;
-const boxWidth = 100;
-const plotHeight = 75;
-const plotWidth = 100;
+const boxHeight = 100;
+const boxWidth = 150;
+const plotHeight = (3 / 4) * boxHeight;
+const plotWidth = boxWidth;
 const pointRadius = 4;
 const plotResolution = 128;
 const MAX_GRID_RES = 16;
@@ -70,7 +71,7 @@ class LFO extends Component {
     )
     this.setState(this.state);
   }
-  
+
   _onMouseDoubleClick(mouseX, mouseY) {
     const { points } = this.state;
 
@@ -121,8 +122,6 @@ class LFO extends Component {
     const dy = plotHeight / gridRes
     const x = Math.round((mouseX / plotWidth) * gridRes) * dx
     const y = Math.round((mouseY / plotHeight) * gridRes) * dy
-
-    global.log(x);
 
     this.state.points.forEach((point) => {
       if (point.isSelected) {
@@ -230,8 +229,8 @@ class LFO extends Component {
   }
 
   setGridRes(value) {
-    const newValue = clamp(Math.round(value * MAX_GRID_RES), 1, 16)
-    this.setState({ gridRes: newValue })
+    // const newValue = clamp(Math.round(value * MAX_GRID_RES), 1, 16)
+    this.setState({ gridRes: value })
   }
 
   render() {
@@ -246,8 +245,9 @@ class LFO extends Component {
             onMouseDrag={this._onMouseDrag}
             onMouseDoubleClick={this._onMouseDoubleClick}
             {...styles.plot} source={this._svg()} />
-          <Slider {...styles.slider} callBack={this.setSpeed.bind(this)}></Slider>
-          <Slider {...styles.slider} callBack={this.setGridRes.bind(this)}></Slider>
+          {/* <Slider {...styles.slider} callBack={this.setSpeed.bind(this)}></Slider> */}
+          {/* <Slider {...styles.slider} {...this.props} min={1} max={16} step={1} callBack={this.setGridRes.bind(this)} ></Slider> */}
+          <Dial {...styles.dial} {...this.props} min={1} max={16} step={1} callBack={this.setGridRes.bind(this)} ></Dial>
         </View>
       );
     }
@@ -265,6 +265,11 @@ let styles = {
   slider: {
     'width': boxWidth,
     'height': boxHeight - plotHeight,
+  },
+  dial: {
+    'width': boxWidth / 4,
+    'height': boxWidth / 4,
+    // 'transform-rotate': Math.PI * 1.25,
   },
   container: {
     'flex-direction': 'column',

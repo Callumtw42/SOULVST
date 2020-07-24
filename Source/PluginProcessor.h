@@ -13,6 +13,7 @@
 #include "soulvoice.h"
 
 static const int MAXVOICES = 1;
+static const int TEMPO = 128;
 
 using namespace juce;
 using namespace soul::patch;

@@ -7,7 +7,7 @@ import {
   View,
 } from 'juce-blueprint';
 
-class Dial extends Component {
+class ParamDial extends Component {
   constructor(props) {
     super(props);
 
@@ -198,4 +198,4 @@ const styles = {
 
 
 
-export default Dial;
+export default ParamDial;

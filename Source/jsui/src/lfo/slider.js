@@ -16,33 +16,44 @@ class Slider extends Component {
 
         this._onMouseDown = this._onMouseDown.bind(this);
         this._onMouseDrag = this._onMouseDrag.bind(this);
-        // const paramState = ParameterValueStore.getParameterState(this.props.paramId);
+        this._onMouseUp = this._onMouseUp.bind(this);
         this.state = {
             width: this.props.width,
             height: this.props.height,
-            value: 0.01
+            value: this.props.min
         };
     }
 
+    snap(value, minSteps, maxSteps, minVal, maxVal) {
+        const v = Math.round((value / (maxVal - minVal)) * maxSteps)
+        return clamp(v, minSteps, maxSteps);
+    }
+
+    _onMouseUp(mouseX, mouseY) {
+        this.props.spawnLabel(0, 0, "")
+    }
+
     _onMouseDown(mouseX, mouseY) {
-        this.setState({ value: clamp(mouseX / this.state.width, 0, 1) });
-        // global.sendLFOSpeed(this.props.paramId, this.state.value);
-        this.props.callBack(this.state.value);
+        const { max, min, steps } = this.props;
+        const { height, width, value } = this.state
+        const newVal = this.snap(mouseX, min, max, 0, this.state.width)
+        this.setState({ value: newVal })
+        this.props.callBack(value);
+        this.props.spawnLabel(global.getMouseX() - mouseX + width / 2, global.getMouseY() - mouseY + height, value)
     }
 
     _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
-        this.setState({ value: clamp(mouseX / this.state.width, 0, 1) });
-        // global.sendLFOSpeed(this.props.paramId, this.state.value);
-        this.props.callBack(this.state.value);
+        const { max, min, steps } = this.props;
+        const { height, width, value } = this.state
+        const newVal = this.snap(mouseX, min, max, 0, this.state.width)
+        this.setState({ value: newVal })
+        this.props.callBack(value);
+        this.props.spawnLabel(global.getMouseX() - mouseX + width / 2, global.getMouseY() - mouseY + height, value)
     }
 
     _renderVectorGraphics(value, width, height) {
-        const cx = width * 0.5;
-        const cy = height * 0.5;
         const strokeWidth = 2.0;
         const radius = (Math.min(width, height) * 0.5) - (strokeWidth / 2);
-        const arcCircumference = 1.5 * Math.PI * radius;
-        const dashArray = [value * arcCircumference, 2.0 * Math.PI * radius];
         return `
       <svg 
         width="${width}"
@@ -53,12 +64,11 @@ class Slider extends Component {
 
         <path d="M0 ${height / 2} L${width} ${height / 2} Z" stroke="${COLOR}" />
         <circle
-          cx="${value * width}"
+          cx="${(value / (this.props.max)) * width}"
           cy="${height / 2}"
           r="${radius}"
           stroke="#626262"
           stroke-width="${strokeWidth}"
-          stroke-dasharray="${[arcCircumference, arcCircumference].join(',')}"
           fill="${COLOR}" />
       </svg>
     `;
@@ -71,8 +81,10 @@ class Slider extends Component {
                 {...this.props}
                 onMouseDown={this._onMouseDown}
                 onMouseDrag={this._onMouseDrag}
+                onMouseUp={this._onMouseUp}
             >
                 <Image {...styles.canvas} source={this._renderVectorGraphics(value, width, height)} />
+                {/* <Text {...styles.text}>{"Grid"}</Text> */}
             </View>
         </View>
         );
@@ -82,7 +94,14 @@ class Slider extends Component {
 const styles = {
     container: {
         'flex-direction': 'column',
-        'background-color': '0f62ffff',
+        'background-color': 'ff333333',
+    },
+    text: {
+        'color': 'ff626262',
+        'font-size': 8.0,
+        // 'line-spacing': 1.6,
+        // 'left': 7,
+        // 'position': 'absolute'
     },
     canvas: {
         'height': '100%',
