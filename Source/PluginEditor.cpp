@@ -115,6 +115,7 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
 			Param* param = self->processor.params.getReference(paramId);
+
 			param->lfo->speed = args.arguments[1];
 			return juce::var::undefined();
 		},

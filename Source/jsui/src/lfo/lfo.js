@@ -139,7 +139,6 @@ class LFO extends Component {
   _onMouseDown(mouseX, mouseY) {
 
     this.initialised = true;
-    global.log(mouseX)
     const points = this.state.points;
     let mouse = new Mouse(mouseX, mouseY);
     points.forEach((point) => {
@@ -249,7 +248,7 @@ class LFO extends Component {
           {/* <Slider {...styles.slider} {...this.props} min={1} max={16} step={1} callBack={this.setGridRes.bind(this)} ></Slider> */}
           <View {...styles.dials}>
             <Dial {...styles.dial} {...this.props} min={1} max={16} step={1} label={"Grid"} callBack={this.setGridRes.bind(this)} ></Dial>
-            <Dial {...styles.dial} {...this.props} min={4} max={1 / 64} step={1} skew={2} label={"Speed"} callBack={(value) => { }} ></Dial>
+            <Dial {...styles.dial} {...this.props} min={4} max={1 / 64} step={1} skew={2} label={"Speed"} callBack={this.setSpeed.bind(this)} ></Dial>
           </View>
         </View>
       );

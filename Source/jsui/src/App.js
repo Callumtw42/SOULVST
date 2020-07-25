@@ -10,7 +10,6 @@ const dialHeight = 50;
 const dialWidth = 50;
 
 function SliderLabel(props) {
-  // global.log(text)
   const styles = {
     text: {
       "top": props.y,
@@ -41,7 +40,6 @@ class App extends Component {
   }
 
   spawnLabel(x, y, text) {
-    global.log(y)
     this.setState({
       labelProps: {
         x: x,

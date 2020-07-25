@@ -29,7 +29,6 @@ class Slider extends Component {
         const vRel = value / maxVal
         const range = maxStep - minStep
         const snapped = Math.round(vRel * range) * stepSize + minStep
-        global.log(snapped)
         const skewed = skew ? Math.pow(skew, snapped) : snapped
         const clamped = clamp(skewed, Math.min(maxStep, minStep), Math.max(maxStep, minStep));
         return clamped
@@ -46,7 +45,7 @@ class Slider extends Component {
         const newVal = this.snap(mouseX, width, step, min, max)
         this.setState({ value: newVal })
         this.props.callBack(value);
-        this.props.spawnLabel(global.getMouseX() - mouseX + width / 2, global.getMouseY() - mouseY + height, value)
+        // this.props.spawnLabel(global.getMouseX() - mouseX + width / 2, global.getMouseY() - mouseY + height, value)
     }
 
     _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
@@ -55,7 +54,7 @@ class Slider extends Component {
         const newVal = this.snap(mouseX, width, step, min, max)
         this.setState({ value: newVal })
         this.props.callBack(value);
-        this.props.spawnLabel(global.getMouseX() - mouseX + width / 2, global.getMouseY() - mouseY + height, value)
+        // this.props.spawnLabel(global.getMouseX() - mouseX + width / 2, global.getMouseY() - mouseY + height, value)
     }
 
     _renderVectorGraphics(value, width, height) {
