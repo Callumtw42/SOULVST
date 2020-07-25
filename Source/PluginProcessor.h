@@ -66,6 +66,7 @@ public:
 	int voicesInitialised = 0;
 	bool isPlayable;
 	SoulVoice* soulVoices[MAXVOICES];
+	AudioPlayHead::CurrentPositionInfo playHead;
 
 private:
 	AudioProcessorPlayer* player;

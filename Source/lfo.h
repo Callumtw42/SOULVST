@@ -20,7 +20,7 @@ static const int TEMPO = 128;
 class LFO
 {
 public:
-	LFO(AudioProcessorParameter* soulParam, double* v) : soulParam(soulParam), paramSliderValue(v)
+	LFO(AudioProcessorParameter* soulParam, double* v, AudioPlayHead::CurrentPositionInfo* p) : soulParam(soulParam), playHead(p), paramSliderValue(v)
 	{
 		plot.fill(0);
 		std::thread proc([this]()
@@ -35,11 +35,11 @@ public:
 
 	~LFO() {};
 
-	template <typename T>
-	void dbgLog(T v)
-	{
-		juce::Logger::writeToLog(juce::String(v));
-	}
+	//template <typename T>
+	//void dbgLog(T v)
+	//{
+	//	juce::Logger::writeToLog(juce::String(v));
+	//}
 
 
 	void process()
@@ -61,6 +61,7 @@ public:
 		soulParam->setValue(outVal);
 	}
 
+	AudioPlayHead::CurrentPositionInfo* playHead;
 	int minInterval = 1000;
 	int maxInterval = 100000;
 	double speed = 0.0;

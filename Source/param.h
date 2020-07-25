@@ -14,13 +14,14 @@
 class Param : public AudioProcessorParameter
 {
 public:
-	Param(AudioProcessorParameter* param) : soulParameter(param)
+	Param(AudioProcessorParameter* param, AudioPlayHead::CurrentPositionInfo* p) : soulParameter(param), playHead(p)
 	{
-		lfo = std::make_unique<LFO>(soulParameter, &value);
+		lfo = std::make_unique<LFO>(soulParameter, &value, playHead);
 		value = soulParameter->getValue();
 	};
 	~Param() {};
 
+	AudioPlayHead::CurrentPositionInfo* playHead;
 	AudioProcessorParameter* soulParameter;
 	double value = 0;
 	std::unique_ptr<LFO> lfo;

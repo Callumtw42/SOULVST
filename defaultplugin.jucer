@@ -25,6 +25,8 @@
         <CONFIGURATION isDebug="1" name="Debug" targetName="defaultplugin" enablePluginBinaryCopyStep="1"
                        vst3BinaryLocation="C:\Users\callu\VST3"/>
         <CONFIGURATION isDebug="0" name="Release" targetName="defaultplugin" enablePluginBinaryCopyStep="1"/>
+        <CONFIGURATION isDebug="1" name="Ableton" enablePluginBinaryCopyStep="1" vst3BinaryLocation="C:\Users\callu\VST3"
+                       optimisation="1"/>
       </CONFIGURATIONS>
       <MODULEPATHS>
         <MODULEPATH id="juce_audio_basics" path="../../../JUCE/modules"/>
@@ -42,11 +44,13 @@
         <MODULEPATH id="blueprint" path="C:\Users\callu\blueprint"/>
         <MODULEPATH id="juce_dsp" path="../../../JUCE/modules"/>
         <MODULEPATH id="soul_includes" path="."/>
+        <MODULEPATH id="functions" path="../../../JUCE_Modules"/>
       </MODULEPATHS>
     </VS2019>
   </EXPORTFORMATS>
   <MODULES>
     <MODULE id="blueprint" showAllCode="1" useLocalCopy="0" useGlobalPath="0"/>
+    <MODULE id="functions" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_basics" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_devices" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>
     <MODULE id="juce_audio_formats" showAllCode="1" useLocalCopy="0" useGlobalPath="1"/>

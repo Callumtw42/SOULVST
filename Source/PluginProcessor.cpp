@@ -70,6 +70,11 @@ void DefaultpluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 
 
 	if (isPlayable) {
+		//setPlayHead();
+		if (auto* p = getPlayHead()) {
+			p->getCurrentPosition(playHead);
+			//dbgLog(playHead.bpm);
+		}
 		soulVoices[MAXVOICES - 1]->processBlock(buffer, midiMessages);
 	}
 }
