@@ -11,15 +11,20 @@
 #include <JuceHeader.h>
 #include "lfo.h" 
 
+
 class Param : public AudioProcessorParameter
 {
 public:
-	Param(AudioProcessorParameter* param, AudioPlayHead::CurrentPositionInfo* p) : soulParameter(param), playHead(p)
+	Param() { };
+	~Param() {};
+
+	void initialise(AudioProcessorParameter* param, AudioPlayHead::CurrentPositionInfo* play)
 	{
+		soulParameter = param;
+		playHead = play;
 		lfo = std::make_unique<LFO>(soulParameter, &value, playHead);
 		value = soulParameter->getValue();
-	};
-	~Param() {};
+	}
 
 	AudioPlayHead::CurrentPositionInfo* playHead;
 	AudioProcessorParameter* soulParameter;
@@ -33,5 +38,6 @@ public:
 	juce::String getLabel() const override { return soulParameter->getLabel(); };
 	float getValueForText(const juce::String& text) const override { return soulParameter->getValueForText(text); };
 	juce::String getText(float newValue, int i)const override { return soulParameter->getText(newValue, i); };
+	//NormalisableRange<float>& getNormalisableRange() const override { return *new NormalisableRange(float(0.0), float(1.0)); };
 };
 

@@ -30,14 +30,13 @@ void DefaultpluginAudioProcessorEditor::updateParams(juce::String* error, int in
 	if (error->isEmpty()) {
 		for (AudioProcessorParameter* p : processor.pluginInstances[index]->getParameters())
 		{
-			processor.params.set(p->getName(100), new Param(p, &processor.playHead));
 			Param* mainParam = processor.params.getReference(p->getName(100));
-			processor.addParameter(mainParam);
+			mainParam->initialise(p, &processor.playHead);
 
 			//processor.LFOPlots.insert_or_assign(p->getName(100), defaultPlot);
 			//juce::Logger::writeToLog(p->getName(100));
 			mainParam->addListener(this);
-			//mainParam->sendValueChangedMessageToListeners(p->getValue());
+			mainParam->sendValueChangedMessageToListeners(p->getValue());
 		}
 		bindNativeCallbacks();
 		addAndMakeVisible(appRoot);

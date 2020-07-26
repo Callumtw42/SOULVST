@@ -10,8 +10,9 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 	isPlayable(false),
 	editor(new DefaultpluginAudioProcessorEditor(*this)),
 	desc(new PluginDescription())
-
 {
+
+
 	for (int i = 0; i < MAXVOICES; i++)
 	{
 		soulVoices[i] = new SoulVoice();
@@ -46,9 +47,9 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 			voicesInitialised++;
 			if (index == MAXVOICES - 1)
 			{
+				static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams(&error, index);
 				Logger::writeToLog(juce::String(getParameters().size()));
 				isPlayable = true;
-				static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams(&error, index);
 			}
 		}
 	};
@@ -79,12 +80,35 @@ void DefaultpluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 	}
 }
 
+void DefaultpluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
+{
+
+	std::vector<juce::String> paramNames =
+	{
+		"cutoff",
+		"voiceCount",
+		"detune",
+		"ampRelease",
+		"ampSustain",
+		"ampDecay",
+		"ampAttack",
+		"volume",
+	};
+	for (juce::String name : paramNames)
+	{
+		params.set(name, new Param());
+		addParameter(params.getReference(name));
+
+	}
+}
+
 juce::AudioProcessorEditor* DefaultpluginAudioProcessor::createEditor() { return editor; }
 
 juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
 	DefaultpluginAudioProcessor* p = new DefaultpluginAudioProcessor();
 	return p;
+
 }
 
 //#################################################################################################################################
@@ -124,7 +148,6 @@ int DefaultpluginAudioProcessor::getCurrentProgram() { return 0; }
 void DefaultpluginAudioProcessor::setCurrentProgram(int index) { }
 const juce::String DefaultpluginAudioProcessor::getProgramName(int index) { return {}; }
 void DefaultpluginAudioProcessor::changeProgramName(int index, const juce::String& newName) { }
-void DefaultpluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock) {}
 void DefaultpluginAudioProcessor::releaseResources() {}
 #ifndef JucePlugin_PreferredChannelConfigurations
 bool DefaultpluginAudioProcessor::isBusesLayoutSupported(const BusesLayout& layouts) const

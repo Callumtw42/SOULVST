@@ -25,7 +25,8 @@ public:
 		processor->processBlock(buffer, midiMessages);
 	}
 
-	juce::HashMap<juce::String, Param*>* mainParams;
+	//juce::HashMap<juce::String, Param*>* mainParams;
+	HashMap < juce::String, Param*>* mainParams;
 	SOULPatchAudioProcessor* processor = nullptr;
 };
 
