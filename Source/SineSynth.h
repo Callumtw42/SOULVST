@@ -10,17 +10,18 @@
  #error "This file is designed to be included inside a file in a JUCE project, so that the module headers have already been included before it"
 #endif
 
-#ifndef SOUL_CPP_ASSERT
- #define SOUL_CPP_ASSERT(x)
-#endif
+//#ifndef SOUL_CPP_ASSERT
+// #define SOUL_CPP_ASSERT(x)
+//#endif
 
+//#include "soulpatch.cpp"
 //==============================================================================
 // Generated from graph 'SineSynth', source file: SineSynth.soulpatch
 //
-struct SineSynth   : public juce::AudioPluginInstance
+struct _SineSynth   : public juce::AudioPluginInstance
 {
-    SineSynth();
-    ~SineSynth() override;
+    _SineSynth();
+    ~_SineSynth() override;
 
     //==============================================================================
     void fillInPluginDescription (juce::PluginDescription&) const override;
@@ -85,8 +86,8 @@ private:
     void ensureValidStateExists();
     void applyLastState();
 
-    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SineSynth)
+    JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (_SineSynth)
 };
 
-#define SOUL_HEADER_INCLUDED_598492220 1
+#define SOUL_HEADER_INCLUDED_167054764 1
 

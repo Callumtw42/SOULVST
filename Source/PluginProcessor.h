@@ -10,15 +10,18 @@
 #include <JuceHeader.h>
 #include <array>
 
-#ifndef SOUL_CPP_ASSERT
-#define SOUL_CPP_ASSERT(x)  jassert (x)
-#endif
+//#ifndef SOUL_CPP_ASSERT
+//#define SOUL_CPP_ASSERT(x)  jassert (x)
+//#endif
 
 #pragma once
 
 #include "SineSynth.h"
 #include <functional>
 #include "soulvoice.h"
+//#include "SineSynth.cpp"
+
+//SineSynth::pimpl
 
 static const int MAXVOICES = 1;
 //static const int TEMPO = 128;
@@ -68,7 +71,7 @@ public:
 	void setStateInformation(const void* data, int sizeInBytes) override;
 
 
-	std::unique_ptr<juce::AudioPluginInstance> pluginInstances[MAXVOICES];
+	std::unique_ptr<_SineSynth> pluginInstance;
 	HashMap<juce::String, Param*> params;
 	int voicesSet = 0;
 	int voicesInitialised = 0;

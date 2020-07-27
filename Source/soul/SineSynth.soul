@@ -48,6 +48,7 @@ graph SineSynth  [[ main ]]
     input event float detune [[label: "Detune", min: 0.00f, max: 50.0f, init: 0.00f, step: 1.0f]];
     input event float voiceCount [[label: "voiceCount", min: 1, max: 16, init: 1, step: 1]];
     input event float cutoff [[label: "cutoff", min: 0.0f, max: 127.0f, init: 127.0f, step: 1.0f]];
+    input event float x;
 
 
     // input event float volumeLFOIn [[ label: "VolumeLFOIn", min: 0.0f, max: 1.0f, init: 0.0f, step: 0.01f]];

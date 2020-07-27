@@ -65,15 +65,20 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 	//for (int i = 0; i < MAXVOICES; i++) {
 	//	patchFormat->createPluginInstance(*desc, getSampleRate(), getBlockSize(), setPlugin);
 	//}
-	pluginInstances[0] = std::make_unique<SineSynth>();
+
+	pluginInstance = std::make_unique<_SineSynth>();
 }
+
+
 
 void DefaultpluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
 	//for (int i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
 	//	buffer.clear(i, 0, buffer.getNumSamples());
 
-	pluginInstances[0]->processBlock(buffer, midiMessages);
+	pluginInstance->processBlock(buffer, midiMessages);
+
+    //std::unique_ptr<Pimpl> pimpl;
 
 	//if (isPlayable) {
 	//	//setPlayHead();
@@ -88,7 +93,7 @@ void DefaultpluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 void DefaultpluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
 
-	pluginInstances[0]->prepareToPlay(sampleRate, samplesPerBlock);
+	pluginInstance->prepareToPlay(sampleRate, samplesPerBlock);
 
 	//std::vector<juce::String> paramNames =
 	//{

@@ -7,6 +7,9 @@
               jucerFormatVersion="1">
   <MAINGROUP id="tPqceN" name="defaultplugin">
     <GROUP id="{1BF8D3CB-F9A7-43D2-B317-640F5BCEBB19}" name="Source">
+      <FILE id="yhE9Ux" name="juce_soul_patch.cpp" compile="1" resource="0"
+            file="Source/juce_soul_patch.cpp"/>
+      <FILE id="fABNXd" name="soulpatch.cpp" compile="0" resource="0" file="Source/soulpatch.cpp"/>
       <FILE id="liUgtC" name="SineSynth.cpp" compile="0" resource="0" file="Source/SineSynth.cpp"/>
       <FILE id="XwdpVd" name="SineSynth.h" compile="0" resource="0" file="Source/SineSynth.h"/>
       <FILE id="bNT5JW" name="soulvoice.h" compile="0" resource="0" file="Source/soulvoice.h"/>
