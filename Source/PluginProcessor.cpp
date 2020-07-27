@@ -1,6 +1,9 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+#include "SineSynth.cpp"
+
+
 DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 	: AudioProcessor(BusesProperties()
 		.withInput("Input", AudioChannelSet::stereo(), true)
@@ -13,93 +16,97 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 {
 
 
-	for (int i = 0; i < MAXVOICES; i++)
-	{
-		soulVoices[i] = new SoulVoice();
-	}
+	//for (int i = 0; i < MAXVOICES; i++)
+	//{
+	//	soulVoices[i] = new SoulVoice();
+	//}
 
-	manager->initialiseWithDefaultDevices(2, 2);
-	manager->addAudioCallback(player);
-	juce::File patchPath("C:\\Users\\callu\\Desktop\\projects\\defaultplugin\\Source\\soul\\SineSynth.soulpatch");
-	jassert(patchPath.existsAsFile());
+	//manager->initialiseWithDefaultDevices(2, 2);
+	//manager->addAudioCallback(player);
+	//juce::File patchPath("C:\\Users\\callu\\Desktop\\projects\\defaultplugin\\Source\\soul\\SineSynth.soulpatch");
+	//jassert(patchPath.existsAsFile());
 
-	auto setPlugin = [this](std::unique_ptr<juce::AudioPluginInstance> newPlugin,
-		const juce::String& error)
-	{
-		int index = voicesSet % MAXVOICES;
-		player->setProcessor(nullptr);
-		pluginInstances[index] = std::move(newPlugin);
-		player->setProcessor(pluginInstances[index].get());
-		voicesSet++;
-	};
+	//auto setPlugin = [this](std::unique_ptr<juce::AudioPluginInstance> newPlugin,
+	//	const juce::String& error)
+	//{
+	//	int index = voicesSet % MAXVOICES;
+	//	player->setProcessor(nullptr);
+	//	pluginInstances[index] = std::move(newPlugin);
+	//	player->setProcessor(pluginInstances[index].get());
+	//	voicesSet++;
+	//};
 
-	auto reinitialiseCallback = [this](soul::patch::SOULPatchAudioProcessor& patch)
-	{
-		int index = voicesInitialised % MAXVOICES;
-		isPlayable = false;
-		player->setProcessor(nullptr);
-		patch.reinitialise();
-		juce::String error = patch.getCompileError();
-		if (error.isEmpty()) {
-			soulVoices[index]->processor = &patch;
-			soulVoices[index]->mainParams = &params;
-			soulVoices[index]->processor->prepareToPlay(getSampleRate(), getBlockSize());
-			voicesInitialised++;
-			if (index == MAXVOICES - 1)
-			{
-				static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams(&error, index);
-				Logger::writeToLog(juce::String(getParameters().size()));
-				isPlayable = true;
-			}
-		}
-	};
+	//auto reinitialiseCallback = [this](soul::patch::SOULPatchAudioProcessor& patch)
+	//{
+	//	int index = voicesInitialised % MAXVOICES;
+	//	isPlayable = false;
+	//	player->setProcessor(nullptr);
+	//	patch.reinitialise();
+	//	juce::String error = patch.getCompileError();
+	//	if (error.isEmpty()) {
+	//		soulVoices[index]->processor = &patch;
+	//		soulVoices[index]->mainParams = &params;
+	//		soulVoices[index]->processor->prepareToPlay(getSampleRate(), getBlockSize());
+	//		voicesInitialised++;
+	//		if (index == MAXVOICES - 1)
+	//		{
+	//			static_cast<DefaultpluginAudioProcessorEditor*>(editor)->updateParams(&error, index);
+	//			Logger::writeToLog(juce::String(getParameters().size()));
+	//			isPlayable = true;
+	//		}
+	//	}
+	//};
 
-	juce::String dll("C:\\Users\\callu\\SOUL_PatchLoader.dll");
-	patchFormat = new SOULPatchAudioPluginFormat(dll, reinitialiseCallback);
-	desc->pluginFormatName = soul::patch::SOULPatchAudioProcessor::getPluginFormatName();
-	desc->fileOrIdentifier = patchPath.getFullPathName();
+	//juce::String dll("C:\\Users\\callu\\SOUL_PatchLoader.dll");
+	//patchFormat = new SOULPatchAudioPluginFormat(dll, reinitialiseCallback);
+	//desc->pluginFormatName = soul::patch::SOULPatchAudioProcessor::getPluginFormatName();
+	//desc->fileOrIdentifier = patchPath.getFullPathName();
 
-	for (int i = 0; i < MAXVOICES; i++) {
-		patchFormat->createPluginInstance(*desc, getSampleRate(), getBlockSize(), setPlugin);
-	}
+	//for (int i = 0; i < MAXVOICES; i++) {
+	//	patchFormat->createPluginInstance(*desc, getSampleRate(), getBlockSize(), setPlugin);
+	//}
+	pluginInstances[0] = std::make_unique<SineSynth>();
 }
 
 void DefaultpluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-	for (int i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
-		buffer.clear(i, 0, buffer.getNumSamples());
+	//for (int i = getTotalNumInputChannels(); i < getTotalNumOutputChannels(); ++i)
+	//	buffer.clear(i, 0, buffer.getNumSamples());
 
+	pluginInstances[0]->processBlock(buffer, midiMessages);
 
-	if (isPlayable) {
-		//setPlayHead();
-		if (auto* p = getPlayHead()) {
-			p->getCurrentPosition(playHead);
-			//dbgLog(playHead.bpm);
-		}
-		soulVoices[MAXVOICES - 1]->processBlock(buffer, midiMessages);
-	}
+	//if (isPlayable) {
+	//	//setPlayHead();
+	//	if (auto* p = getPlayHead()) {
+	//		p->getCurrentPosition(playHead);
+	//		//dbgLog(playHead.bpm);
+	//	}
+	//	soulVoices[MAXVOICES - 1]->processBlock(buffer, midiMessages);
+	//}
 }
 
 void DefaultpluginAudioProcessor::prepareToPlay(double sampleRate, int samplesPerBlock)
 {
 
-	std::vector<juce::String> paramNames =
-	{
-		"cutoff",
-		"voiceCount",
-		"detune",
-		"ampRelease",
-		"ampSustain",
-		"ampDecay",
-		"ampAttack",
-		"volume",
-	};
-	for (juce::String name : paramNames)
-	{
-		params.set(name, new Param());
-		addParameter(params.getReference(name));
+	pluginInstances[0]->prepareToPlay(sampleRate, samplesPerBlock);
 
-	}
+	//std::vector<juce::String> paramNames =
+	//{
+	//	"cutoff",
+	//	"voiceCount",
+	//	"detune",
+	//	"ampRelease",
+	//	"ampSustain",
+	//	"ampDecay",
+	//	"ampAttack",
+	//	"volume",
+	//};
+	//for (juce::String name : paramNames)
+	//{
+	//	params.set(name, new Param());
+	//	addParameter(params.getReference(name));
+
+	//}
 }
 
 juce::AudioProcessorEditor* DefaultpluginAudioProcessor::createEditor() { return editor; }

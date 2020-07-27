@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="fqXiv5" name="defaultplugin" projectType="audioplug" useAppConfig="0"
+<JUCERPROJECT id="fqXiv5" name="defaultplugin" projectType="audioplug" useAppConfig="1"
               addUsingNamespaceToJuceHeader="1" displaySplashScreen="1" pluginFormats="buildStandalone,buildVST3"
               cppLanguageStandard="17" pluginCharacteristicsValue="pluginIsSynth,pluginWantsMidiIn"
-              headerPath="C:/Users/callu/SOUL/source/API/soul_patch/API/soul_patch.h;&#10;C:/Users/callu/SOUL/source/API/soul_patch/helper_classes/soul_patch_AudioPluginFormat.h;&#10;C:/Users/callu/SOUL/source/API/soul_patch/helper_classes/soul_patch_Utilities.h;&#10;C:/Users/callu/SOUL/source/API/soul_patch/helper_classes/soul_patch_CompilerCacheFolder.h;&#10;C:/Users/callu/SOUL/source/API/soul_patch/helper_classes/soul_patch_AudioProcessor.h;&#10;C:/Users/callu/SOUL/examples/SOULPatchHostDemo/Source/PatchLoaderComponent.h;">
+              headerPath="C:/Users/callu/SOUL/source/API/soul_patch/API/soul_patch.h;&#10;C:/Users/callu/SOUL/source/API/soul_patch/helper_classes/soul_patch_AudioPluginFormat.h;&#10;C:/Users/callu/SOUL/source/API/soul_patch/helper_classes/soul_patch_Utilities.h;&#10;C:/Users/callu/SOUL/source/API/soul_patch/helper_classes/soul_patch_CompilerCacheFolder.h;&#10;C:/Users/callu/SOUL/source/API/soul_patch/helper_classes/soul_patch_AudioProcessor.h;&#10;C:/Users/callu/SOUL/examples/SOULPatchHostDemo/Source/PatchLoaderComponent.h;"
+              jucerFormatVersion="1">
   <MAINGROUP id="tPqceN" name="defaultplugin">
     <GROUP id="{1BF8D3CB-F9A7-43D2-B317-640F5BCEBB19}" name="Source">
+      <FILE id="liUgtC" name="SineSynth.cpp" compile="0" resource="0" file="Source/SineSynth.cpp"/>
+      <FILE id="XwdpVd" name="SineSynth.h" compile="0" resource="0" file="Source/SineSynth.h"/>
       <FILE id="bNT5JW" name="soulvoice.h" compile="0" resource="0" file="Source/soulvoice.h"/>
       <FILE id="B4diM5" name="param.h" compile="0" resource="0" file="Source/param.h"/>
       <FILE id="WrJICZ" name="PluginProcessor.cpp" compile="1" resource="0"

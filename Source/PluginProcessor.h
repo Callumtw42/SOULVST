@@ -6,9 +6,17 @@
   ==============================================================================
 */
 
+//
+#include <JuceHeader.h>
+#include <array>
+
+#ifndef SOUL_CPP_ASSERT
+#define SOUL_CPP_ASSERT(x)  jassert (x)
+#endif
+
 #pragma once
 
-#include <JuceHeader.h>
+#include "SineSynth.h"
 #include <functional>
 #include "soulvoice.h"
 
