@@ -9,7 +9,7 @@
 */
 
 static const int LFORES = 128;
-static const int TEMPO = 128;
+static const int DEFAULT_TEMPO = 128;
 
 #pragma once
 #define _USE_MATH_DEFINES
@@ -44,7 +44,9 @@ public:
 
 	void process()
 	{
-		double microSecondsPerBeat = (60.0 / TEMPO) * 1000000;
+		if (playHead->bpm > 0)
+			bpm = playHead->bpm;
+		double microSecondsPerBeat = (60.0 / bpm) * 1000000;
 		double barLength = microSecondsPerBeat * 4;
 
 		//float interval = speed * barLength;
@@ -63,7 +65,7 @@ public:
 
 	AudioPlayHead::CurrentPositionInfo* playHead;
 	int minInterval = 1000;
-	int maxInterval = 100000;
+	int bpm = DEFAULT_TEMPO;
 	double speed = 0.0;
 	std::chrono::steady_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 	std::array<double, LFORES> plot;

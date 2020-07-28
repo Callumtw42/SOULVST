@@ -7,30 +7,24 @@
 
 processor LFO
 {
-    input event float in;
+    input event float<128> in;
     output event float<128> out;
     // output event float out2;
 
-    float<128> profile;
-    int index = 0;
+    float<128> plot;
 
-    event in (float f)
+    float write (float f)
     {
-        // out2 << f;
-        profile.at(index) = f;
-        index++;
+        // plot = f;
+        return f;
     }
 
     void run()
     {
         loop
         {
-            out << profile;
-            loop(100000)
-            {
-
+        // out << plot;
             advance();
-            }
         }
     }
     
@@ -48,23 +42,10 @@ graph SineSynth  [[ main ]]
     input event float detune [[label: "Detune", min: 0.00f, max: 50.0f, init: 0.00f, step: 1.0f]];
     input event float voiceCount [[label: "voiceCount", min: 1, max: 16, init: 1, step: 1]];
     input event float cutoff [[label: "cutoff", min: 0.0f, max: 127.0f, init: 127.0f, step: 1.0f]];
-    input event float x;
-
-
-    // input event float volumeLFOIn [[ label: "VolumeLFOIn", min: 0.0f, max: 1.0f, init: 0.0f, step: 0.01f]];
-    // input event float ampAttackLFOIn [[label: "AttackLFOIn", min: 0.0f, max: 1.0f, init: 0.0f, step: 0.01f]];
-    // input event float ampDecayLFOIn [[label: "DecayLFOIn", min: 0.0f, max: 1.0f, init: 0.0f, step: 0.01f]];
-    // input event float ampSustainLFOIn [[label: "SustainLFOIn", min: 0.0f, max: 1.0f, init: 0.0f, step: 0.01f]];
-    // input event float ampReleaseLFOIn [[label: "ReleaseLFOIn", min: 0.0f, max: 1.0f, init: 0.0f, step: 0.01f]];
-    // input event float detuneLFOIn [[label: "DetuneLFOIn", min: 0.0f, max: 1.0f, init: 0.0f, step: 0.01f]];
-    // input event float voiceCountLFOIn [[label: "voiceCountLFOIn", min: 0.0f, max: 1.0f, init: 0.0f, step: 0.01f]];
-    // input event float cutoffLFOIn [[label: "cutoffLFOIn", min: 0.0f, max: 1.0f, init: 0.0f, step: 0.01f]];
-
-
+    input stream float lfo;
 
     output stream float<2> audioOut;
-    // output event float<128> logOut;
-    // output event float out2;
+    output event float<128> logOut;
 
 
     let
@@ -80,20 +61,8 @@ graph SineSynth  [[ main ]]
 
     connection
     {
-        // volumeLFOIn -> lfo.in;
-        // lfo.out -> logOut; 
-        // lfo.out2 -> out2;
-        // logger.out -> logOut;
-
+        lfo.out -> logOut; 
         cutoff          -> voices.cutoffIn;
-        // cutoffModAmt    -> voices.cutoffModAmt;
-        // cutoffRelease   -> voices.cutoffRelease;
-        // cutoffSustain   -> voices.cutoffSustain;
-        // cutoffDecay     -> voices.cutoffDecay;
-        // cutoffAttack    -> voices.cutoffAttack;
-        // cutoffModAmt    -> voices.cutoffModAmt;
-
-
         detune  -> voices.detune;
         voiceCount -> voices.voiceCountIn;
 
@@ -101,7 +70,6 @@ graph SineSynth  [[ main ]]
         ampDecay -> voices.ampDecay;
         ampSustain -> voices.ampSustain;
         ampRelease -> voices.ampRelease;
-        // oscGain -> voices.oscGain;
 
         midiIn -> midiParser.parseMIDI;
         midiParser.eventOut -> voiceAllocator.eventIn;

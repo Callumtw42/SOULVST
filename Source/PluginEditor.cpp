@@ -14,40 +14,27 @@ DefaultpluginAudioProcessorEditor::DefaultpluginAudioProcessorEditor(Defaultplug
 	juce::File UIPath("C:\\Users\\callu\\Desktop\\projects\\defaultplugin\\Source\\jsui\\build\\js\\main.js");
 	jassert(UIPath.existsAsFile());
 	appRoot.enableHotReloading();
+	updateParams();
 	appRoot.evaluate(UIPath);
+	bindNativeCallbacks();
+	addAndMakeVisible(appRoot);
 }
 
 DefaultpluginAudioProcessorEditor::~DefaultpluginAudioProcessorEditor() { }
 
-void DefaultpluginAudioProcessorEditor::updateParams(juce::String* error, int index)
+void DefaultpluginAudioProcessorEditor::updateParams()
 {
-	removeChildComponent(getIndexOfChildComponent(&appRoot));
-	removeChildComponent(getIndexOfChildComponent(&errorText));
-	// Now our React application is up and running, so we can start dispatching events, such as current parameter values.
 	Logger::writeToLog("Loaded: " + processor.pluginInstance->getName());
-
-	//if (processor.params) processor.params->clear();
-	if (error->isEmpty()) {
-		for (AudioProcessorParameter* p : processor.pluginInstance->getParameters())
-		{
-			Param* mainParam = processor.params.getReference(p->getName(100));
-			mainParam->initialise(p, &processor.playHead);
-
-			//processor.LFOPlots.insert_or_assign(p->getName(100), defaultPlot);
-			//juce::Logger::writeToLog(p->getName(100));
-			mainParam->addListener(this);
-			mainParam->sendValueChangedMessageToListeners(p->getValue());
-		}
-		bindNativeCallbacks();
-		addAndMakeVisible(appRoot);
+	for (AudioProcessorParameter* p : processor.pluginInstance->getParameters())
+	{
+		juce::String name = p->getName(100);
+		processor.params.set(name, new Param());
+		Param* mainParam = processor.params.getReference(name);
+		mainParam->initialise(p, &processor.playHead);
+		mainParam->addListener(this);
+		processor.addParameter(mainParam);
+		mainParam->sendValueChangedMessageToListeners(mainParam->getValue());
 	}
-	else {
-		errorText.setText(*error, NotificationType());
-		addAndMakeVisible(errorText);
-		errorText.setBounds(getLocalBounds());
-		errorText.centreWithSize(getParentHeight(), getParentWidth());
-	}
-
 }
 
 void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
@@ -74,6 +61,7 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 
 			if (Param* parameter = self->processor.params.getReference(paramId)) {
 				parameter->setValueNotifyingHost(value);
+				//parameter->sendValueChangedMessageToListeners(parameter->getValue());
 			}
 			return juce::var::undefined();
 		},
@@ -152,29 +140,27 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 
 void DefaultpluginAudioProcessorEditor::parameterValueChanged(int parameterIndex, float newValue)
 {
-	if (processor.isPlayable) {
-		//const auto& p = processor.pluginInstances[MAXVOICES - 1]->getParameters()[parameterIndex];
-		const auto& p = processor.getParameters()[parameterIndex];
-		juce::String id = p->getName(100);
+	//const auto& p = processor.pluginInstances[MAXVOICES - 1]->getParameters()[parameterIndex];
+	const auto& p = processor.getParameters()[parameterIndex];
+	juce::String id = p->getName(100);
 
-		if (auto* x = dynamic_cast<AudioProcessorParameterWithID*>(p))
-			id = x->paramID;
+	if (auto* x = dynamic_cast<AudioProcessorParameterWithID*>(p))
+		id = x->paramID;
 
-		float defaultValue = p->getDefaultValue();
-		juce::String stringValue = p->getText(newValue, 0);
+	float defaultValue = p->getDefaultValue();
+	juce::String stringValue = p->getText(newValue, 0);
 
-		Component::SafePointer<blueprint::ReactApplicationRoot> safeAppRoot(&appRoot);
+	Component::SafePointer<blueprint::ReactApplicationRoot> safeAppRoot(&appRoot);
 
-		juce::MessageManager::callAsync([=]() {
-			if (blueprint::ReactApplicationRoot* root = safeAppRoot.getComponent())
-				root->dispatchEvent("parameterValueChange",
-					parameterIndex,
-					id,
-					defaultValue,
-					newValue,
-					stringValue);
-			});
-	}
+	juce::MessageManager::callAsync([=]() {
+		if (blueprint::ReactApplicationRoot* root = safeAppRoot.getComponent())
+			root->dispatchEvent("parameterValueChange",
+				parameterIndex,
+				id,
+				defaultValue,
+				newValue,
+				stringValue);
+		});
 }
 
 void DefaultpluginAudioProcessorEditor::resized()

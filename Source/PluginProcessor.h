@@ -15,7 +15,6 @@
 //#endif
 
 #pragma once
-
 #include "SineSynth.h"
 #include <functional>
 #include "soulvoice.h"

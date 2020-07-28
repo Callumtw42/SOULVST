@@ -67,7 +67,11 @@ public:
     struct _SparseStreamStatus;
     struct _Event_in_struct_Message_1;
     struct _Event_in_f32_1;
+    struct _Stream_in_f32_512;
     struct _Stream_out_vec_2_f32_512;
+    struct _Event_out_vec_128_f32_512_EventHolder;
+    struct _Event_out_vec_128_f32_512;
+    struct LFO___State;
     struct NoteHandler__NoteInfo;
     struct NoteHandler__NoteHandler;
     struct Controller___State;
@@ -111,6 +115,7 @@ public:
     struct soul__gain__SmoothedGainParameter___for__root__SineSynth_smoothedGain___IO;
     struct soul__gain__DynamicGain___for__root__SineSynth_gainProcessor___IO;
     struct Voice___IO;
+    struct LFO___IO;
     struct PolyBlep___IO;
     struct Controller___IO;
     struct ADSREnvelope___IO;
@@ -159,7 +164,7 @@ public:
     // These classes and functions provide a high-level rendering method that
     // presents the processor as a set of standard audio and MIDI channels.
 
-    static constexpr uint32_t numAudioInputChannels  = 0;
+    static constexpr uint32_t numAudioInputChannels  = 1;
     static constexpr uint32_t numAudioOutputChannels = 2;
 
     struct MIDIMessage
@@ -177,7 +182,7 @@ public:
     template <typename FloatType = float>
     struct RenderContext
     {
-        std::array<const FloatType*, 0> inputChannels;
+        std::array<const FloatType*, 1> inputChannels;
         std::array<FloatType*, 2> outputChannels;
         MIDIMessageArray  incomingMIDI;
         uint32_t          numFrames = 0;
@@ -219,7 +224,7 @@ public:
                 auto midi = context.incomingMIDI.messages[startMIDIIndex++];
                 auto packed = (static_cast<uint32_t> (midi.byte0) << 16) | (static_cast<uint32_t> (midi.byte1) << 8) | static_cast<uint32_t> (midi.byte2);
                 _addInputEvent_midiIn_struct_Message (state, { static_cast<int32_t> (packed) });
-            }
+            }copyToInterleaved (_getInputFrameArrayRef_lfo (state).elements, &context.inputChannels[0], startFrame, numFramesToDo);
 
             advance();
 
@@ -300,14 +305,38 @@ public:
         _addInputEvent_cutoff_f32 (state, eventValue);
     }
 
-    void addInputEvent_x (float eventValue)
+    void setNextInputStreamFrames_lfo (const float* frames, uint32_t numFramesToUse)
     {
-        _addInputEvent_x_f32 (state, eventValue);
+        auto& buffer = _getInputFrameArrayRef_lfo (state);
+
+        for (uint32_t i = 0; i < numFramesToUse; ++i)
+            buffer[static_cast<int> (i)] = frames[i];
+    }
+
+    void setNextInputStreamSparseFrames_lfo (float targetFrameValue, uint32_t numFramesToReachValue, float curveShape)
+    {
+        _setSparseInputTarget_lfo (state, targetFrameValue, (int32_t) numFramesToReachValue, curveShape);
     }
 
     DynamicArray<const Vector<float, 2>> getOutputStreamFrames_audioOut()
     {
         return { &(_getOutputFrameArrayRef_audioOut (state).elements[0]), static_cast<int32_t> (framesToAdvance) };
+    }
+
+    void iterateOutputEvents_logOut (std::function<bool(uint32_t frameOffset, Vector<float, 128>)>&& handleEvent)
+    {
+        auto numEvents = _getNumOutputEvents_logOut (state);
+
+        for (int32_t i = 0; i < numEvents; ++i)
+        {
+            auto& event = _getOutputEventRef_logOut (state, i);
+
+            switch (event.m_eventType)
+            {
+                case 0:   if (! handleEvent        (static_cast<uint32_t> (event.m_eventTime), event.m_type0)) return; break;
+                default:  SOUL_CPP_ASSERT (false);
+            }
+        }
     }
 
     //==============================================================================
@@ -331,16 +360,16 @@ public:
     {
         return
         {
-            { "midiIn",     "in:midiIn",     EndpointType::event, "Message { int32 midiBytes }", 0, ""                                                                                                                         },
-            { "volume",     "in:volume",     EndpointType::event, "float32",                     0, "{ \"label\": \"Volume\", \"min\": -85, \"max\": 6, \"init\": -6, \"step\": 1, \"unit\": \"dB\" }"                         },
-            { "ampAttack",  "in:ampAttack",  EndpointType::event, "float32",                     0, "{ \"label\": \"Attack\", \"min\": 0.009999999776482582, \"max\": 100.0, \"init\": 0.009999999776482582, \"step\": 1.0 }"  },
-            { "ampDecay",   "in:ampDecay",   EndpointType::event, "float32",                     0, "{ \"label\": \"Decay\", \"min\": 0.009999999776482582, \"max\": 100.0, \"init\": 0.009999999776482582, \"step\": 1.0 }"   },
-            { "ampSustain", "in:ampSustain", EndpointType::event, "float32",                     0, "{ \"label\": \"Sustain\", \"min\": 0.009999999776482582, \"max\": 100.0, \"init\": 100.0, \"step\": 1.0 }"                },
-            { "ampRelease", "in:ampRelease", EndpointType::event, "float32",                     0, "{ \"label\": \"Release\", \"min\": 0.009999999776482582, \"max\": 100.0, \"init\": 0.009999999776482582, \"step\": 1.0 }" },
-            { "detune",     "in:detune",     EndpointType::event, "float32",                     0, "{ \"label\": \"Detune\", \"min\": 0.0, \"max\": 50.0, \"init\": 0.0, \"step\": 1.0 }"                                     },
-            { "voiceCount", "in:voiceCount", EndpointType::event, "float32",                     0, "{ \"label\": \"voiceCount\", \"min\": 1, \"max\": 16, \"init\": 1, \"step\": 1 }"                                         },
-            { "cutoff",     "in:cutoff",     EndpointType::event, "float32",                     0, "{ \"label\": \"cutoff\", \"min\": 0.0, \"max\": 127.0, \"init\": 127.0, \"step\": 1.0 }"                                  },
-            { "x",          "in:x",          EndpointType::event, "float32",                     0, ""                                                                                                                         }
+            { "midiIn",     "in:midiIn",     EndpointType::event,  "Message { int32 midiBytes }", 0, ""                                                                                                                         },
+            { "volume",     "in:volume",     EndpointType::event,  "float32",                     0, "{ \"label\": \"Volume\", \"min\": -85, \"max\": 6, \"init\": -6, \"step\": 1, \"unit\": \"dB\" }"                         },
+            { "ampAttack",  "in:ampAttack",  EndpointType::event,  "float32",                     0, "{ \"label\": \"Attack\", \"min\": 0.009999999776482582, \"max\": 100.0, \"init\": 0.009999999776482582, \"step\": 1.0 }"  },
+            { "ampDecay",   "in:ampDecay",   EndpointType::event,  "float32",                     0, "{ \"label\": \"Decay\", \"min\": 0.009999999776482582, \"max\": 100.0, \"init\": 0.009999999776482582, \"step\": 1.0 }"   },
+            { "ampSustain", "in:ampSustain", EndpointType::event,  "float32",                     0, "{ \"label\": \"Sustain\", \"min\": 0.009999999776482582, \"max\": 100.0, \"init\": 100.0, \"step\": 1.0 }"                },
+            { "ampRelease", "in:ampRelease", EndpointType::event,  "float32",                     0, "{ \"label\": \"Release\", \"min\": 0.009999999776482582, \"max\": 100.0, \"init\": 0.009999999776482582, \"step\": 1.0 }" },
+            { "detune",     "in:detune",     EndpointType::event,  "float32",                     0, "{ \"label\": \"Detune\", \"min\": 0.0, \"max\": 50.0, \"init\": 0.0, \"step\": 1.0 }"                                     },
+            { "voiceCount", "in:voiceCount", EndpointType::event,  "float32",                     0, "{ \"label\": \"voiceCount\", \"min\": 1, \"max\": 16, \"init\": 1, \"step\": 1 }"                                         },
+            { "cutoff",     "in:cutoff",     EndpointType::event,  "float32",                     0, "{ \"label\": \"cutoff\", \"min\": 0.0, \"max\": 127.0, \"init\": 127.0, \"step\": 1.0 }"                                  },
+            { "lfo",        "in:lfo",        EndpointType::stream, "float32",                     1, ""                                                                                                                         }
         };
     }
 
@@ -348,7 +377,8 @@ public:
     {
         return
         {
-            { "audioOut", "out:audioOut", EndpointType::stream, "float32<2>", 2, "" }
+            { "audioOut", "out:audioOut", EndpointType::stream, "float32<2>",   2, "" },
+            { "logOut",   "out:logOut",   EndpointType::event,  "float32<128>", 0, "" }
         };
     }
 
@@ -396,25 +426,24 @@ public:
     };
 
     static constexpr bool      hasMIDIInput = true;
-    static constexpr uint32_t  numParameters = 9;
+    static constexpr uint32_t  numParameters = 8;
 
     std::vector<ParameterProperties> getParameterProperties()
     {
         return
         {
-            {  "volume",      "volume",      "dB",  -85.0f,  6.0f,    1.0f,    -6.0f,   true,  false,  false,  "",  "",  -6.0f,   [this] (float v) { addInputEvent_volume (v); }      },
-            {  "ampAttack",   "ampAttack",   "",    0.01f,   100.0f,  1.0f,    0.01f,   true,  false,  false,  "",  "",  0.01f,   [this] (float v) { addInputEvent_ampAttack (v); }   },
-            {  "ampDecay",    "ampDecay",    "",    0.01f,   100.0f,  1.0f,    0.01f,   true,  false,  false,  "",  "",  0.01f,   [this] (float v) { addInputEvent_ampDecay (v); }    },
-            {  "ampSustain",  "ampSustain",  "",    0.01f,   100.0f,  1.0f,    100.0f,  true,  false,  false,  "",  "",  100.0f,  [this] (float v) { addInputEvent_ampSustain (v); }  },
-            {  "ampRelease",  "ampRelease",  "",    0.01f,   100.0f,  1.0f,    0.01f,   true,  false,  false,  "",  "",  0.01f,   [this] (float v) { addInputEvent_ampRelease (v); }  },
-            {  "detune",      "detune",      "",    0.0f,    50.0f,   1.0f,    0.0f,    true,  false,  false,  "",  "",  0.0f,    [this] (float v) { addInputEvent_detune (v); }      },
-            {  "voiceCount",  "voiceCount",  "",    1.0f,    16.0f,   1.0f,    1.0f,    true,  false,  false,  "",  "",  1.0f,    [this] (float v) { addInputEvent_voiceCount (v); }  },
-            {  "cutoff",      "cutoff",      "",    0.0f,    127.0f,  1.0f,    127.0f,  true,  false,  false,  "",  "",  127.0f,  [this] (float v) { addInputEvent_cutoff (v); }      },
-            {  "x",           "x",           "",    0.0f,    1.0f,    0.001f,  0.0f,    true,  false,  false,  "",  "",  0.0f,    [this] (float v) { addInputEvent_x (v); }           }
+            {  "volume",      "volume",      "dB",  -85.0f,  6.0f,    1.0f,  -6.0f,   true,  false,  false,  "",  "",  -6.0f,   [this] (float v) { addInputEvent_volume (v); }      },
+            {  "ampAttack",   "ampAttack",   "",    0.01f,   100.0f,  1.0f,  0.01f,   true,  false,  false,  "",  "",  0.01f,   [this] (float v) { addInputEvent_ampAttack (v); }   },
+            {  "ampDecay",    "ampDecay",    "",    0.01f,   100.0f,  1.0f,  0.01f,   true,  false,  false,  "",  "",  0.01f,   [this] (float v) { addInputEvent_ampDecay (v); }    },
+            {  "ampSustain",  "ampSustain",  "",    0.01f,   100.0f,  1.0f,  100.0f,  true,  false,  false,  "",  "",  100.0f,  [this] (float v) { addInputEvent_ampSustain (v); }  },
+            {  "ampRelease",  "ampRelease",  "",    0.01f,   100.0f,  1.0f,  0.01f,   true,  false,  false,  "",  "",  0.01f,   [this] (float v) { addInputEvent_ampRelease (v); }  },
+            {  "detune",      "detune",      "",    0.0f,    50.0f,   1.0f,  0.0f,    true,  false,  false,  "",  "",  0.0f,    [this] (float v) { addInputEvent_detune (v); }      },
+            {  "voiceCount",  "voiceCount",  "",    1.0f,    16.0f,   1.0f,  1.0f,    true,  false,  false,  "",  "",  1.0f,    [this] (float v) { addInputEvent_voiceCount (v); }  },
+            {  "cutoff",      "cutoff",      "",    0.0f,    127.0f,  1.0f,  127.0f,  true,  false,  false,  "",  "",  127.0f,  [this] (float v) { addInputEvent_cutoff (v); }      }
         };
     }
 
-    std::vector<AudioBus> getInputBuses() const   { return {}; }
+    std::vector<AudioBus> getInputBuses() const   { return { { "lfo", 1 } }; }
 
     std::vector<AudioBus> getOutputBuses() const   { return { { "audioOut", 2 } }; }
 
@@ -683,9 +712,35 @@ public:
         int32_t m_numFrames;
     };
 
+    struct _Stream_in_f32_512
+    {
+        FixedArray<float, 512> m_buffer;
+        float m_currentSparseValue, m_targetSparseValue, m_perFrameIncrement;
+        int32_t m_numSparseFramesToRender, m_constantFilledFrames;
+        bool m_sparseStreamActive;
+    };
+
     struct _Stream_out_vec_2_f32_512
     {
         FixedArray<Vector<float, 2>, 512> m_buffer;
+    };
+
+    struct _Event_out_vec_128_f32_512_EventHolder
+    {
+        int32_t m_eventTime, m_eventType;
+        Vector<float, 128> m_type0;
+    };
+
+    struct _Event_out_vec_128_f32_512
+    {
+        int32_t m_numEvents;
+        FixedArray<_Event_out_vec_128_f32_512_EventHolder, 512> m_eventData;
+    };
+
+    struct LFO___State
+    {
+        int32_t m__resumePoint, m__frameCount, m__arrayEntry, m__sessionID, m__processorId;
+        Vector<float, 128> m_plot;
     };
 
     struct NoteHandler__NoteInfo
@@ -918,8 +973,11 @@ public:
         _RenderStats m__renderStats;
         _SparseStreamStatus m__sparseStreamStatus;
         _Event_in_struct_Message_1 m__in_midiIn;
-        _Event_in_f32_1 m__in_volume, m__in_ampAttack, m__in_ampDecay, m__in_ampSustain, m__in_ampRelease, m__in_detune, m__in_voiceCount, m__in_cutoff, m__in_x;
+        _Event_in_f32_1 m__in_volume, m__in_ampAttack, m__in_ampDecay, m__in_ampSustain, m__in_ampRelease, m__in_detune, m__in_voiceCount, m__in_cutoff;
+        _Stream_in_f32_512 m__in_lfo;
         _Stream_out_vec_2_f32_512 m__out_audioOut;
+        _Event_out_vec_128_f32_512 m__out_logOut;
+        LFO___State m_lfo_state;
         FixedArray<Voice___State, 8> m_voices_state;
         soul__midi__MPEParser___State m_midiParser_state;
         soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State m_voiceAllocator_state;
@@ -983,6 +1041,10 @@ public:
     struct Voice___IO
     {
         Vector<float, 2> m__out_audioOut;
+    };
+
+    struct LFO___IO
+    {
     };
 
     struct PolyBlep___IO
@@ -1132,6 +1194,7 @@ public:
         FixedArray<Voice___IO, 8> _3 = {};
         soul__gain__SmoothedGainParameter___for__root__SineSynth_smoothedGain___IO _4 = {};
         soul__gain__DynamicGain___for__root__SineSynth_gainProcessor___IO _5 = {};
+        LFO___IO _6 = {};
 
         _2 = _internal___minInt32 (512, maxFrames);
         _updateRampingStreams (_state, _2);
@@ -1153,6 +1216,8 @@ public:
                            _5.m__in_gain = _4.m__out_gain;
                            soul__gain__DynamicGain___for__root__SineSynth_gainProcessor__run (_state.m_gainProcessor_state, _5);
                            _writeToStream_struct__Stream_out_vec_2_f32_512 (_state.m__out_audioOut, _state.m__frameCount, _5.m__out_out);
+                           _6 = ZeroInitialiser();
+                           LFO__run (_state.m_lfo_state, _6);
                            _state.m__frameCount = _state.m__frameCount + 1;
                            goto _main_loop_check;
         }
@@ -1164,51 +1229,55 @@ public:
     void _initialise (_State& _state, int32_t sessionID) noexcept
     {
         _state.m__sessionID = sessionID;
+        _state.m_lfo_state.m__arrayEntry = 0;
+        _state.m_lfo_state.m__sessionID = _state.m__sessionID;
+        _state.m_lfo_state.m__processorId = 22;
+        LFO___initialise (_state.m_lfo_state);
         _state.m_voices_state[0].m__arrayEntry = 0;
         _state.m_voices_state[0].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[0].m__processorId = 22;
+        _state.m_voices_state[0].m__processorId = 23;
         Voice___initialise (_state.m_voices_state[0]);
         _state.m_voices_state[1].m__arrayEntry = 1;
         _state.m_voices_state[1].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[1].m__processorId = 23;
+        _state.m_voices_state[1].m__processorId = 24;
         Voice___initialise (_state.m_voices_state[1]);
         _state.m_voices_state[2].m__arrayEntry = 2;
         _state.m_voices_state[2].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[2].m__processorId = 24;
+        _state.m_voices_state[2].m__processorId = 25;
         Voice___initialise (_state.m_voices_state[2]);
         _state.m_voices_state[3].m__arrayEntry = 3;
         _state.m_voices_state[3].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[3].m__processorId = 25;
+        _state.m_voices_state[3].m__processorId = 26;
         Voice___initialise (_state.m_voices_state[3]);
         _state.m_voices_state[4].m__arrayEntry = 4;
         _state.m_voices_state[4].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[4].m__processorId = 26;
+        _state.m_voices_state[4].m__processorId = 27;
         Voice___initialise (_state.m_voices_state[4]);
         _state.m_voices_state[5].m__arrayEntry = 5;
         _state.m_voices_state[5].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[5].m__processorId = 27;
+        _state.m_voices_state[5].m__processorId = 28;
         Voice___initialise (_state.m_voices_state[5]);
         _state.m_voices_state[6].m__arrayEntry = 6;
         _state.m_voices_state[6].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[6].m__processorId = 28;
+        _state.m_voices_state[6].m__processorId = 29;
         Voice___initialise (_state.m_voices_state[6]);
         _state.m_voices_state[7].m__arrayEntry = 7;
         _state.m_voices_state[7].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[7].m__processorId = 29;
+        _state.m_voices_state[7].m__processorId = 30;
         Voice___initialise (_state.m_voices_state[7]);
         _state.m_midiParser_state.m__arrayEntry = 0;
         _state.m_midiParser_state.m__sessionID = _state.m__sessionID;
-        _state.m_midiParser_state.m__processorId = 30;
+        _state.m_midiParser_state.m__processorId = 31;
         _state.m_voiceAllocator_state.m__arrayEntry = 0;
         _state.m_voiceAllocator_state.m__sessionID = _state.m__sessionID;
-        _state.m_voiceAllocator_state.m__processorId = 31;
+        _state.m_voiceAllocator_state.m__processorId = 32;
         soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___initialise (_state.m_voiceAllocator_state);
         _state.m_gainProcessor_state.m__arrayEntry = 0;
         _state.m_gainProcessor_state.m__sessionID = _state.m__sessionID;
-        _state.m_gainProcessor_state.m__processorId = 32;
+        _state.m_gainProcessor_state.m__processorId = 33;
         _state.m_smoothedGain_state.m__arrayEntry = 0;
         _state.m_smoothedGain_state.m__sessionID = _state.m__sessionID;
-        _state.m_smoothedGain_state.m__processorId = 33;
+        _state.m_smoothedGain_state.m__processorId = 34;
         soul__gain__SmoothedGainParameter___for__root__SineSynth_smoothedGain___initialise (_state.m_smoothedGain_state);
     }
 
@@ -1306,8 +1375,39 @@ public:
         Voice___cutoffIn_f32 (_state.m_voices_state[7], event);
     }
 
-    void _addInputEvent_x_f32 (_State& _state, const float& event) noexcept
+    FixedArray<float, 512>& _getInputFrameArrayRef_lfo (_State& _state) noexcept
     {
+        return _state.m__in_lfo.m_buffer;
+    }
+
+    void _setSparseStream_struct__Stream_in_f32_512 (_Stream_in_f32_512& streamState, const float& targetValue, int32_t framesToReachTarget) noexcept
+    {
+        float rampFrames = {}, delta = {};
+
+        if (! (framesToReachTarget == 0)) goto _ramp;
+        _no_ramp: { streamState.m_currentSparseValue = targetValue;
+                    streamState.m_targetSparseValue = targetValue;
+                    streamState.m_perFrameIncrement = 0;
+                    streamState.m_numSparseFramesToRender = 0;
+                    streamState.m_constantFilledFrames = 0;
+                    streamState.m_sparseStreamActive = true;
+                    return;
+        }
+        _ramp: { rampFrames = static_cast<float> (framesToReachTarget);
+                 delta = static_cast<float> (targetValue - streamState.m_currentSparseValue);
+                 streamState.m_targetSparseValue = targetValue;
+                 streamState.m_perFrameIncrement = delta / rampFrames;
+                 streamState.m_numSparseFramesToRender = framesToReachTarget;
+                 streamState.m_constantFilledFrames = 0;
+                 streamState.m_sparseStreamActive = true;
+        }
+    }
+
+    void _setSparseInputTarget_lfo (_State& _state, const float& targetValue, int32_t framesToReachTarget, float curveShape) noexcept
+    {
+        if (_state.m__in_lfo.m_sparseStreamActive) goto _block_1;
+        _block_0: { _addRampingStream (_state.m__sparseStreamStatus, 9); }
+        _block_1: { _setSparseStream_struct__Stream_in_f32_512 (_state.m__in_lfo, targetValue, framesToReachTarget); }
     }
 
     FixedArray<Vector<float, 2>, 512>& _getOutputFrameArrayRef_audioOut (_State& state) noexcept
@@ -1315,9 +1415,20 @@ public:
         return state.m__out_audioOut.m_buffer;
     }
 
+    int32_t _getNumOutputEvents_logOut (_State& state) noexcept
+    {
+        return state.m__out_logOut.m_numEvents;
+    }
+
+    _Event_out_vec_128_f32_512_EventHolder& _getOutputEventRef_logOut (_State& state, int32_t index) noexcept
+    {
+        return state.m__out_logOut.m_eventData[index];
+    }
+
     void _prepare (_State& state, int32_t frames) noexcept
     {
         state.m__framesToAdvance = frames;
+        state.m__out_logOut.m_numEvents = 0;
     }
 
     int32_t _get_num_xruns (_State& state) noexcept
@@ -1326,12 +1437,67 @@ public:
     }
 
     //==============================================================================
+    void _renderSparseFrames_struct__Stream_in_f32_512 (_Stream_in_f32_512& stream, int32_t startFrame, int32_t framesToGenerate) noexcept
+    {
+        int32_t writePos = {};
+        float currentValue = {};
+
+        writePos = startFrame;
+        currentValue = stream.m_currentSparseValue;
+        _main_loop_check: { if (! (framesToGenerate > 0)) goto _exit_after_loop; }
+        _main_loop_body: { stream.m_buffer[writePos] = currentValue;
+                           currentValue = currentValue + stream.m_perFrameIncrement;
+                           writePos = writePos + 1;
+                           framesToGenerate = framesToGenerate - 1;
+                           goto _main_loop_check;
+        }
+        _exit_after_loop: { stream.m_currentSparseValue = currentValue; }
+    }
+
+    bool _applySparseStreamData_struct__Stream_in_f32_512 (_Stream_in_f32_512& stream, int32_t numFrames) noexcept
+    {
+        int32_t rampFrames = {};
+
+        rampFrames = 0;
+        if (! (stream.m_sparseStreamActive == true)) goto _exitTrue;
+        _check_stream_state: { if (! (stream.m_numSparseFramesToRender == 0)) goto _render_ramp; }
+        _no_frames_to_render: { if (stream.m_constantFilledFrames == 512) goto _rampComplete; }
+        _add_fixed_value: { stream.m_currentSparseValue = stream.m_targetSparseValue;
+                            stream.m_perFrameIncrement = 0;
+                            _renderSparseFrames_struct__Stream_in_f32_512 (stream, stream.m_constantFilledFrames, _internal___minInt32 (numFrames, 512 - stream.m_constantFilledFrames));
+                            stream.m_constantFilledFrames = stream.m_constantFilledFrames + _internal___minInt32 (numFrames, 512 - stream.m_constantFilledFrames);
+                            goto _exit;
+        }
+        _render_ramp: { rampFrames = _internal___minInt32 (numFrames, stream.m_numSparseFramesToRender);
+                        _renderSparseFrames_struct__Stream_in_f32_512 (stream, 0, rampFrames);
+                        stream.m_numSparseFramesToRender = stream.m_numSparseFramesToRender - rampFrames;
+                        if (rampFrames == numFrames) goto _exit;
+        }
+        _fill_remainder: { stream.m_currentSparseValue = stream.m_targetSparseValue;
+                           stream.m_perFrameIncrement = 0;
+                           _renderSparseFrames_struct__Stream_in_f32_512 (stream, rampFrames, numFrames - rampFrames);
+        }
+        _exit: { return false; }
+        _exitTrue: { return true; }
+        _rampComplete: { stream.m_sparseStreamActive = false;
+                         return true;
+        }
+    }
+
+    void _addRampingStream (_SparseStreamStatus& status, int32_t streamId) noexcept
+    {
+        status.m_rampArray[status.m_activeRamps] = streamId;
+        status.m_activeRamps = status.m_activeRamps + 1;
+    }
+
     bool _updateRampingStream (_State& _state, int32_t streamId, int32_t framesToRender) noexcept
     {
         bool rampComplete = {};
 
         rampComplete = false;
-        return rampComplete;
+        if (! (streamId == 9)) goto _exit;
+        _case_9: { rampComplete = _applySparseStreamData_struct__Stream_in_f32_512 (_state.m__in_lfo, framesToRender); }
+        _exit: { return rampComplete; }
     }
 
     void _updateRampingStreams (_State& _state, int32_t framesToRender) noexcept
@@ -2355,6 +2521,17 @@ public:
     void Voice___cutoffIn_f32 (Voice___State& _state, float event) noexcept
     {
         Filter___cutoffIn_f32 (_state.m_filter_state, event);
+    }
+
+    //==============================================================================
+    void LFO__run (LFO___State& _state, LFO___IO& _io) noexcept
+    {
+        _state.m__resumePoint = 1;
+    }
+
+    void LFO___initialise (LFO___State& _state) noexcept
+    {
+        _state.m_plot = ZeroInitialiser();
     }
 
     //==============================================================================
