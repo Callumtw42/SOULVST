@@ -19,7 +19,7 @@
 // Generated from graph 'SineSynth', source file: SineSynth.soulpatch
 //
 
-const int MAXVOICES = 12;
+const int MAXVOICES = 3;
 struct _SineSynth : public juce::AudioPluginInstance
 {
 	_SineSynth();

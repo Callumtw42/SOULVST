@@ -73,7 +73,10 @@ struct _SineSynth::Pimpl
 
 	void prepareToPlay(double sampleRate, int maxBlockSize)
 	{
-		processor[0].init(sampleRate, ++sessionID);
+		for (size_t i = 0; i < MAXVOICES; i++)
+		{
+			processor[i].init(sampleRate, ++sessionID);
+		}
 
 		incomingMIDIMessages.resize((size_t)maxBlockSize);
 		owner.setRateAndBufferSizeDetails(sampleRate, maxBlockSize);
@@ -97,48 +100,54 @@ struct _SineSynth::Pimpl
 		auto numFrames = audio.getNumSamples();
 		outputBuffer.setSize(GeneratedClass::numAudioOutputChannels, numFrames, false, false, true);
 		outputBuffer.clear();
+		std::array<GeneratedClass::RenderContext<float>, MAXVOICES> rcs;
 
-		GeneratedClass::RenderContext<float> rc;
-
-		populateInputChannels(audio, rc);
-
-		for (int i = 0; i < (int)GeneratedClass::numAudioOutputChannels; ++i)
-			rc.outputChannels[i] = outputBuffer.getWritePointer(i);
-
-		rc.numFrames = (uint32_t)numFrames;
-
-		owner.midiKeyboardState.processNextMidiBuffer(midi, 0, numFrames, true);
-
-		if (midi.isEmpty())
+		for (size_t i = 0; i < MAXVOICES; i++)
 		{
-			rc.incomingMIDI.numMessages = 0;
-		}
-		else
-		{
-			auto maxEvents = incomingMIDIMessages.size();
-			auto iter = midi.cbegin();
-			auto end = midi.cend();
-			size_t i = 0;
+			std::unique_ptr<GeneratedClass::RenderContext<float>> rc = std::make_unique<GeneratedClass::RenderContext<float>>();
 
-			while (i < maxEvents && iter != end)
+			populateInputChannels(audio, *rc.get());
+
+			for (int i = 0; i < (int)GeneratedClass::numAudioOutputChannels; ++i)
+				rc->outputChannels[i] = outputBuffer.getWritePointer(i);
+
+			rc->numFrames = (uint32_t)numFrames;
+
+			owner.midiKeyboardState.processNextMidiBuffer(midi, 0, numFrames, true);
+
+			if (midi.isEmpty())
 			{
-				auto message = *iter++;
-
-				if (message.numBytes < 4)
-					incomingMIDIMessages[i++] = { static_cast<uint32_t> (message.samplePosition),
-												  static_cast<uint8_t> (message.data[0]),
-												  static_cast<uint8_t> (message.data[1]),
-												  static_cast<uint8_t> (message.data[2]) };
+				rc->incomingMIDI.numMessages = 0;
 			}
+			else
+			{
+				auto maxEvents = incomingMIDIMessages.size();
+				auto iter = midi.cbegin();
+				auto end = midi.cend();
+				size_t i = 0;
 
-			rc.incomingMIDI.messages = std::addressof(incomingMIDIMessages[0]);
-			rc.incomingMIDI.numMessages = (uint32_t)i;
-			midi.clear();
+				while (i < maxEvents && iter != end)
+				{
+					auto message = *iter++;
+
+					if (message.numBytes < 4)
+						incomingMIDIMessages[i++] = { static_cast<uint32_t> (message.samplePosition),
+													  static_cast<uint8_t> (message.data[0]),
+													  static_cast<uint8_t> (message.data[1]),
+													  static_cast<uint8_t> (message.data[2]) };
+				}
+
+				rc->incomingMIDI.messages = std::addressof(incomingMIDIMessages[0]);
+				rc->incomingMIDI.numMessages = (uint32_t)i;
+			}
+			rcs[i] = *rc.get();
 		}
-
+		midi.clear();
 		updateAnyChangedParameters();
-
-		processor[0].render(rc);
+		for (size_t i = 0; i < MAXVOICES; i++)
+		{
+			processor[i].render(rcs[i]);
+		}
 
 		for (int i = 0; i < outputBuffer.getNumChannels(); ++i)
 			audio.copyFrom(i, 0, outputBuffer, i, 0, numFrames);
@@ -210,7 +219,13 @@ bool _SineSynth::isBusesLayoutSupported(const BusesLayout & layout) const
 }
 
 //==============================================================================
-void _SineSynth::reset() { pimpl->processor[0].reset(); }
+void _SineSynth::reset()
+{
+	for (size_t i = 0; i < MAXVOICES; i++)
+	{
+		pimpl->processor[i].reset();
+	}
+}
 void _SineSynth::prepareToPlay(double sampleRate, int maxBlockSize) { pimpl->prepareToPlay(sampleRate, maxBlockSize); }
 void _SineSynth::releaseResources() { midiKeyboardState.reset(); }
 
