@@ -43,7 +43,7 @@ struct _SineSynth::Pimpl
 	std::atomic<uint32_t> numParametersNeedingUpdate{ 0 };
 
 	juce::AudioBuffer<float> outputBuffer;
-	std::vector<GeneratedClass::MIDIMessage> incomingMIDIMessages;
+	std::array<std::vector<GeneratedClass::MIDIMessage>, MAXVOICES> incomingMIDIMessages;
 
 	struct IDs
 	{
@@ -78,7 +78,10 @@ struct _SineSynth::Pimpl
 			processor[i].init(sampleRate, ++sessionID);
 		}
 
-		incomingMIDIMessages.resize((size_t)maxBlockSize);
+		for (size_t i = 0; i < MAXVOICES; i++)
+		{
+			incomingMIDIMessages[i].resize((size_t)maxBlockSize);
+		}
 		owner.setRateAndBufferSizeDetails(sampleRate, maxBlockSize);
 		owner.midiKeyboardState.reset();
 		outputBuffer.setSize(GeneratedClass::numAudioOutputChannels, maxBlockSize, false, false, true);
@@ -124,21 +127,33 @@ struct _SineSynth::Pimpl
 				auto maxEvents = incomingMIDIMessages.size();
 				auto iter = midi.cbegin();
 				auto end = midi.cend();
-				size_t i = 0;
+				size_t j = 0;
+				bool noteOnFound = false;
 
-				while (i < maxEvents && iter != end)
+				while (j < maxEvents && iter != end)
 				{
 					auto message = *iter++;
-
-					if (message.numBytes < 4)
-						incomingMIDIMessages[i++] = { static_cast<uint32_t> (message.samplePosition),
+					//if (message.getMessage().isNoteOn())
+					//	noteOnFound = true;
+					if (message.numBytes < 4) {
+						if (message.getMessage().isNoteOff()) {}
+						else if (message.getMessage().isNoteOn() && noteOnFound) {}
+						else if (message.getMessage().isNoteOn() && !noteOnFound) {
+							noteOnFound = true;
+							incomingMIDIMessages[i][j++] = { static_cast<uint32_t> (message.samplePosition),
 													  static_cast<uint8_t> (message.data[0]),
 													  static_cast<uint8_t> (message.data[1]),
 													  static_cast<uint8_t> (message.data[2]) };
+						}
+						else incomingMIDIMessages[i][j++] = { static_cast<uint32_t> (message.samplePosition),
+													  static_cast<uint8_t> (message.data[0]),
+													  static_cast<uint8_t> (message.data[1]),
+													  static_cast<uint8_t> (message.data[2]) };
+					}
 				}
 
-				rc->incomingMIDI.messages = std::addressof(incomingMIDIMessages[0]);
-				rc->incomingMIDI.numMessages = (uint32_t)i;
+				rc->incomingMIDI.messages = std::addressof(incomingMIDIMessages[i][0]);
+				rc->incomingMIDI.numMessages = (uint32_t)j;
 			}
 			rcs[i] = *rc.get();
 		}
