@@ -100,8 +100,6 @@ public:
     struct PolyBlep_16___State;
     struct Voice___State;
     struct soul__midi__MPEParser___State;
-    struct soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator__VoiceInfo;
-    struct soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State;
     struct soul__gain__DynamicGain___for__root__SineSynth_gainProcessor___State;
     struct soul__gain__SmoothedGainParameter___for__root__SineSynth_smoothedGain___State;
     struct _State;
@@ -941,20 +939,6 @@ public:
         int32_t m__resumePoint, m__frameCount, m__arrayEntry, m__sessionID, m__processorId;
     };
 
-    struct soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator__VoiceInfo
-    {
-        bool m_active;
-        int32_t m_channel;
-        float m_note;
-        int32_t m_voiceAge;
-    };
-
-    struct soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State
-    {
-        int32_t m__resumePoint, m__frameCount, m__arrayEntry, m__sessionID, m__processorId, m_nextAllocatedVoiceAge, m_nextUnallocatedVoiceAge;
-        FixedArray<soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator__VoiceInfo, 8> m_voiceInfo;
-    };
-
     struct soul__gain__DynamicGain___for__root__SineSynth_gainProcessor___State
     {
         int32_t m__resumePoint, m__frameCount, m__arrayEntry, m__sessionID, m__processorId;
@@ -978,9 +962,8 @@ public:
         _Stream_out_vec_2_f32_512 m__out_audioOut;
         _Event_out_vec_128_f32_512 m__out_logOut;
         LFO___State m_lfo_state;
-        FixedArray<Voice___State, 8> m_voices_state;
+        Voice___State m_voice_state;
         soul__midi__MPEParser___State m_midiParser_state;
-        soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State m_voiceAllocator_state;
         soul__gain__DynamicGain___for__root__SineSynth_gainProcessor___State m_gainProcessor_state;
         soul__gain__SmoothedGainParameter___for__root__SineSynth_smoothedGain___State m_smoothedGain_state;
     };
@@ -1191,7 +1174,7 @@ public:
     int32_t run (_State& _state, int32_t maxFrames) noexcept
     {
         int32_t _2 = {};
-        FixedArray<Voice___IO, 8> _3 = {};
+        Voice___IO _3 = {};
         soul__gain__SmoothedGainParameter___for__root__SineSynth_smoothedGain___IO _4 = {};
         soul__gain__DynamicGain___for__root__SineSynth_gainProcessor___IO _5 = {};
         LFO___IO _6 = {};
@@ -1201,18 +1184,11 @@ public:
         _state.m__frameCount = 0;
         _main_loop_check: { if (! (_state.m__frameCount < _2)) goto _exit; }
         _main_loop_body: { _3 = ZeroInitialiser();
-                           Voice__run (_state.m_voices_state[0], _3[0]);
-                           Voice__run (_state.m_voices_state[1], _3[1]);
-                           Voice__run (_state.m_voices_state[2], _3[2]);
-                           Voice__run (_state.m_voices_state[3], _3[3]);
-                           Voice__run (_state.m_voices_state[4], _3[4]);
-                           Voice__run (_state.m_voices_state[5], _3[5]);
-                           Voice__run (_state.m_voices_state[6], _3[6]);
-                           Voice__run (_state.m_voices_state[7], _3[7]);
+                           Voice__run (_state.m_voice_state, _3);
                            _4 = ZeroInitialiser();
                            soul__gain__SmoothedGainParameter___for__root__SineSynth_smoothedGain__run (_state.m_smoothedGain_state, _4);
                            _5 = ZeroInitialiser();
-                           _5.m__in_in = ((((((_3[0].m__out_audioOut + _3[1].m__out_audioOut) + _3[2].m__out_audioOut) + _3[3].m__out_audioOut) + _3[4].m__out_audioOut) + _3[5].m__out_audioOut) + _3[6].m__out_audioOut) + _3[7].m__out_audioOut;
+                           _5.m__in_in = _3.m__out_audioOut;
                            _5.m__in_gain = _4.m__out_gain;
                            soul__gain__DynamicGain___for__root__SineSynth_gainProcessor__run (_state.m_gainProcessor_state, _5);
                            _writeToStream_struct__Stream_out_vec_2_f32_512 (_state.m__out_audioOut, _state.m__frameCount, _5.m__out_out);
@@ -1233,51 +1209,19 @@ public:
         _state.m_lfo_state.m__sessionID = _state.m__sessionID;
         _state.m_lfo_state.m__processorId = 22;
         LFO___initialise (_state.m_lfo_state);
-        _state.m_voices_state[0].m__arrayEntry = 0;
-        _state.m_voices_state[0].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[0].m__processorId = 23;
-        Voice___initialise (_state.m_voices_state[0]);
-        _state.m_voices_state[1].m__arrayEntry = 1;
-        _state.m_voices_state[1].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[1].m__processorId = 24;
-        Voice___initialise (_state.m_voices_state[1]);
-        _state.m_voices_state[2].m__arrayEntry = 2;
-        _state.m_voices_state[2].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[2].m__processorId = 25;
-        Voice___initialise (_state.m_voices_state[2]);
-        _state.m_voices_state[3].m__arrayEntry = 3;
-        _state.m_voices_state[3].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[3].m__processorId = 26;
-        Voice___initialise (_state.m_voices_state[3]);
-        _state.m_voices_state[4].m__arrayEntry = 4;
-        _state.m_voices_state[4].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[4].m__processorId = 27;
-        Voice___initialise (_state.m_voices_state[4]);
-        _state.m_voices_state[5].m__arrayEntry = 5;
-        _state.m_voices_state[5].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[5].m__processorId = 28;
-        Voice___initialise (_state.m_voices_state[5]);
-        _state.m_voices_state[6].m__arrayEntry = 6;
-        _state.m_voices_state[6].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[6].m__processorId = 29;
-        Voice___initialise (_state.m_voices_state[6]);
-        _state.m_voices_state[7].m__arrayEntry = 7;
-        _state.m_voices_state[7].m__sessionID = _state.m__sessionID;
-        _state.m_voices_state[7].m__processorId = 30;
-        Voice___initialise (_state.m_voices_state[7]);
+        _state.m_voice_state.m__arrayEntry = 0;
+        _state.m_voice_state.m__sessionID = _state.m__sessionID;
+        _state.m_voice_state.m__processorId = 23;
+        Voice___initialise (_state.m_voice_state);
         _state.m_midiParser_state.m__arrayEntry = 0;
         _state.m_midiParser_state.m__sessionID = _state.m__sessionID;
-        _state.m_midiParser_state.m__processorId = 31;
-        _state.m_voiceAllocator_state.m__arrayEntry = 0;
-        _state.m_voiceAllocator_state.m__sessionID = _state.m__sessionID;
-        _state.m_voiceAllocator_state.m__processorId = 32;
-        soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___initialise (_state.m_voiceAllocator_state);
+        _state.m_midiParser_state.m__processorId = 24;
         _state.m_gainProcessor_state.m__arrayEntry = 0;
         _state.m_gainProcessor_state.m__sessionID = _state.m__sessionID;
-        _state.m_gainProcessor_state.m__processorId = 33;
+        _state.m_gainProcessor_state.m__processorId = 25;
         _state.m_smoothedGain_state.m__arrayEntry = 0;
         _state.m_smoothedGain_state.m__sessionID = _state.m__sessionID;
-        _state.m_smoothedGain_state.m__processorId = 34;
+        _state.m_smoothedGain_state.m__processorId = 26;
         soul__gain__SmoothedGainParameter___for__root__SineSynth_smoothedGain___initialise (_state.m_smoothedGain_state);
     }
 
@@ -1293,86 +1237,37 @@ public:
 
     void _addInputEvent_ampAttack_f32 (_State& _state, const float& event) noexcept
     {
-        Voice___ampAttack_f32 (_state.m_voices_state[0], event);
-        Voice___ampAttack_f32 (_state.m_voices_state[1], event);
-        Voice___ampAttack_f32 (_state.m_voices_state[2], event);
-        Voice___ampAttack_f32 (_state.m_voices_state[3], event);
-        Voice___ampAttack_f32 (_state.m_voices_state[4], event);
-        Voice___ampAttack_f32 (_state.m_voices_state[5], event);
-        Voice___ampAttack_f32 (_state.m_voices_state[6], event);
-        Voice___ampAttack_f32 (_state.m_voices_state[7], event);
+        Voice___ampAttack_f32 (_state.m_voice_state, event);
     }
 
     void _addInputEvent_ampDecay_f32 (_State& _state, const float& event) noexcept
     {
-        Voice___ampDecay_f32 (_state.m_voices_state[0], event);
-        Voice___ampDecay_f32 (_state.m_voices_state[1], event);
-        Voice___ampDecay_f32 (_state.m_voices_state[2], event);
-        Voice___ampDecay_f32 (_state.m_voices_state[3], event);
-        Voice___ampDecay_f32 (_state.m_voices_state[4], event);
-        Voice___ampDecay_f32 (_state.m_voices_state[5], event);
-        Voice___ampDecay_f32 (_state.m_voices_state[6], event);
-        Voice___ampDecay_f32 (_state.m_voices_state[7], event);
+        Voice___ampDecay_f32 (_state.m_voice_state, event);
     }
 
     void _addInputEvent_ampSustain_f32 (_State& _state, const float& event) noexcept
     {
-        Voice___ampSustain_f32 (_state.m_voices_state[0], event);
-        Voice___ampSustain_f32 (_state.m_voices_state[1], event);
-        Voice___ampSustain_f32 (_state.m_voices_state[2], event);
-        Voice___ampSustain_f32 (_state.m_voices_state[3], event);
-        Voice___ampSustain_f32 (_state.m_voices_state[4], event);
-        Voice___ampSustain_f32 (_state.m_voices_state[5], event);
-        Voice___ampSustain_f32 (_state.m_voices_state[6], event);
-        Voice___ampSustain_f32 (_state.m_voices_state[7], event);
+        Voice___ampSustain_f32 (_state.m_voice_state, event);
     }
 
     void _addInputEvent_ampRelease_f32 (_State& _state, const float& event) noexcept
     {
-        Voice___ampRelease_f32 (_state.m_voices_state[0], event);
-        Voice___ampRelease_f32 (_state.m_voices_state[1], event);
-        Voice___ampRelease_f32 (_state.m_voices_state[2], event);
-        Voice___ampRelease_f32 (_state.m_voices_state[3], event);
-        Voice___ampRelease_f32 (_state.m_voices_state[4], event);
-        Voice___ampRelease_f32 (_state.m_voices_state[5], event);
-        Voice___ampRelease_f32 (_state.m_voices_state[6], event);
-        Voice___ampRelease_f32 (_state.m_voices_state[7], event);
+        Voice___ampRelease_f32 (_state.m_voice_state, event);
     }
 
     void _addInputEvent_detune_f32 (_State& _state, const float& event) noexcept
     {
-        Voice___detune_f32 (_state.m_voices_state[0], event);
-        Voice___detune_f32 (_state.m_voices_state[1], event);
-        Voice___detune_f32 (_state.m_voices_state[2], event);
-        Voice___detune_f32 (_state.m_voices_state[3], event);
-        Voice___detune_f32 (_state.m_voices_state[4], event);
-        Voice___detune_f32 (_state.m_voices_state[5], event);
-        Voice___detune_f32 (_state.m_voices_state[6], event);
-        Voice___detune_f32 (_state.m_voices_state[7], event);
+        Voice___detune_f32 (_state.m_voice_state, event);
     }
 
     void _addInputEvent_voiceCount_f32 (_State& _state, const float& event) noexcept
     {
-        Voice___voiceCountIn_f32 (_state.m_voices_state[0], event);
-        Voice___voiceCountIn_f32 (_state.m_voices_state[1], event);
-        Voice___voiceCountIn_f32 (_state.m_voices_state[2], event);
-        Voice___voiceCountIn_f32 (_state.m_voices_state[3], event);
-        Voice___voiceCountIn_f32 (_state.m_voices_state[4], event);
-        Voice___voiceCountIn_f32 (_state.m_voices_state[5], event);
-        Voice___voiceCountIn_f32 (_state.m_voices_state[6], event);
-        Voice___voiceCountIn_f32 (_state.m_voices_state[7], event);
+        Voice___voiceCountIn_f32 (_state.m_voice_state, event);
     }
 
     void _addInputEvent_cutoff_f32 (_State& _state, const float& event) noexcept
     {
-        Voice___cutoffIn_f32 (_state.m_voices_state[0], event);
-        Voice___cutoffIn_f32 (_state.m_voices_state[1], event);
-        Voice___cutoffIn_f32 (_state.m_voices_state[2], event);
-        Voice___cutoffIn_f32 (_state.m_voices_state[3], event);
-        Voice___cutoffIn_f32 (_state.m_voices_state[4], event);
-        Voice___cutoffIn_f32 (_state.m_voices_state[5], event);
-        Voice___cutoffIn_f32 (_state.m_voices_state[6], event);
-        Voice___cutoffIn_f32 (_state.m_voices_state[7], event);
+        Voice___cutoffIn_f32 (_state.m_voice_state, event);
     }
 
     FixedArray<float, 512>& _getInputFrameArrayRef_lfo (_State& _state) noexcept
@@ -1786,393 +1681,31 @@ public:
     void soul__midi__MPEParser___eventOut_struct_NoteOff (soul__midi__MPEParser___State& _state, soul__note_events__NoteOff value) noexcept
     {
         auto& _2 = _stateUpCast (_state);
-        soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___eventIn_struct_NoteOff (_2.m_voiceAllocator_state, value);
+        Voice___eventIn_struct_NoteOff (_2.m_voice_state, value);
     }
 
     void soul__midi__MPEParser___eventOut_struct_NoteOn (soul__midi__MPEParser___State& _state, soul__note_events__NoteOn value) noexcept
     {
         auto& _2 = _stateUpCast (_state);
-        soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___eventIn_struct_NoteOn (_2.m_voiceAllocator_state, value);
+        Voice___eventIn_struct_NoteOn (_2.m_voice_state, value);
     }
 
     void soul__midi__MPEParser___eventOut_struct_Slide (soul__midi__MPEParser___State& _state, soul__note_events__Slide value) noexcept
     {
         auto& _2 = _stateUpCast (_state);
-        soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___eventIn_struct_Slide (_2.m_voiceAllocator_state, value);
+        Voice___eventIn_struct_Slide (_2.m_voice_state, value);
     }
 
     void soul__midi__MPEParser___eventOut_struct_Pressure (soul__midi__MPEParser___State& _state, soul__note_events__Pressure value) noexcept
     {
         auto& _2 = _stateUpCast (_state);
-        soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___eventIn_struct_Pressure (_2.m_voiceAllocator_state, value);
+        Voice___eventIn_struct_Pressure (_2.m_voice_state, value);
     }
 
     void soul__midi__MPEParser___eventOut_struct_PitchBend (soul__midi__MPEParser___State& _state, soul__note_events__PitchBend value) noexcept
     {
         auto& _2 = _stateUpCast (_state);
-        soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___eventIn_struct_PitchBend (_2.m_voiceAllocator_state, value);
-    }
-
-    //==============================================================================
-    static _State& _stateUpCast (soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State& s)
-    {
-        auto offset = static_cast<int32_t> (offsetof (_State, m_voiceAllocator_state));
-        return *reinterpret_cast<_State*> (reinterpret_cast<char*> (&s) - offset);
-    }
-
-    //==============================================================================
-    void soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___eventIn_struct_NoteOn (soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State& _state, soul__note_events__NoteOn e) noexcept
-    {
-        int32_t allocatedVoice = {};
-        int32_t allocatedVoiceAge = {}, i = {}, _2 = {}, _3 = {};
-        int32_t age = {};
-        soul__note_events__NoteOff noteOff = {};
-
-        allocatedVoice = 0;
-        allocatedVoiceAge = _state.m_voiceInfo[allocatedVoice].m_voiceAge;
-        i = 1;
-        _loop_0: { if (! (i < 8)) goto _break_0; }
-        _body_0: { age = static_cast<int32_t> (_state.m_voiceInfo[_intrin_wrap (static_cast<int32_t> (i), 8) & 7].m_voiceAge);
-                   if (! (age < static_cast<int32_t> (allocatedVoiceAge))) goto _cont_0;
-        }
-        _if_0: { allocatedVoiceAge = static_cast<int32_t> (age);
-                 allocatedVoice = _intrin_wrap (static_cast<int32_t> (i), 8) & 7;
-        }
-        _cont_0: { _2 = i;
-                   i = _2 + 1;
-                   goto _loop_0;
-        }
-        _break_0: { soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___voiceEventOut_struct_NoteOn (_state, static_cast<int32_t> (allocatedVoice) & 7, e);
-                    if (! _state.m_voiceInfo[allocatedVoice].m_active) goto _ifnot_1;
-        }
-        _if_1: { noteOff = ZeroInitialiser();
-                 noteOff.m_channel = _state.m_voiceInfo[allocatedVoice].m_channel;
-                 noteOff.m_note = _state.m_voiceInfo[allocatedVoice].m_note;
-                 soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___voiceEventOut_struct_NoteOff (_state, static_cast<int32_t> (allocatedVoice) & 7, noteOff);
-        }
-        _ifnot_1: { _state.m_voiceInfo[allocatedVoice].m_active = true;
-                    _state.m_voiceInfo[allocatedVoice].m_channel = e.m_channel;
-                    _state.m_voiceInfo[allocatedVoice].m_note = e.m_note;
-                    _3 = _state.m_nextAllocatedVoiceAge;
-                    _state.m_nextAllocatedVoiceAge = _3 + 1;
-                    _state.m_voiceInfo[allocatedVoice].m_voiceAge = _3;
-        }
-    }
-
-    void soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___eventIn_struct_NoteOff (soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State& _state, soul__note_events__NoteOff e) noexcept
-    {
-        int32_t voice = {}, _2 = {};
-        int32_t counter_1 = {};
-        bool _3 = {}, _4 = {}, _5 = {}, _T3 = {};
-        int32_t _6 = {};
-
-        voice = 0;
-        counter_1 = 8;
-        _loop_1: { if (! (counter_1 > 0)) goto _break_1; }
-        _body_1: { if (! (_state.m_voiceInfo[voice].m_channel == e.m_channel)) goto _ternary_false_3; }
-        _ternary_true_3: { _3 = _state.m_voiceInfo[voice].m_note == e.m_note;
-                           _T3 = _3;
-                           goto _ternary_end_3;
-        }
-        _ternary_false_3: { _4 = false;
-                            _T3 = _4;
-        }
-        _ternary_end_3: { _5 = _T3;
-                          if (! _5) goto _ifnot_2;
-        }
-        _if_2: { _state.m_voiceInfo[voice].m_active = false;
-                 _6 = _state.m_nextUnallocatedVoiceAge;
-                 _state.m_nextUnallocatedVoiceAge = _6 + 1;
-                 _state.m_voiceInfo[voice].m_voiceAge = _6;
-                 soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___voiceEventOut_struct_NoteOff (_state, static_cast<int32_t> (voice) & 7, e);
-        }
-        _ifnot_2: { _2 = voice;
-                    voice = (_2 + 1) & 7;
-                    counter_1 = counter_1 - 1;
-                    goto _loop_1;
-        }
-        _break_1: {}
-    }
-
-    void soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___eventIn_struct_PitchBend (soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State& _state, soul__note_events__PitchBend e) noexcept
-    {
-        int32_t voice = {}, _2 = {};
-        int32_t counter_2 = {};
-
-        voice = 0;
-        counter_2 = 8;
-        _loop_2: { if (! (counter_2 > 0)) goto _break_2; }
-        _body_2: { if (! (_state.m_voiceInfo[voice].m_channel == e.m_channel)) goto _ifnot_4; }
-        _if_4: { soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___voiceEventOut_struct_PitchBend (_state, static_cast<int32_t> (voice) & 7, e); }
-        _ifnot_4: { _2 = voice;
-                    voice = (_2 + 1) & 7;
-                    counter_2 = counter_2 - 1;
-                    goto _loop_2;
-        }
-        _break_2: {}
-    }
-
-    void soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___eventIn_struct_Pressure (soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State& _state, soul__note_events__Pressure p) noexcept
-    {
-        int32_t voice = {}, _2 = {};
-        int32_t counter_3 = {};
-
-        voice = 0;
-        counter_3 = 8;
-        _loop_3: { if (! (counter_3 > 0)) goto _break_3; }
-        _body_3: { if (! (_state.m_voiceInfo[voice].m_channel == p.m_channel)) goto _ifnot_5; }
-        _if_5: { soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___voiceEventOut_struct_Pressure (_state, static_cast<int32_t> (voice) & 7, p); }
-        _ifnot_5: { _2 = voice;
-                    voice = (_2 + 1) & 7;
-                    counter_3 = counter_3 - 1;
-                    goto _loop_3;
-        }
-        _break_3: {}
-    }
-
-    void soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___eventIn_struct_Slide (soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State& _state, soul__note_events__Slide s) noexcept
-    {
-        int32_t voice = {}, _2 = {};
-        int32_t counter_4 = {};
-
-        voice = 0;
-        counter_4 = 8;
-        _loop_4: { if (! (counter_4 > 0)) goto _break_4; }
-        _body_4: { if (! (_state.m_voiceInfo[voice].m_channel == s.m_channel)) goto _ifnot_6; }
-        _if_6: { soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___voiceEventOut_struct_Slide (_state, static_cast<int32_t> (voice) & 7, s); }
-        _ifnot_6: { _2 = voice;
-                    voice = (_2 + 1) & 7;
-                    counter_4 = counter_4 - 1;
-                    goto _loop_4;
-        }
-        _break_4: {}
-    }
-
-    void soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___initialise (soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State& _state) noexcept
-    {
-        _state.m_nextAllocatedVoiceAge = 1000000000;
-        _state.m_nextUnallocatedVoiceAge = 1;
-        _state.m_voiceInfo = ZeroInitialiser();
-    }
-
-    void soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___voiceEventOut_struct_NoteOn (soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State& _state, int32_t element, soul__note_events__NoteOn value) noexcept
-    {
-        if (element == 0) goto _element_0;
-        _block_1: { if (element == 1) goto _element_1; }
-        _block_2: { if (element == 2) goto _element_2; }
-        _block_3: { if (element == 3) goto _element_3; }
-        _block_4: { if (element == 4) goto _element_4; }
-        _block_5: { if (element == 5) goto _element_5; }
-        _block_6: { if (element == 6) goto _element_6; }
-        _block_7: { if (element == 7) goto _element_7; }
-        _block_8: { return; }
-        _element_0: { auto& _2 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOn (_2.m_voices_state[0], value);
-                      return;
-        }
-        _element_1: { auto& _3 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOn (_3.m_voices_state[1], value);
-                      return;
-        }
-        _element_2: { auto& _4 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOn (_4.m_voices_state[2], value);
-                      return;
-        }
-        _element_3: { auto& _5 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOn (_5.m_voices_state[3], value);
-                      return;
-        }
-        _element_4: { auto& _6 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOn (_6.m_voices_state[4], value);
-                      return;
-        }
-        _element_5: { auto& _7 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOn (_7.m_voices_state[5], value);
-                      return;
-        }
-        _element_6: { auto& _8 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOn (_8.m_voices_state[6], value);
-                      return;
-        }
-        _element_7: { auto& _9 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOn (_9.m_voices_state[7], value);
-        }
-    }
-
-    void soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___voiceEventOut_struct_NoteOff (soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State& _state, int32_t element, soul__note_events__NoteOff value) noexcept
-    {
-        if (element == 0) goto _element_0;
-        _block_1: { if (element == 1) goto _element_1; }
-        _block_2: { if (element == 2) goto _element_2; }
-        _block_3: { if (element == 3) goto _element_3; }
-        _block_4: { if (element == 4) goto _element_4; }
-        _block_5: { if (element == 5) goto _element_5; }
-        _block_6: { if (element == 6) goto _element_6; }
-        _block_7: { if (element == 7) goto _element_7; }
-        _block_8: { return; }
-        _element_0: { auto& _2 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOff (_2.m_voices_state[0], value);
-                      return;
-        }
-        _element_1: { auto& _3 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOff (_3.m_voices_state[1], value);
-                      return;
-        }
-        _element_2: { auto& _4 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOff (_4.m_voices_state[2], value);
-                      return;
-        }
-        _element_3: { auto& _5 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOff (_5.m_voices_state[3], value);
-                      return;
-        }
-        _element_4: { auto& _6 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOff (_6.m_voices_state[4], value);
-                      return;
-        }
-        _element_5: { auto& _7 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOff (_7.m_voices_state[5], value);
-                      return;
-        }
-        _element_6: { auto& _8 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOff (_8.m_voices_state[6], value);
-                      return;
-        }
-        _element_7: { auto& _9 = _stateUpCast (_state);
-                      Voice___eventIn_struct_NoteOff (_9.m_voices_state[7], value);
-        }
-    }
-
-    void soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___voiceEventOut_struct_PitchBend (soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State& _state, int32_t element, soul__note_events__PitchBend value) noexcept
-    {
-        if (element == 0) goto _element_0;
-        _block_1: { if (element == 1) goto _element_1; }
-        _block_2: { if (element == 2) goto _element_2; }
-        _block_3: { if (element == 3) goto _element_3; }
-        _block_4: { if (element == 4) goto _element_4; }
-        _block_5: { if (element == 5) goto _element_5; }
-        _block_6: { if (element == 6) goto _element_6; }
-        _block_7: { if (element == 7) goto _element_7; }
-        _block_8: { return; }
-        _element_0: { auto& _2 = _stateUpCast (_state);
-                      Voice___eventIn_struct_PitchBend (_2.m_voices_state[0], value);
-                      return;
-        }
-        _element_1: { auto& _3 = _stateUpCast (_state);
-                      Voice___eventIn_struct_PitchBend (_3.m_voices_state[1], value);
-                      return;
-        }
-        _element_2: { auto& _4 = _stateUpCast (_state);
-                      Voice___eventIn_struct_PitchBend (_4.m_voices_state[2], value);
-                      return;
-        }
-        _element_3: { auto& _5 = _stateUpCast (_state);
-                      Voice___eventIn_struct_PitchBend (_5.m_voices_state[3], value);
-                      return;
-        }
-        _element_4: { auto& _6 = _stateUpCast (_state);
-                      Voice___eventIn_struct_PitchBend (_6.m_voices_state[4], value);
-                      return;
-        }
-        _element_5: { auto& _7 = _stateUpCast (_state);
-                      Voice___eventIn_struct_PitchBend (_7.m_voices_state[5], value);
-                      return;
-        }
-        _element_6: { auto& _8 = _stateUpCast (_state);
-                      Voice___eventIn_struct_PitchBend (_8.m_voices_state[6], value);
-                      return;
-        }
-        _element_7: { auto& _9 = _stateUpCast (_state);
-                      Voice___eventIn_struct_PitchBend (_9.m_voices_state[7], value);
-        }
-    }
-
-    void soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___voiceEventOut_struct_Pressure (soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State& _state, int32_t element, soul__note_events__Pressure value) noexcept
-    {
-        if (element == 0) goto _element_0;
-        _block_1: { if (element == 1) goto _element_1; }
-        _block_2: { if (element == 2) goto _element_2; }
-        _block_3: { if (element == 3) goto _element_3; }
-        _block_4: { if (element == 4) goto _element_4; }
-        _block_5: { if (element == 5) goto _element_5; }
-        _block_6: { if (element == 6) goto _element_6; }
-        _block_7: { if (element == 7) goto _element_7; }
-        _block_8: { return; }
-        _element_0: { auto& _2 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Pressure (_2.m_voices_state[0], value);
-                      return;
-        }
-        _element_1: { auto& _3 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Pressure (_3.m_voices_state[1], value);
-                      return;
-        }
-        _element_2: { auto& _4 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Pressure (_4.m_voices_state[2], value);
-                      return;
-        }
-        _element_3: { auto& _5 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Pressure (_5.m_voices_state[3], value);
-                      return;
-        }
-        _element_4: { auto& _6 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Pressure (_6.m_voices_state[4], value);
-                      return;
-        }
-        _element_5: { auto& _7 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Pressure (_7.m_voices_state[5], value);
-                      return;
-        }
-        _element_6: { auto& _8 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Pressure (_8.m_voices_state[6], value);
-                      return;
-        }
-        _element_7: { auto& _9 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Pressure (_9.m_voices_state[7], value);
-        }
-    }
-
-    void soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___voiceEventOut_struct_Slide (soul__voice_allocators__Basic___for__root__SineSynth_voiceAllocator___State& _state, int32_t element, soul__note_events__Slide value) noexcept
-    {
-        if (element == 0) goto _element_0;
-        _block_1: { if (element == 1) goto _element_1; }
-        _block_2: { if (element == 2) goto _element_2; }
-        _block_3: { if (element == 3) goto _element_3; }
-        _block_4: { if (element == 4) goto _element_4; }
-        _block_5: { if (element == 5) goto _element_5; }
-        _block_6: { if (element == 6) goto _element_6; }
-        _block_7: { if (element == 7) goto _element_7; }
-        _block_8: { return; }
-        _element_0: { auto& _2 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Slide (_2.m_voices_state[0], value);
-                      return;
-        }
-        _element_1: { auto& _3 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Slide (_3.m_voices_state[1], value);
-                      return;
-        }
-        _element_2: { auto& _4 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Slide (_4.m_voices_state[2], value);
-                      return;
-        }
-        _element_3: { auto& _5 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Slide (_5.m_voices_state[3], value);
-                      return;
-        }
-        _element_4: { auto& _6 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Slide (_6.m_voices_state[4], value);
-                      return;
-        }
-        _element_5: { auto& _7 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Slide (_7.m_voices_state[5], value);
-                      return;
-        }
-        _element_6: { auto& _8 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Slide (_8.m_voices_state[6], value);
-                      return;
-        }
-        _element_7: { auto& _9 = _stateUpCast (_state);
-                      Voice___eventIn_struct_Slide (_9.m_voices_state[7], value);
-        }
+        Voice___eventIn_struct_PitchBend (_2.m_voice_state, value);
     }
 
     //==============================================================================

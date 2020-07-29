@@ -19,7 +19,8 @@ DefaultpluginAudioProcessor::DefaultpluginAudioProcessor()
 
 void DefaultpluginAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer, juce::MidiBuffer& midiMessages)
 {
-	getPlayHead()->getCurrentPosition(playHead);
+	AudioPlayHead* p = getPlayHead();
+	if (p != nullptr) p->getCurrentPosition(playHead);
 	pluginInstance->processBlock(buffer, midiMessages);
 }
 

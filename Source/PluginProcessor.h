@@ -22,7 +22,7 @@
 
 //SineSynth::pimpl
 
-static const int MAXVOICES = 1;
+//static const int MAXVOICES = 1;
 //static const int TEMPO = 128;
 
 using namespace juce;

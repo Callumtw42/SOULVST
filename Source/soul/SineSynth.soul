@@ -51,9 +51,9 @@ graph SineSynth  [[ main ]]
     let
     {
         smoothedGain = soul::gain::SmoothedGainParameter (0.01f);
-        voices = Voice[8];
+        voice = Voice;
         midiParser = soul::midi::MPEParser;
-        voiceAllocator = soul::voice_allocators::Basic(8);
+        // voiceAllocator = soul::voice_allocators::Basic(8);
         gainProcessor = soul::gain::DynamicGain (float<2>);
         logger = Logger;
         lfo = LFO;
@@ -62,19 +62,19 @@ graph SineSynth  [[ main ]]
     connection
     {
         lfo.out -> logOut; 
-        cutoff          -> voices.cutoffIn;
-        detune  -> voices.detune;
-        voiceCount -> voices.voiceCountIn;
+        cutoff          -> voice.cutoffIn;
+        detune  -> voice.detune;
+        voiceCount -> voice.voiceCountIn;
 
-        ampAttack -> voices.ampAttack;
-        ampDecay -> voices.ampDecay;
-        ampSustain -> voices.ampSustain;
-        ampRelease -> voices.ampRelease;
+        ampAttack -> voice.ampAttack;
+        ampDecay -> voice.ampDecay;
+        ampSustain -> voice.ampSustain;
+        ampRelease -> voice.ampRelease;
 
         midiIn -> midiParser.parseMIDI;
-        midiParser.eventOut -> voiceAllocator.eventIn;
-        voiceAllocator.voiceEventOut -> voices.eventIn;
-        voices.audioOut -> gainProcessor.in; 
+        midiParser.eventOut -> voice.eventIn; 
+        // voiceAllocator.voiceEventOut -> voice.eventIn;
+        voice.audioOut -> gainProcessor.in; 
         smoothedGain.gain -> gainProcessor.gain; 
         gainProcessor.out -> audioOut; 
     }

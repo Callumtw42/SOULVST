@@ -38,7 +38,7 @@ struct _SineSynth::Pimpl
 	using GeneratedClass = SineSynth;
 
 	_SineSynth& owner;
-	GeneratedClass processor;
+	std::array<GeneratedClass, MAXVOICES> processor;
 	int sessionID = 0;
 	std::atomic<uint32_t> numParametersNeedingUpdate{ 0 };
 
@@ -73,7 +73,7 @@ struct _SineSynth::Pimpl
 
 	void prepareToPlay(double sampleRate, int maxBlockSize)
 	{
-		processor.init(sampleRate, ++sessionID);
+		processor[0].init(sampleRate, ++sessionID);
 
 		incomingMIDIMessages.resize((size_t)maxBlockSize);
 		owner.setRateAndBufferSizeDetails(sampleRate, maxBlockSize);
@@ -138,7 +138,7 @@ struct _SineSynth::Pimpl
 
 		updateAnyChangedParameters();
 
-		processor.render(rc);
+		processor[0].render(rc);
 
 		for (int i = 0; i < outputBuffer.getNumChannels(); ++i)
 			audio.copyFrom(i, 0, outputBuffer, i, 0, numFrames);
@@ -189,8 +189,8 @@ juce::StringArray _SineSynth::getAlternateDisplayNames() const
 
 bool _SineSynth::isBusesLayoutSupported(const BusesLayout & layout) const
 {
-	auto processorInputBuses = pimpl->processor.getInputBuses();
-	auto processorOutputBuses = pimpl->processor.getOutputBuses();
+	auto processorInputBuses = pimpl->processor[0].getInputBuses();
+	auto processorOutputBuses = pimpl->processor[0].getOutputBuses();
 
 	if (layout.inputBuses.size() != (int)processorInputBuses.size())
 		return false;
@@ -210,7 +210,7 @@ bool _SineSynth::isBusesLayoutSupported(const BusesLayout & layout) const
 }
 
 //==============================================================================
-void _SineSynth::reset() { pimpl->processor.reset(); }
+void _SineSynth::reset() { pimpl->processor[0].reset(); }
 void _SineSynth::prepareToPlay(double sampleRate, int maxBlockSize) { pimpl->prepareToPlay(sampleRate, maxBlockSize); }
 void _SineSynth::releaseResources() { midiKeyboardState.reset(); }
 
@@ -246,33 +246,33 @@ struct _SineSynth::Parameter : public juce::AudioProcessorParameterWithID
 {
 	Parameter(_SineSynth& owner, const Pimpl::GeneratedClass::ParameterProperties& p)
 		: AudioProcessorParameterWithID(p.UID, p.name),
-		properties(p),
-		textValues(parseTextValues(properties.textValues)),
-		range(properties.minValue, properties.maxValue, properties.step),
+		textValues(parseTextValues(p.textValues)),
+		range(p.minValue, p.maxValue, p.step),
 		numDecimalPlaces(getNumDecimalPlaces(range)),
 		numParametersNeedingUpdate(owner.pimpl->numParametersNeedingUpdate)
 	{
-		currentFullRangeValue = properties.initialValue;
+		properties[0] = p;
+		currentFullRangeValue = properties[0].initialValue;
 	}
 
 	float currentFullRangeValue = 0;
 	bool needsUpdate = false;
 
-	Pimpl::GeneratedClass::ParameterProperties properties;
+	std::array<Pimpl::GeneratedClass::ParameterProperties, MAXVOICES> properties;
 	const juce::StringArray textValues;
 	const juce::NormalisableRange<float> range;
 	const int numDecimalPlaces;
 	std::atomic<uint32_t>& numParametersNeedingUpdate;
 
 	juce::String getName(int maximumStringLength) const override { return name.substring(0, maximumStringLength); }
-	juce::String getLabel() const override { return properties.unit; }
+	juce::String getLabel() const override { return properties[0].unit; }
 	Category getCategory() const override { return genericParameter; }
 	bool isDiscrete() const override { return range.interval != 0; }
-	bool isBoolean() const override { return properties.isBoolean; }
-	bool isAutomatable() const override { return properties.isAutomatable; }
+	bool isBoolean() const override { return properties[0].isBoolean; }
+	bool isAutomatable() const override { return properties[0].isAutomatable; }
 	bool isMetaParameter() const override { return false; }
 	juce::StringArray getAllValueStrings() const override { return textValues; }
-	float getDefaultValue() const override { return convertTo0to1(properties.initialValue); }
+	float getDefaultValue() const override { return convertTo0to1(properties[0].initialValue); }
 	float getValue() const override { return convertTo0to1(currentFullRangeValue); }
 	void setValue(float newValue) override { setFullRangeValue(convertFrom0to1(newValue)); }
 
@@ -292,9 +292,9 @@ struct _SineSynth::Parameter : public juce::AudioProcessorParameterWithID
 		}
 	}
 
-	void sendUpdate()
+	void sendUpdate(int index)
 	{
-		properties.setValue(currentFullRangeValue);
+		properties[index].setValue(currentFullRangeValue);
 	}
 
 	bool sendUpdateIfNeeded()
@@ -303,7 +303,10 @@ struct _SineSynth::Parameter : public juce::AudioProcessorParameterWithID
 			return false;
 
 		needsUpdate = false;
-		sendUpdate();
+		for (size_t i = 0; i < MAXVOICES; i++)
+		{
+			sendUpdate(i);
+		}
 		return true;
 	}
 
@@ -436,7 +439,10 @@ private:
 void _SineSynth::Pimpl::updateAllParameters()
 {
 	for (auto& p : owner.allParameters)
-		p->sendUpdate();
+		for (size_t i = 0; i < MAXVOICES; i++)
+		{
+			p->sendUpdate(i);
+		}
 }
 
 void _SineSynth::Pimpl::updateAnyChangedParameters()
@@ -457,7 +463,7 @@ void _SineSynth::refreshParameterList()
 
 		void addParam(std::unique_ptr<Parameter> newParam)
 		{
-			juce::String group(newParam->properties.group);
+			juce::String group(newParam->properties[0].group);
 
 			if (group.isNotEmpty())
 				getOrCreateGroup(tree, {}, group).addChild(std::move(newParam));
@@ -492,16 +498,26 @@ void _SineSynth::refreshParameterList()
 	};
 
 	ParameterTreeGroupBuilder treeBuilder;
-
-	for (auto& p : pimpl->processor.getParameterProperties())
+	for (size_t i = 0; i < MAXVOICES; i++)
 	{
-		auto param = std::make_unique<Parameter>(*this, p);
-		allParameters.push_back(param.get());
+		for (auto& p : pimpl->processor[i].getParameterProperties())
+		{
+			if (i == 0)
+			{
+				auto mainParam = std::make_unique<Parameter>(*this, p);
+				mainParams.set(p.name, mainParam.get());
+				allParameters.push_back(mainParam.get());
 
-		if (p.isHidden)
-			hiddenParams.push_back(std::move(param));
-		else
-			treeBuilder.addParam(std::move(param));
+				if (p.isHidden)
+					hiddenParams.push_back(std::move(mainParam));
+				else
+					treeBuilder.addParam(std::move(mainParam));
+			}
+			else
+			{
+				mainParams.getReference(p.name)->properties[i] = p;
+			}
+		}
 	}
 
 	setParameterTree(std::move(treeBuilder.tree));
@@ -540,7 +556,10 @@ juce::ValueTree _SineSynth::createCurrentState()
 	for (auto& p : allParameters)
 	{
 		juce::ValueTree param(pimpl->ids.PARAM);
-		param.setProperty(pimpl->ids.id, p->properties.UID, nullptr);
+		for (size_t i = 0; i < MAXVOICES; i++)
+		{
+			param.setProperty(pimpl->ids.id, p->properties[i].UID, nullptr);
+		}
 		param.setProperty(pimpl->ids.value, p->currentFullRangeValue, nullptr);
 		state.addChild(param, -1, nullptr);
 	}
@@ -563,7 +582,7 @@ void _SineSynth::applyLastState()
 {
 	if (lastValidState.hasType(pimpl->ids.UID))
 		for (auto& p : allParameters)
-			if (auto* value = lastValidState.getChildWithProperty(pimpl->ids.id, p->properties.UID).getPropertyPointer(pimpl->ids.value))
+			if (auto* value = lastValidState.getChildWithProperty(pimpl->ids.id, p->properties[0].UID).getPropertyPointer(pimpl->ids.value))
 				p->setFullRangeValue(*value);
 }
 
