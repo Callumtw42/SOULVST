@@ -39,7 +39,6 @@ struct _SineSynth::Pimpl
 	_SineSynth& owner;
 	int sessionID = 0;
 	std::atomic<uint32_t> numParametersNeedingUpdate{ 0 };
-	int counter = 0;
 	int notesOn = 0;
 
 	struct Voice
@@ -134,10 +133,6 @@ struct _SineSynth::Pimpl
 
 		int numSamples = audio.getNumSamples();
 		std::array<GeneratedClass::RenderContext<float>, MAXVOICES> rcs;
-		//voices[0].incomingMIDIMessages[0] = MidiMessage::note
-		//std::array<int, MAXVOICES> sizes;
-		//sizes.fill(0);
-
 
 		for (size_t i = 0; i < MAXVOICES; i++)
 		{
@@ -175,7 +170,6 @@ struct _SineSynth::Pimpl
 				auto message = *iter++;
 				if (message.numBytes < 4)
 				{
-
 					for (size_t i = 0; i < MAXVOICES; i++)
 					{
 						voices[i].incomingMIDIMessages[j] = midiBlank(message);
@@ -184,14 +178,12 @@ struct _SineSynth::Pimpl
 					if (message.getMessage().isNoteOn())
 					{
 						int note = message.getMessage().getNoteNumber();
-						Voice* voice = &voices[counter % MAXVOICES];
+						Voice* voice = &voices[notesOn % MAXVOICES];
 						std::vector<SineSynth::MIDIMessage>* incBuffer = &voice->incomingMIDIMessages;
-						incBuffer->at(j) = midiBytes(message);						//sizes[counter % MAXVOICES]++;
+						incBuffer->at(j) = midiBytes(message);
 						voice->numMessages++;
 						voice->noteOn = note;
-						counter++;
 						notesOn++;
-						//notesOn.set(note, incBuffer);
 					}
 					else if (message.getMessage().isNoteOff())
 					{
@@ -202,12 +194,12 @@ struct _SineSynth::Pimpl
 						{
 							if (voices[i].noteOn == note)
 							{
+								notesOn--;
 								voice = &voices[i];
 								incBuffer = &voice->incomingMIDIMessages;
-								incBuffer->at(j) = midiBytes(message);								//notesOn.remove(note);
+								incBuffer->at(j) = midiBytes(message);
 								voice->noteOn = -1;
 								voice->numMessages++;
-								notesOn--;
 								break;
 							}
 						}
@@ -222,16 +214,12 @@ struct _SineSynth::Pimpl
 					}
 					j++;
 				}
-
 			}
 			for (size_t i = 0; i < MAXVOICES; i++)
 			{
 				rcs[i].incomingMIDI.messages = std::addressof(voices[i].incomingMIDIMessages[0]);
-				//rcs[i].incomingMIDI.numMessages = (uint32_t)j;
 				rcs[i].incomingMIDI.numMessages = voices[i].numMessages;
-
 			}
-
 		}
 
 		midi.clear();

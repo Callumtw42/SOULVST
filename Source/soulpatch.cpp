@@ -2301,7 +2301,8 @@ public:
         _break_0: { this_.m_activeNotes = writePoint;
                     if (! (static_cast<int32_t> (this_.m_activeNotes) > 0)) goto _ifnot_3;
         }
-        _if_3: { this_.m_currentNote = this_.m_noteArray[(this_.m_activeNotes - 1) & 15].m_note;
+        _if_3: { this_.m_activeNotes = 0;
+                 this_.m_currentNote = this_.m_noteArray[(this_.m_activeNotes - 1) & 15].m_note;
                  this_.m_currentBendSemitones = this_.m_noteArray[(this_.m_activeNotes - 1) & 15].m_bendSemitones;
         }
         _ifnot_3: {}

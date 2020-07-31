@@ -75,6 +75,7 @@ namespace NoteHandler
         // Update the current active note
         if (int(this.activeNotes) > 0)
         {
+            this.activeNotes = float(0);
             this.currentNote = this.noteArray[this.activeNotes - 1].note;
             this.currentBendSemitones = this.noteArray[this.activeNotes - 1].bendSemitones;
         }
