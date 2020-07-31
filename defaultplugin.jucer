@@ -7,18 +7,11 @@
               jucerFormatVersion="1">
   <MAINGROUP id="tPqceN" name="defaultplugin">
     <GROUP id="{1BF8D3CB-F9A7-43D2-B317-640F5BCEBB19}" name="Source">
-      <FILE id="yhE9Ux" name="juce_soul_patch.cpp" compile="1" resource="0"
-            file="Source/juce_soul_patch.cpp"/>
       <FILE id="fABNXd" name="soulpatch.cpp" compile="0" resource="0" file="Source/soulpatch.cpp"/>
-      <FILE id="liUgtC" name="SineSynth.cpp" compile="0" resource="0" file="Source/SineSynth.cpp"/>
+      <FILE id="liUgtC" name="SineSynth.cpp" compile="1" resource="0" file="Source/SineSynth.cpp"/>
       <FILE id="XwdpVd" name="SineSynth.h" compile="0" resource="0" file="Source/SineSynth.h"/>
-      <FILE id="bNT5JW" name="soulvoice.h" compile="0" resource="0" file="Source/soulvoice.h"/>
       <FILE id="B4diM5" name="param.h" compile="0" resource="0" file="Source/param.h"/>
-      <FILE id="WrJICZ" name="PluginProcessor.cpp" compile="1" resource="0"
-            file="Source/PluginProcessor.cpp"/>
       <FILE id="rOdEgE" name="lfo.h" compile="0" resource="0" file="Source/lfo.h"/>
-      <FILE id="dw2dL8" name="PluginProcessor.h" compile="0" resource="0"
-            file="Source/PluginProcessor.h"/>
       <FILE id="Uco0Jl" name="PluginEditor.cpp" compile="1" resource="0"
             file="Source/PluginEditor.cpp"/>
       <FILE id="GjXsLR" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>

@@ -2,8 +2,8 @@
 
 juce::String message;
 
-DefaultpluginAudioProcessorEditor::DefaultpluginAudioProcessorEditor(DefaultpluginAudioProcessor& p)
-	: AudioProcessorEditor(&p), processor(p)
+Editor::Editor(_SineSynth& p)
+	: AudioProcessorEditor(&p), processor(&p)
 {
 	constrainer.setMinimumWidth(WIDTH);
 	constrainer.setMinimumHeight(HEIGHT);
@@ -14,38 +14,24 @@ DefaultpluginAudioProcessorEditor::DefaultpluginAudioProcessorEditor(Defaultplug
 	juce::File UIPath("C:\\Users\\callu\\Desktop\\projects\\defaultplugin\\Source\\jsui\\build\\js\\main.js");
 	jassert(UIPath.existsAsFile());
 	appRoot.enableHotReloading();
-	updateParams();
+	//updateParams();
 	appRoot.evaluate(UIPath);
 	bindNativeCallbacks();
 	addAndMakeVisible(appRoot);
 }
 
-DefaultpluginAudioProcessorEditor::~DefaultpluginAudioProcessorEditor() { }
+Editor::~Editor() { }
 
-void DefaultpluginAudioProcessorEditor::updateParams()
-{
-	Logger::writeToLog("Loaded: " + processor.pluginInstance->getName());
-	for (AudioProcessorParameter* p : processor.pluginInstance->getParameters())
-	{
-		juce::String name = p->getName(100);
-		processor.params.set(name, new Param());
-		Param* mainParam = processor.params.getReference(name);
-		mainParam->initialise(p, &processor.playHead);
-		mainParam->addListener(this);
-		processor.addParameter(mainParam);
-		mainParam->sendValueChangedMessageToListeners(mainParam->getValue());
-	}
-}
 
-void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
+void Editor::bindNativeCallbacks()
 {
 	//Bind some native callbacks
 	appRoot.engine.registerNativeMethod(
 		"beginParameterChangeGesture",
 		[](void* stash, const juce::var::NativeFunctionArgs& args) {
-			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
+			auto* self = reinterpret_cast<Editor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
-			if (Param* parameter = self->processor.params.getReference(paramId))
+			if (Param* parameter = self->processor->params.getReference(paramId))
 				parameter->beginChangeGesture();
 			return juce::var::undefined();
 		},
@@ -55,11 +41,11 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 	appRoot.engine.registerNativeMethod(
 		"setParameterValueNotifyingHost",
 		[](void* stash, const juce::var::NativeFunctionArgs& args) {
-			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
+			auto* self = reinterpret_cast<Editor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
 			const double value = args.arguments[1];
 
-			if (Param* parameter = self->processor.params.getReference(paramId)) {
+			if (Param* parameter = self->processor->params.getReference(paramId)) {
 				parameter->setValueNotifyingHost(value);
 				//parameter->sendValueChangedMessageToListeners(parameter->getValue());
 			}
@@ -71,10 +57,10 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 	appRoot.engine.registerNativeMethod(
 		"endParameterChangeGesture",
 		[](void* stash, const juce::var::NativeFunctionArgs& args) {
-			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
+			auto* self = reinterpret_cast<Editor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
 			//Logger::writeToLog(paramId);
-			if (Param* parameter = self->processor.params.getReference(paramId))
+			if (Param* parameter = self->processor->params.getReference(paramId))
 				parameter->endChangeGesture();
 			return juce::var::undefined();
 		},
@@ -84,9 +70,9 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 	appRoot.engine.registerNativeMethod(
 		"sendPlot",
 		[](void* stash, const juce::var::NativeFunctionArgs& args) {
-			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
+			auto* self = reinterpret_cast<Editor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
-			Param* param = self->processor.params.getReference(paramId);
+			Param* param = self->processor->params.getReference(paramId);
 			for (int i = 0; i < LFORES; i++) {
 				double inVal = static_cast<double>(args.arguments[1][i]);
 				param->lfo->plot[i] = inVal;
@@ -99,9 +85,9 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 	appRoot.engine.registerNativeMethod(
 		"sendLFOSpeed",
 		[](void* stash, const juce::var::NativeFunctionArgs& args) {
-			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
+			auto* self = reinterpret_cast<Editor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
-			Param* param = self->processor.params.getReference(paramId);
+			Param* param = self->processor->params.getReference(paramId);
 
 			param->lfo->speed = args.arguments[1];
 			return juce::var::undefined();
@@ -121,7 +107,7 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 	appRoot.engine.registerNativeMethod(
 		"getMouseX",
 		[](void* stash, const juce::var::NativeFunctionArgs& args) {
-			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
+			auto* self = reinterpret_cast<Editor*>(stash);
 			return var(self->getMouseXYRelative().getX());
 		},
 		(void*)this
@@ -130,7 +116,7 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 	appRoot.engine.registerNativeMethod(
 		"getMouseY",
 		[](void* stash, const juce::var::NativeFunctionArgs& args) {
-			auto* self = reinterpret_cast<DefaultpluginAudioProcessorEditor*>(stash);
+			auto* self = reinterpret_cast<Editor*>(stash);
 			return var(self->getMouseXYRelative().getY());
 		},
 		(void*)this
@@ -138,10 +124,10 @@ void DefaultpluginAudioProcessorEditor::bindNativeCallbacks()
 
 }
 
-void DefaultpluginAudioProcessorEditor::parameterValueChanged(int parameterIndex, float newValue)
+void Editor::parameterValueChanged(int parameterIndex, float newValue)
 {
-	//const auto& p = processor.pluginInstances[MAXVOICES - 1]->getParameters()[parameterIndex];
-	const auto& p = processor.getParameters()[parameterIndex];
+	//const auto& p = processor->pluginInstances[MAXVOICES - 1]->getParameters()[parameterIndex];
+	const auto& p = processor->getParameters()[parameterIndex];
 	juce::String id = p->getName(100);
 
 	if (auto* x = dynamic_cast<AudioProcessorParameterWithID*>(p))
@@ -163,7 +149,7 @@ void DefaultpluginAudioProcessorEditor::parameterValueChanged(int parameterIndex
 		});
 }
 
-void DefaultpluginAudioProcessorEditor::resized()
+void Editor::resized()
 {
 	appRoot.setBounds(getLocalBounds());
 	errorText.setBounds(getLocalBounds());

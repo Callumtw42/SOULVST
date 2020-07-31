@@ -4,19 +4,21 @@
 //     |_____|_____|_____|_____|     https://soul.dev
 //
 
-#ifndef JUCE_AUDIO_PROCESSORS_H_INCLUDED
-#error "This file is designed to be included inside a file in a JUCE project, so that the module headers have already been included before it"
-#endif
-
-#ifndef SOUL_HEADER_INCLUDED_167054764
-#error "This file is designed to be included inside a file where its corresponding auto-generated header has already been included"
-#endif
+//#ifndef JUCE_AUDIO_PROCESSORS_H_INCLUDED
+//#error "This file is designed to be included inside a file in a JUCE project, so that the module headers have already been included before it"
+//#endif
+//
+//#ifndef SOUL_HEADER_INCLUDED_167054764
+//#error "This file is designed to be included inside a file where its corresponding auto-generated header has already been included"
+//#endif
 
 #ifndef SOUL_CPP_ASSERT
 #define SOUL_CPP_ASSERT(x)
 #endif
 
 #include "soulpatch.cpp"
+#include "SineSynth.h"
+#include "PluginEditor.h"
 //#include "juce_soul_patch.cpp"
 
 //==============================================================================
@@ -98,6 +100,7 @@ struct _SineSynth::Pimpl
 			voices[i].outputBuffer.setSize(GeneratedClass::numAudioOutputChannels, maxBlockSize, false, false, true);
 		}
 		updateAllParameters();
+		owner.linkParams();
 	}
 
 	template <class RenderContext>
@@ -238,7 +241,8 @@ struct _SineSynth::Pimpl
 
 //==============================================================================
 _SineSynth::_SineSynth()
-	: juce::AudioPluginInstance(Pimpl::createBuses())
+	: juce::AudioPluginInstance(Pimpl::createBuses()),
+	editor(new Editor(*this))
 {
 	pimpl = std::make_unique<Pimpl>(*this);
 	refreshParameterList();
@@ -737,7 +741,10 @@ struct _SineSynth::EditorComponent : public juce::AudioProcessorEditor
 };
 
 bool _SineSynth::hasEditor() const { return true; }
-juce::AudioProcessorEditor* _SineSynth::createEditor() { return new EditorComponent(*this); }
+juce::AudioProcessorEditor* _SineSynth::createEditor()
+{
+	/*return new EditorComponent(*this);*/ return editor;
+}
 
 _SineSynth::EditorSize _SineSynth::getStoredEditorSize(EditorSize defaultSize)
 {
@@ -767,3 +774,26 @@ void _SineSynth::storeEditorSize(EditorSize newSize)
 		state.removeProperty(pimpl->ids.size, nullptr);
 }
 
+
+void _SineSynth::linkParams()
+{
+	Logger::writeToLog("Loaded: " + getName());
+	for (AudioProcessorParameter* p : allParameters)
+	{
+		juce::String name = p->getName(100);
+		params.set(name, new Param());
+		Param* mainParam = params.getReference(name);
+		mainParam->initialise(p, &playHead);
+		mainParam->addListener(dynamic_cast<AudioProcessorParameter::Listener*> (editor));
+		addParameter(mainParam);
+		mainParam->sendValueChangedMessageToListeners(mainParam->getValue());
+	}
+}
+
+
+juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
+{
+	_SineSynth* p = new _SineSynth();
+	//static_cast<Editor*>(p->editor)->updateParams();
+	return p;
+}

@@ -5,7 +5,10 @@
 //
 
 #pragma once
-
+#include <JuceHeader.h>
+#include <array>
+#include <functional>
+#include "param.h"
 #ifndef JUCE_AUDIO_PROCESSORS_H_INCLUDED
 #error "This file is designed to be included inside a file in a JUCE project, so that the module headers have already been included before it"
 #endif
@@ -20,11 +23,12 @@
 //
 
 const int MAXVOICES = 3;
-struct _SineSynth : public juce::AudioPluginInstance
+class _SineSynth : public juce::AudioPluginInstance
 {
+
+public:
 	_SineSynth();
 	~_SineSynth() override;
-
 	//==============================================================================
 	void fillInPluginDescription(juce::PluginDescription&) const override;
 	void refreshParameterList() override;
@@ -64,6 +68,10 @@ struct _SineSynth : public juce::AudioPluginInstance
 	bool isMidiEffect() const override;
 	void setNonRealtime(bool) noexcept override;
 
+	HashMap<juce::String, Param*> params;
+	AudioPlayHead::CurrentPositionInfo playHead;
+	AudioProcessorEditor* editor;
+
 protected:
 	//==============================================================================
 	struct EditorSize { int width = 0, height = 0; };
@@ -87,10 +95,12 @@ private:
 	void updateLastState();
 	void ensureValidStateExists();
 	void applyLastState();
+	void linkParams();
 	HashMap<juce::String, Parameter*>mainParams;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(_SineSynth)
 };
 
 #define SOUL_HEADER_INCLUDED_167054764 1
+
 
