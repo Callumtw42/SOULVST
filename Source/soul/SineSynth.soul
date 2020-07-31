@@ -8,6 +8,7 @@
 processor LFO
 {
     input event float<128> in;
+    input event float<128> x;
     output event float<128> out;
     // output event float out2;
 

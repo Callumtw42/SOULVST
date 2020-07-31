@@ -34,16 +34,25 @@
 struct _SineSynth::Pimpl
 {
 	Pimpl(_SineSynth& p) : owner(p) {}
-
 	using GeneratedClass = SineSynth;
 
 	_SineSynth& owner;
-	std::array<GeneratedClass, MAXVOICES> processor;
 	int sessionID = 0;
 	std::atomic<uint32_t> numParametersNeedingUpdate{ 0 };
+	int counter = 0;
+	int notesOn = 0;
 
-	juce::AudioBuffer<float> outputBuffer;
-	std::array<std::vector<GeneratedClass::MIDIMessage>, MAXVOICES> incomingMIDIMessages;
+	struct Voice
+	{
+		GeneratedClass processor;
+		juce::AudioBuffer<float> outputBuffer;
+		std::vector<GeneratedClass::MIDIMessage> incomingMIDIMessages;
+		int midiBufferSize = 0;
+		int noteOn = -1;
+		int numMessages = 0;
+	};
+
+	std::array<Voice, MAXVOICES> voices;
 
 	struct IDs
 	{
@@ -75,16 +84,20 @@ struct _SineSynth::Pimpl
 	{
 		for (size_t i = 0; i < MAXVOICES; i++)
 		{
-			processor[i].init(sampleRate, ++sessionID);
+			voices[i].processor.init(sampleRate, ++sessionID);
 		}
 
 		for (size_t i = 0; i < MAXVOICES; i++)
 		{
-			incomingMIDIMessages[i].resize((size_t)maxBlockSize);
+			//voices[i].incomingMIDIMessages.resize((size_t)maxBlockSize);
+			voices[i].midiBufferSize = maxBlockSize;
 		}
 		owner.setRateAndBufferSizeDetails(sampleRate, maxBlockSize);
 		owner.midiKeyboardState.reset();
-		outputBuffer.setSize(GeneratedClass::numAudioOutputChannels, maxBlockSize, false, false, true);
+		for (size_t i = 0; i < MAXVOICES; i++)
+		{
+			voices[i].outputBuffer.setSize(GeneratedClass::numAudioOutputChannels, maxBlockSize, false, false, true);
+		}
 		updateAllParameters();
 	}
 
@@ -98,74 +111,137 @@ struct _SineSynth::Pimpl
 		}
 	}
 
+	SineSynth::MIDIMessage midiBlank(MidiBufferIterator::reference message)
+	{
+
+		return  { static_cast<uint32_t> (message.samplePosition),
+								  static_cast<uint8_t> (0),
+								  static_cast<uint8_t> (0),
+								  static_cast<uint8_t> (0) };
+	}
+
+	SineSynth::MIDIMessage midiBytes(MidiBufferIterator::reference message)
+	{
+
+		return  { static_cast<uint32_t> (message.samplePosition),
+								  static_cast<uint8_t> (message.data[0]),
+								  static_cast<uint8_t> (message.data[1]),
+								  static_cast<uint8_t> (message.data[2]) };
+	}
+
 	void processBlock(juce::AudioBuffer<float>& audio, juce::MidiBuffer& midi)
 	{
-		auto numFrames = audio.getNumSamples();
-		outputBuffer.setSize(GeneratedClass::numAudioOutputChannels, numFrames, false, false, true);
-		outputBuffer.clear();
+
+		int numSamples = audio.getNumSamples();
 		std::array<GeneratedClass::RenderContext<float>, MAXVOICES> rcs;
+		//voices[0].incomingMIDIMessages[0] = MidiMessage::note
+		//std::array<int, MAXVOICES> sizes;
+		//sizes.fill(0);
+
 
 		for (size_t i = 0; i < MAXVOICES; i++)
 		{
-			std::unique_ptr<GeneratedClass::RenderContext<float>> rc = std::make_unique<GeneratedClass::RenderContext<float>>();
 
-			populateInputChannels(audio, *rc.get());
+			voices[i].incomingMIDIMessages = std::vector<GeneratedClass::MIDIMessage>();
+			voices[i].incomingMIDIMessages.resize(voices[i].midiBufferSize);
+			voices[i].outputBuffer.setSize(GeneratedClass::numAudioOutputChannels, numSamples, false, false, true);
+			voices[i].outputBuffer.clear();
+			voices[i].numMessages = 0;
 
-			for (int i = 0; i < (int)GeneratedClass::numAudioOutputChannels; ++i)
-				rc->outputChannels[i] = outputBuffer.getWritePointer(i);
+			populateInputChannels(audio, rcs[i]);
 
-			rc->numFrames = (uint32_t)numFrames;
+			for (int j = 0; j < (int)GeneratedClass::numAudioOutputChannels; ++j)
+				rcs[i].outputChannels[j] = voices[i].outputBuffer.getWritePointer(j);
 
-			owner.midiKeyboardState.processNextMidiBuffer(midi, 0, numFrames, true);
-
-			if (midi.isEmpty())
+			rcs[i].numFrames = (uint32_t)numSamples;
+		}
+		if (midi.isEmpty())
+		{
+			for (size_t i = 0; i < MAXVOICES; i++)
 			{
-				rc->incomingMIDI.numMessages = 0;
+				rcs[i].incomingMIDI.numMessages = 0;
 			}
-			else
-			{
-				auto maxEvents = incomingMIDIMessages.size();
-				auto iter = midi.cbegin();
-				auto end = midi.cend();
-				size_t j = 0;
-				bool noteOnFound = false;
+		}
+		else
+		{
+			owner.midiKeyboardState.processNextMidiBuffer(midi, 0, numSamples, true);
+			auto maxEvents = voices[0].incomingMIDIMessages.size();
+			auto iter = midi.cbegin();
+			auto end = midi.cend();
+			size_t j = 0;
 
-				while (j < maxEvents && iter != end)
+			while (j < maxEvents && iter != end)
+			{
+				auto message = *iter++;
+				if (message.numBytes < 4)
 				{
-					auto message = *iter++;
-					//if (message.getMessage().isNoteOn())
-					//	noteOnFound = true;
-					if (message.numBytes < 4) {
-						if (message.getMessage().isNoteOff()) {}
-						else if (message.getMessage().isNoteOn() && noteOnFound) {}
-						else if (message.getMessage().isNoteOn() && !noteOnFound) {
-							noteOnFound = true;
-							incomingMIDIMessages[i][j++] = { static_cast<uint32_t> (message.samplePosition),
-													  static_cast<uint8_t> (message.data[0]),
-													  static_cast<uint8_t> (message.data[1]),
-													  static_cast<uint8_t> (message.data[2]) };
-						}
-						else incomingMIDIMessages[i][j++] = { static_cast<uint32_t> (message.samplePosition),
-													  static_cast<uint8_t> (message.data[0]),
-													  static_cast<uint8_t> (message.data[1]),
-													  static_cast<uint8_t> (message.data[2]) };
+
+					for (size_t i = 0; i < MAXVOICES; i++)
+					{
+						voices[i].incomingMIDIMessages[j] = midiBlank(message);
+						voices[i].numMessages++;
 					}
+					if (message.getMessage().isNoteOn())
+					{
+						int note = message.getMessage().getNoteNumber();
+						Voice* voice = &voices[counter % MAXVOICES];
+						std::vector<SineSynth::MIDIMessage>* incBuffer = &voice->incomingMIDIMessages;
+						incBuffer->at(j) = midiBytes(message);						//sizes[counter % MAXVOICES]++;
+						voice->numMessages++;
+						voice->noteOn = note;
+						counter++;
+						notesOn++;
+						//notesOn.set(note, incBuffer);
+					}
+					else if (message.getMessage().isNoteOff())
+					{
+						int note = message.getMessage().getNoteNumber();
+						std::vector<SineSynth::MIDIMessage>* incBuffer;
+						Voice* voice;
+						for (size_t i = 0; i < MAXVOICES; i++)
+						{
+							if (voices[i].noteOn == note)
+							{
+								voice = &voices[i];
+								incBuffer = &voice->incomingMIDIMessages;
+								incBuffer->at(j) = midiBytes(message);								//notesOn.remove(note);
+								voice->noteOn = -1;
+								voice->numMessages++;
+								notesOn--;
+								break;
+							}
+						}
+					}
+					else
+					{
+						for (size_t i = 0; i < MAXVOICES; i++)
+						{
+							voices[i].incomingMIDIMessages[j] = midiBytes(message);
+							voices[i].numMessages++;
+						}
+					}
+					j++;
 				}
 
-				rc->incomingMIDI.messages = std::addressof(incomingMIDIMessages[i][0]);
-				rc->incomingMIDI.numMessages = (uint32_t)j;
 			}
-			rcs[i] = *rc.get();
+			for (size_t i = 0; i < MAXVOICES; i++)
+			{
+				rcs[i].incomingMIDI.messages = std::addressof(voices[i].incomingMIDIMessages[0]);
+				//rcs[i].incomingMIDI.numMessages = (uint32_t)j;
+				rcs[i].incomingMIDI.numMessages = voices[i].numMessages;
+
+			}
+
 		}
+
 		midi.clear();
 		updateAnyChangedParameters();
 		for (size_t i = 0; i < MAXVOICES; i++)
 		{
-			processor[i].render(rcs[i]);
+			voices[i].processor.render(rcs[i]);
+			for (int j = 0; j < voices[i].outputBuffer.getNumChannels(); ++j)
+				audio.addFrom(j, 0, voices[i].outputBuffer, j, 0, numSamples);
 		}
-
-		for (int i = 0; i < outputBuffer.getNumChannels(); ++i)
-			audio.copyFrom(i, 0, outputBuffer, i, 0, numFrames);
 	}
 
 	void updateAllParameters();
@@ -213,8 +289,8 @@ juce::StringArray _SineSynth::getAlternateDisplayNames() const
 
 bool _SineSynth::isBusesLayoutSupported(const BusesLayout & layout) const
 {
-	auto processorInputBuses = pimpl->processor[0].getInputBuses();
-	auto processorOutputBuses = pimpl->processor[0].getOutputBuses();
+	auto processorInputBuses = pimpl->voices[0].processor.getInputBuses();
+	auto processorOutputBuses = pimpl->voices[0].processor.getOutputBuses();
 
 	if (layout.inputBuses.size() != (int)processorInputBuses.size())
 		return false;
@@ -238,7 +314,7 @@ void _SineSynth::reset()
 {
 	for (size_t i = 0; i < MAXVOICES; i++)
 	{
-		pimpl->processor[i].reset();
+		pimpl->voices[i].processor.reset();
 	}
 }
 void _SineSynth::prepareToPlay(double sampleRate, int maxBlockSize) { pimpl->prepareToPlay(sampleRate, maxBlockSize); }
@@ -530,7 +606,7 @@ void _SineSynth::refreshParameterList()
 	ParameterTreeGroupBuilder treeBuilder;
 	for (size_t i = 0; i < MAXVOICES; i++)
 	{
-		for (auto& p : pimpl->processor[i].getParameterProperties())
+		for (auto& p : pimpl->voices[i].processor.getParameterProperties())
 		{
 			if (i == 0)
 			{
