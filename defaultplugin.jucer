@@ -7,9 +7,16 @@
               jucerFormatVersion="1">
   <MAINGROUP id="tPqceN" name="defaultplugin">
     <GROUP id="{1BF8D3CB-F9A7-43D2-B317-640F5BCEBB19}" name="Source">
+      <GROUP id="{2CDA30D1-6DFD-6021-2CCB-2961D7C6F3D5}" name="SineSynth">
+        <FILE id="qkrI4u" name="editor_component.cpp" compile="0" resource="0"
+              file="Source/editor_component.cpp"/>
+        <FILE id="p0zh3h" name="parameter.cpp" compile="0" resource="0" file="Source/parameter.cpp"/>
+        <FILE id="WW4QSi" name="main_processor.cpp" compile="0" resource="0"
+              file="Source/main_processor.cpp"/>
+        <FILE id="liUgtC" name="SineSynth.cpp" compile="1" resource="0" file="Source/SineSynth.cpp"/>
+        <FILE id="XwdpVd" name="SineSynth.h" compile="0" resource="0" file="Source/SineSynth.h"/>
+      </GROUP>
       <FILE id="fABNXd" name="soulpatch.cpp" compile="0" resource="0" file="Source/soulpatch.cpp"/>
-      <FILE id="liUgtC" name="SineSynth.cpp" compile="1" resource="0" file="Source/SineSynth.cpp"/>
-      <FILE id="XwdpVd" name="SineSynth.h" compile="0" resource="0" file="Source/SineSynth.h"/>
       <FILE id="B4diM5" name="param.h" compile="0" resource="0" file="Source/param.h"/>
       <FILE id="rOdEgE" name="lfo.h" compile="0" resource="0" file="Source/lfo.h"/>
       <FILE id="Uco0Jl" name="PluginEditor.cpp" compile="1" resource="0"

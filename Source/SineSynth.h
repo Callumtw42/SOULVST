@@ -82,11 +82,11 @@ protected:
 
 	//==============================================================================
 private:
-	struct Pimpl;
+	struct MainProcessor;
 	struct Parameter;
 	struct EditorComponent;
 
-	std::unique_ptr<Pimpl> pimpl;
+	std::unique_ptr<MainProcessor> pimpl;
 	std::vector<Parameter*> allParameters;
 	std::vector<std::unique_ptr<Parameter>> hiddenParams;
 	juce::ValueTree lastValidState;
@@ -96,6 +96,7 @@ private:
 	void ensureValidStateExists();
 	void applyLastState();
 	void linkParams();
+	void generateVoices();
 	HashMap<juce::String, Parameter*>mainParams;
 
 	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(_SineSynth)

@@ -22,7 +22,7 @@ public:
 	{
 		soulParameter = param;
 		playHead = play;
-		lfo = std::make_unique<LFO>(soulParameter, &value, playHead);
+		//lfo = std::make_unique<LFO>(soulParameter, &value, playHead);
 		value = soulParameter->getValue();
 	}
 
