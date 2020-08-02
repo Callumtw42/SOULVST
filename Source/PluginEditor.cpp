@@ -31,9 +31,11 @@ void Editor::bindNativeCallbacks()
 		[](void* stash, const juce::var::NativeFunctionArgs& args) {
 			auto* self = reinterpret_cast<Editor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
-			if (Param* parameter = self->processor->params.getReference(paramId))
+			if (AudioProcessorParameter* parameter = self->processor->params.getReference(paramId))
+			{
 				parameter->beginChangeGesture();
-			return juce::var::undefined();
+			}
+			return var::undefined();
 		},
 		(void*)this
 			);
@@ -45,52 +47,52 @@ void Editor::bindNativeCallbacks()
 			const juce::String& paramId = args.arguments[0].toString();
 			const double value = args.arguments[1];
 
-			if (Param* parameter = self->processor->params.getReference(paramId)) {
+			if (AudioProcessorParameter* parameter = self->processor->params.getReference(paramId)) {
 				parameter->setValueNotifyingHost(value);
-				//parameter->sendValueChangedMessageToListeners(parameter->getValue());
+				parameter->sendValueChangedMessageToListeners(parameter->getValue());
 			}
-			return juce::var::undefined();
+			return var::undefined();
 		},
 		(void*)this
 			);
 
 	appRoot.engine.registerNativeMethod(
 		"endParameterChangeGesture",
-		[](void* stash, const juce::var::NativeFunctionArgs& args) {
+		[](void* stash, const var::NativeFunctionArgs& args) {
 			auto* self = reinterpret_cast<Editor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
 			//Logger::writeToLog(paramId);
-			if (Param* parameter = self->processor->params.getReference(paramId))
+			if (AudioProcessorParameter* parameter = self->processor->params.getReference(paramId))
 				parameter->endChangeGesture();
-			return juce::var::undefined();
+			return var::undefined();
 		},
 		(void*)this
 			);
 
 	appRoot.engine.registerNativeMethod(
 		"sendPlot",
-		[](void* stash, const juce::var::NativeFunctionArgs& args) {
+		[](void* stash, const var::NativeFunctionArgs& args) {
 			auto* self = reinterpret_cast<Editor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
-			Param* param = self->processor->params.getReference(paramId);
+			//AudioProcessorParameter* param = self->processor->mainParams.getReference(paramId);
 			for (int i = 0; i < LFORES; i++) {
 				double inVal = static_cast<double>(args.arguments[1][i]);
-				param->lfo->plot[i] = inVal;
+				//param->lfo->plot[i] = inVal;
 			}
-			return juce::var::undefined();
+			return var::undefined();
 		},
 		(void*)this
 			);
 
 	appRoot.engine.registerNativeMethod(
 		"sendLFOSpeed",
-		[](void* stash, const juce::var::NativeFunctionArgs& args) {
+		[](void* stash, const var::NativeFunctionArgs& args) {
 			auto* self = reinterpret_cast<Editor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
-			Param* param = self->processor->params.getReference(paramId);
+			//AudioProcessorParameter* param = self->processor->mainParams.getReference(paramId);
 
-			param->lfo->speed = args.arguments[1];
-			return juce::var::undefined();
+			//param->lfo->speed = args.arguments[1];
+			return var::undefined();
 		},
 		(void*)this
 			);

@@ -68,7 +68,7 @@ public:
 	bool isMidiEffect() const override;
 	void setNonRealtime(bool) noexcept override;
 
-	HashMap<juce::String, Param*> params;
+	HashMap<juce::String, AudioProcessorParameter*> params;
 	AudioPlayHead::CurrentPositionInfo playHead;
 	AudioProcessorEditor* editor;
 

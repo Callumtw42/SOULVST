@@ -42,7 +42,12 @@ struct _SineSynth::MainProcessor
 		void setParamValue(float* f)
 		{
 			paramValue = f;
+			//if (!lfo->isOn)
+			//{
+			//	setValue(*f);
+			//}
 		}
+
 
 		GeneratedClass::ParameterProperties* endPoint;
 		std::unique_ptr<LFO> lfo;
@@ -91,9 +96,9 @@ struct _SineSynth::MainProcessor
 
 	IDs ids;
 
-	static juce::AudioProcessor::BusesProperties createBuses()
+	static BusesProperties createBuses()
 	{
-		juce::AudioProcessor::BusesProperties buses;
+		BusesProperties buses;
 
 		if constexpr (GeneratedClass::numAudioInputChannels > 0)
 			buses.addBus(true, "Input", juce::AudioChannelSet::canonicalChannelSet(GeneratedClass::numAudioInputChannels));
@@ -123,7 +128,7 @@ struct _SineSynth::MainProcessor
 			voices[i]->outputBuffer.setSize(GeneratedClass::numAudioOutputChannels, maxBlockSize, false, false, true);
 		}
 		updateAllParameters();
-		//owner.linkParams();
+		owner.linkParams();
 
 	}
 

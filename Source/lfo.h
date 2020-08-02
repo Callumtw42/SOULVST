@@ -31,15 +31,19 @@ public:
 
 	void start()
 	{
+		isOn = true;
 		std::thread proc([this]()
 			{
-				while (true) {
+				while (true)
+				{
 					process();
 					std::this_thread::sleep_for(std::chrono::microseconds(minInterval));
 				}
 			});
 		proc.detach();
 	}
+
+
 
 	void process()
 	{
@@ -70,6 +74,7 @@ public:
 	float* paramSliderValue;
 	//void(*callBack)(double);
 	std::function<void(float)>* callBack;
+	bool isOn = false;
 
 	//AudioProcessorParameter* soulParam;
 };

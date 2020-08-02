@@ -20,28 +20,29 @@ struct _SineSynth::Parameter : public juce::AudioProcessorParameterWithID
 		numDecimalPlaces(getNumDecimalPlaces(range)),
 		numParametersNeedingUpdate(owner.pimpl->numParametersNeedingUpdate)
 	{
-		properties[0] = p;
-		currentFullRangeValue = properties[0].initialValue;
+		voices[0] = p;
+		currentFullRangeValue = voices[0].initialValue;
 	}
 
 	float currentFullRangeValue = 0;
 	bool needsUpdate = false;
 
-	std::array<MainProcessor::GeneratedClass::ParameterProperties, MAXVOICES> properties;
+	//std::array<MainProcessor::GeneratedClass::ParameterProperties, MAXVOICES> properties;
+	std::array<MainProcessor::GeneratedClass::ParameterProperties, MAXVOICES> voices;
 	const juce::StringArray textValues;
 	const juce::NormalisableRange<float> range;
 	const int numDecimalPlaces;
 	std::atomic<uint32_t>& numParametersNeedingUpdate;
 
 	juce::String getName(int maximumStringLength) const override { return name.substring(0, maximumStringLength); }
-	juce::String getLabel() const override { return properties[0].unit; }
+	juce::String getLabel() const override { return voices[0].unit; }
 	Category getCategory() const override { return genericParameter; }
 	bool isDiscrete() const override { return range.interval != 0; }
-	bool isBoolean() const override { return properties[0].isBoolean; }
-	bool isAutomatable() const override { return properties[0].isAutomatable; }
+	bool isBoolean() const override { return voices[0].isBoolean; }
+	bool isAutomatable() const override { return voices[0].isAutomatable; }
 	bool isMetaParameter() const override { return false; }
 	juce::StringArray getAllValueStrings() const override { return textValues; }
-	float getDefaultValue() const override { return convertTo0to1(properties[0].initialValue); }
+	float getDefaultValue() const override { return convertTo0to1(voices[0].initialValue); }
 	float getValue() const override { return convertTo0to1(currentFullRangeValue); }
 	void setValue(float newValue) override { setFullRangeValue(convertFrom0to1(newValue)); }
 
@@ -63,7 +64,7 @@ struct _SineSynth::Parameter : public juce::AudioProcessorParameterWithID
 
 	void sendUpdate(int index)
 	{
-		properties[index].setValue(currentFullRangeValue/*+lfos[index].value*/);
+		voices[index].setValue(currentFullRangeValue/*+lfos[index].value*/);
 	}
 
 	bool sendUpdateIfNeeded()

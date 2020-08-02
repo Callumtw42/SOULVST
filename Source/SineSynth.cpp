@@ -135,7 +135,7 @@ void _SineSynth::refreshParameterList()
 
 		void addParam(std::unique_ptr<Parameter> newParam)
 		{
-			juce::String group(newParam->properties[0].group);
+			juce::String group(newParam->voices[0].group);
 
 			if (group.isNotEmpty())
 				getOrCreateGroup(tree, {}, group).addChild(std::move(newParam));
@@ -188,7 +188,7 @@ void _SineSynth::refreshParameterList()
 			}
 			else
 			{
-				mainParams.getReference(p.name)->properties[i] = p;
+				mainParams.getReference(p.name)->voices[i] = p;
 			}
 		}
 	}
@@ -250,7 +250,7 @@ juce::ValueTree _SineSynth::createCurrentState()
 		juce::ValueTree param(pimpl->ids.PARAM);
 		for (size_t i = 0; i < MAXVOICES; i++)
 		{
-			param.setProperty(pimpl->ids.id, p->properties[i].UID, nullptr);
+			param.setProperty(pimpl->ids.id, p->voices[i].UID, nullptr);
 		}
 		param.setProperty(pimpl->ids.value, p->currentFullRangeValue, nullptr);
 		state.addChild(param, -1, nullptr);
@@ -274,7 +274,7 @@ void _SineSynth::applyLastState()
 {
 	if (lastValidState.hasType(pimpl->ids.UID))
 		for (auto& p : allParameters)
-			if (auto* value = lastValidState.getChildWithProperty(pimpl->ids.id, p->properties[0].UID).getPropertyPointer(pimpl->ids.value))
+			if (auto* value = lastValidState.getChildWithProperty(pimpl->ids.id, p->voices[0].UID).getPropertyPointer(pimpl->ids.value))
 				p->setFullRangeValue(*value);
 }
 
@@ -318,15 +318,15 @@ void _SineSynth::storeEditorSize(EditorSize newSize)
 void _SineSynth::linkParams()
 {
 	Logger::writeToLog("Loaded: " + getName());
-	for (AudioProcessorParameter* p : allParameters)
+	for (AudioProcessorParameter* p : getParameters())
 	{
 		juce::String name = p->getName(100);
-		//params.set(name, new Param());
-		Param* mainParam = params.getReference(name);
-		mainParam->initialise(p, &playHead);
-		mainParam->addListener(dynamic_cast<AudioProcessorParameter::Listener*> (editor));
-		addParameter(mainParam);
-		mainParam->sendValueChangedMessageToListeners(mainParam->getValue());
+		params.set(name, p);
+		AudioProcessorParameter* param = params.getReference(name);
+		//mainParam->initialise(p, &playHead);
+		param->addListener(dynamic_cast<AudioProcessorParameter::Listener*> (editor));
+		//addParameter(mainParam);
+		param->sendValueChangedMessageToListeners(param->getValue());
 	}
 }
 
