@@ -39,15 +39,18 @@ struct _SineSynth::MainProcessor
 			lfo(std::make_unique<LFO>(&setValue, paramValue, bpm))
 		{ }
 
-		void setParamValue(float* f)
+		void setParamValueAddress(float* f)
 		{
 			paramValue = f;
-			//if (!lfo->isOn)
-			//{
-			//	setValue(*f);
-			//}
 		}
 
+		void setValueFromSlider()
+		{
+			if (!lfo->isOn)
+			{
+				endPoint->setValue(*paramValue);
+			}
+		}
 
 		GeneratedClass::ParameterProperties* endPoint;
 		std::unique_ptr<LFO> lfo;
@@ -67,7 +70,7 @@ struct _SineSynth::MainProcessor
 		GeneratedClass processor;
 		juce::AudioBuffer<float> outputBuffer;
 		std::vector<GeneratedClass::MIDIMessage> incomingMIDIMessages;
-		std::array<std::unique_ptr<EndPointParameter>, numParams> endPointParameters;
+		std::array<std::shared_ptr<EndPointParameter>, numParams> endPointParameters;
 		int midiBufferSize = 0;
 		int noteOn = -1;
 		int numMessages = 0;

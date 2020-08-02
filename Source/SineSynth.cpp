@@ -11,7 +11,7 @@ _SineSynth::_SineSynth()
 	: juce::AudioPluginInstance(MainProcessor::createBuses()),
 	editor(new Editor(*this))
 {
-	pimpl = std::make_unique<MainProcessor>(*this);
+	mainProcessor = std::make_unique<MainProcessor>(*this);
 	refreshParameterList();
 }
 
@@ -48,8 +48,8 @@ juce::StringArray _SineSynth::getAlternateDisplayNames() const
 
 bool _SineSynth::isBusesLayoutSupported(const BusesLayout & layout) const
 {
-	auto processorInputBuses = pimpl->voices[0]->processor.getInputBuses();
-	auto processorOutputBuses = pimpl->voices[0]->processor.getOutputBuses();
+	auto processorInputBuses = mainProcessor->voices[0]->processor.getInputBuses();
+	auto processorOutputBuses = mainProcessor->voices[0]->processor.getOutputBuses();
 
 	if (layout.inputBuses.size() != (int)processorInputBuses.size())
 		return false;
@@ -73,10 +73,10 @@ void _SineSynth::reset()
 {
 	for (size_t i = 0; i < MAXVOICES; i++)
 	{
-		pimpl->voices[i]->processor.reset();
+		mainProcessor->voices[i]->processor.reset();
 	}
 }
-void _SineSynth::prepareToPlay(double sampleRate, int maxBlockSize) { pimpl->prepareToPlay(sampleRate, maxBlockSize); }
+void _SineSynth::prepareToPlay(double sampleRate, int maxBlockSize) { mainProcessor->prepareToPlay(sampleRate, maxBlockSize); }
 void _SineSynth::releaseResources() { midiKeyboardState.reset(); }
 
 void _SineSynth::processBlock(juce::AudioBuffer<float> & audio, juce::MidiBuffer & midi)
@@ -88,7 +88,7 @@ void _SineSynth::processBlock(juce::AudioBuffer<float> & audio, juce::MidiBuffer
 	}
 	else
 	{
-		pimpl->processBlock(audio, midi);
+		mainProcessor->processBlock(audio, midi);
 	}
 }
 
@@ -135,7 +135,7 @@ void _SineSynth::refreshParameterList()
 
 		void addParam(std::unique_ptr<Parameter> newParam)
 		{
-			juce::String group(newParam->voices[0].group);
+			juce::String group(newParam->properties->group);
 
 			if (group.isNotEmpty())
 				getOrCreateGroup(tree, {}, group).addChild(std::move(newParam));
@@ -170,31 +170,61 @@ void _SineSynth::refreshParameterList()
 	};
 
 	ParameterTreeGroupBuilder treeBuilder;
-	for (size_t i = 0; i < MAXVOICES; i++)
-	{
-		for (auto& p : pimpl->voices[i]->processor.getParameterProperties())
-		{
-			if (i == 0)
-			{
-				auto mainParam = std::make_unique<Parameter>(*this, p);
-				pimpl->voices[i]->endPointParameters[i]->setParamValue(&mainParam->currentFullRangeValue);
-				mainParams.set(p.name, mainParam.get());
-				allParameters.push_back(mainParam.get());
 
-				if (p.isHidden)
-					hiddenParams.push_back(std::move(mainParam));
-				else
-					treeBuilder.addParam(std::move(mainParam));
-			}
-			else
-			{
-				mainParams.getReference(p.name)->voices[i] = p;
-			}
+	const int numParams = MainProcessor::GeneratedClass::numParameters;
+	for (int i = 0; i < numParams; ++i)
+	{
+		std::array<std::shared_ptr<MainProcessor::EndPointParameter>, MAXVOICES> paramEndPoints;
+
+		for (size_t j = 0; j < MAXVOICES; j++)
+		{
+			paramEndPoints[j] = std::move(mainProcessor->voices[j]->endPointParameters[i]);
 		}
+		juce::String name = paramEndPoints[0]->endPoint->name;
+		juce::String uid = paramEndPoints[0]->endPoint->UID;
+		auto mainParam = std::make_unique<Parameter>(*this, &paramEndPoints, uid, name);
+		mainParams.set(mainParam->name, mainParam.get());
+		allParameters.push_back(mainParam.get());
+
+		if (paramEndPoints[0]->endPoint->isHidden)
+			hiddenParams.push_back(std::move(mainParam));
+		else
+			treeBuilder.addParam(std::move(mainParam));
+		//mainProcessor->voices[i]->endPointParameters[i]->setParamValue(&mainParam->currentFullRangeValue);
 	}
+	//{
+		//std::unique_ptr<Parameter> mainParam =std::make_unique<Parameter>(*this, v->endPointParameters);
+
+	//}
+
+
+	//for (size_t i = 0; i < MAXVOICES; i++)
+	//{
+
+	//	for (auto& v : mainProcessor->voices)
+	//	{
+	//		if (i == 0)
+	//		{
+	//			auto mainParam = std::make_unique<Parameter>(*this, v->endPointParameters);
+	//			mainProcessor->voices[i]->endPointParameters[i]->setParamValue(&mainParam->currentFullRangeValue);
+	//			mainParams.set(p.name, mainParam.get());
+	//			allParameters.push_back(mainParam.get());
+
+	//			if (p.isHidden)
+	//				hiddenParams.push_back(std::move(mainParam));
+	//			else
+	//				treeBuilder.addParam(std::move(mainParam));
+	//		}
+	//		else
+	//		{
+	//			mainParams.getReference(p.name)->endPoints[i]->endPoint = p;
+	//		}
+	//	}
+
+	//}
 
 	setParameterTree(std::move(treeBuilder.tree));
-	pimpl->numParametersNeedingUpdate = static_cast<uint32_t> (allParameters.size());
+	mainProcessor->numParametersNeedingUpdate = static_cast<uint32_t> (allParameters.size());
 	generateVoices();
 }
 
@@ -228,7 +258,7 @@ void _SineSynth::setStateInformation(const void* data, int size)
 {
 	auto newState = juce::ValueTree::readFromData(data, (size_t)size);
 
-	if (newState.hasType(pimpl->ids.UID))
+	if (newState.hasType(mainProcessor->ids.UID))
 	{
 		lastValidState = std::move(newState);
 		applyLastState();
@@ -237,22 +267,22 @@ void _SineSynth::setStateInformation(const void* data, int size)
 
 juce::ValueTree _SineSynth::createCurrentState()
 {
-	juce::ValueTree state(pimpl->ids.UID);
-	state.setProperty(pimpl->ids.version, MainProcessor::GeneratedClass::version, nullptr);
+	juce::ValueTree state(mainProcessor->ids.UID);
+	state.setProperty(mainProcessor->ids.version, MainProcessor::GeneratedClass::version, nullptr);
 
-	auto editorState = lastValidState.getChildWithName(pimpl->ids.EDITOR);
+	auto editorState = lastValidState.getChildWithName(mainProcessor->ids.EDITOR);
 
 	if (editorState.isValid())
 		state.addChild(editorState.createCopy(), -1, nullptr);
 
 	for (auto& p : allParameters)
 	{
-		juce::ValueTree param(pimpl->ids.PARAM);
+		juce::ValueTree param(mainProcessor->ids.PARAM);
 		for (size_t i = 0; i < MAXVOICES; i++)
 		{
-			param.setProperty(pimpl->ids.id, p->voices[i].UID, nullptr);
+			param.setProperty(mainProcessor->ids.id, p->endPoints->at(i)->endPoint->UID, nullptr);
 		}
-		param.setProperty(pimpl->ids.value, p->currentFullRangeValue, nullptr);
+		param.setProperty(mainProcessor->ids.value, p->currentFullRangeValue, nullptr);
 		state.addChild(param, -1, nullptr);
 	}
 
@@ -266,15 +296,15 @@ void _SineSynth::updateLastState()
 
 void _SineSynth::ensureValidStateExists()
 {
-	if (!lastValidState.hasType(pimpl->ids.UID))
+	if (!lastValidState.hasType(mainProcessor->ids.UID))
 		updateLastState();
 }
 
 void _SineSynth::applyLastState()
 {
-	if (lastValidState.hasType(pimpl->ids.UID))
+	if (lastValidState.hasType(mainProcessor->ids.UID))
 		for (auto& p : allParameters)
-			if (auto* value = lastValidState.getChildWithProperty(pimpl->ids.id, p->voices[0].UID).getPropertyPointer(pimpl->ids.value))
+			if (auto* value = lastValidState.getChildWithProperty(mainProcessor->ids.id, p->properties->UID).getPropertyPointer(mainProcessor->ids.value))
 				p->setFullRangeValue(*value);
 }
 
@@ -288,7 +318,7 @@ juce::AudioProcessorEditor* _SineSynth::createEditor()
 
 _SineSynth::EditorSize _SineSynth::getStoredEditorSize(EditorSize defaultSize)
 {
-	auto propertyValue = lastValidState.getChildWithName(pimpl->ids.EDITOR).getProperty(pimpl->ids.size);
+	auto propertyValue = lastValidState.getChildWithName(mainProcessor->ids.EDITOR).getProperty(mainProcessor->ids.size);
 	auto tokens = juce::StringArray::fromTokens(propertyValue.toString(), " ", {});
 
 	if (tokens.size() == 2)
@@ -306,12 +336,12 @@ _SineSynth::EditorSize _SineSynth::getStoredEditorSize(EditorSize defaultSize)
 void _SineSynth::storeEditorSize(EditorSize newSize)
 {
 	ensureValidStateExists();
-	auto state = lastValidState.getOrCreateChildWithName(pimpl->ids.EDITOR, nullptr);
+	auto state = lastValidState.getOrCreateChildWithName(mainProcessor->ids.EDITOR, nullptr);
 
 	if (newSize.width > 0 || newSize.height > 0)
-		state.setProperty(pimpl->ids.size, juce::String(newSize.width) + " " + juce::String(newSize.height), nullptr);
+		state.setProperty(mainProcessor->ids.size, juce::String(newSize.width) + " " + juce::String(newSize.height), nullptr);
 	else
-		state.removeProperty(pimpl->ids.size, nullptr);
+		state.removeProperty(mainProcessor->ids.size, nullptr);
 }
 
 

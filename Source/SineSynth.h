@@ -86,7 +86,7 @@ private:
 	struct Parameter;
 	struct EditorComponent;
 
-	std::unique_ptr<MainProcessor> pimpl;
+	std::unique_ptr<MainProcessor> mainProcessor;
 	std::vector<Parameter*> allParameters;
 	std::vector<std::unique_ptr<Parameter>> hiddenParams;
 	juce::ValueTree lastValidState;

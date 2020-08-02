@@ -13,36 +13,44 @@
 
 struct _SineSynth::Parameter : public juce::AudioProcessorParameterWithID
 {
-	Parameter(_SineSynth& owner, const MainProcessor::GeneratedClass::ParameterProperties& p)
-		: AudioProcessorParameterWithID(p.UID, p.name),
-		textValues(parseTextValues(p.textValues)),
-		range(p.minValue, p.maxValue, p.step),
-		numDecimalPlaces(getNumDecimalPlaces(range)),
-		numParametersNeedingUpdate(owner.pimpl->numParametersNeedingUpdate)
+	Parameter(_SineSynth& owner, std::array<std::shared_ptr<MainProcessor::EndPointParameter>, MAXVOICES>* p, juce::String uid, juce::String name)
+		:AudioProcessorParameterWithID(uid, name)
 	{
-		voices[0] = p;
-		currentFullRangeValue = voices[0].initialValue;
+		properties = p->at(0)->endPoint;
+		this->owner = &owner;
+		textValues = parseTextValues(p->at(0)->endPoint->textValues);
+		range = new NormalisableRange<float>(p->at(0)->endPoint->minValue, p->at(0)->endPoint->maxValue, p->at(0)->endPoint->step);
+		numDecimalPlaces = getNumDecimalPlaces(*range);
+		numParametersNeedingUpdate = &owner.mainProcessor->numParametersNeedingUpdate;
+		endPoints = p;
+		currentFullRangeValue = properties->initialValue;
+		for (int i = 0; i < MAXVOICES; ++i)
+		{
+			endPoints->at(i)->setParamValueAddress(&currentFullRangeValue);
+		}
 	}
+
 
 	float currentFullRangeValue = 0;
 	bool needsUpdate = false;
+	_SineSynth* owner;
 
-	//std::array<MainProcessor::GeneratedClass::ParameterProperties, MAXVOICES> properties;
-	std::array<MainProcessor::GeneratedClass::ParameterProperties, MAXVOICES> voices;
-	const juce::StringArray textValues;
-	const juce::NormalisableRange<float> range;
-	const int numDecimalPlaces;
-	std::atomic<uint32_t>& numParametersNeedingUpdate;
+	const MainProcessor::GeneratedClass::ParameterProperties* properties;
+	std::array<std::shared_ptr<MainProcessor::EndPointParameter>, MAXVOICES>* endPoints;
+	juce::StringArray textValues;
+	const juce::NormalisableRange<float>* range;
+	int numDecimalPlaces;
+	std::atomic<uint32_t>* numParametersNeedingUpdate;
 
 	juce::String getName(int maximumStringLength) const override { return name.substring(0, maximumStringLength); }
-	juce::String getLabel() const override { return voices[0].unit; }
+	juce::String getLabel() const override { return properties->unit; }
 	Category getCategory() const override { return genericParameter; }
-	bool isDiscrete() const override { return range.interval != 0; }
-	bool isBoolean() const override { return voices[0].isBoolean; }
-	bool isAutomatable() const override { return voices[0].isAutomatable; }
+	bool isDiscrete() const override { return range->interval != 0; }
+	bool isBoolean() const override { return properties->isBoolean; }
+	bool isAutomatable() const override { return properties->isAutomatable; }
 	bool isMetaParameter() const override { return false; }
 	juce::StringArray getAllValueStrings() const override { return textValues; }
-	float getDefaultValue() const override { return convertTo0to1(voices[0].initialValue); }
+	float getDefaultValue() const override { return convertTo0to1(properties->initialValue); }
 	float getValue() const override { return convertTo0to1(currentFullRangeValue); }
 	void setValue(float newValue) override { setFullRangeValue(convertFrom0to1(newValue)); }
 
@@ -64,7 +72,7 @@ struct _SineSynth::Parameter : public juce::AudioProcessorParameterWithID
 
 	void sendUpdate(int index)
 	{
-		voices[index].setValue(currentFullRangeValue/*+lfos[index].value*/);
+		endPoints->at(index)->setValue(currentFullRangeValue/*+lfos[index].value*/);
 	}
 
 	bool sendUpdateIfNeeded()
@@ -100,18 +108,18 @@ struct _SineSynth::Parameter : public juce::AudioProcessorParameterWithID
 
 	int getNumSteps() const override
 	{
-		if (!textValues.isEmpty() && std::abs(textValues.size() - (range.end - range.start)) < 0.01f)
+		if (!textValues.isEmpty() && std::abs(textValues.size() - (range->end - range->start)) < 0.01f)
 			return textValues.size() - 1;
 
-		if (range.interval > 0)
-			return static_cast<int> ((range.end - range.start) / range.interval) + 1;
+		if (range->interval > 0)
+			return static_cast<int> ((range->end - range->start) / range->interval) + 1;
 
 		return AudioProcessor::getDefaultNumParameterSteps();
 	}
 
 private:
-	float convertTo0to1(float v) const { return range.convertTo0to1(range.snapToLegalValue(v)); }
-	float convertFrom0to1(float v) const { return range.snapToLegalValue(range.convertFrom0to1(juce::jlimit(0.0f, 1.0f, v))); }
+	float convertTo0to1(float v) const { return range->convertTo0to1(range->snapToLegalValue(v)); }
+	float convertFrom0to1(float v) const { return range->snapToLegalValue(range->convertFrom0to1(juce::jlimit(0.0f, 1.0f, v))); }
 
 	static int getNumDecimalPlaces(juce::NormalisableRange<float> r)
 	{
