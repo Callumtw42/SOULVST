@@ -1,8 +1,8 @@
-#include "PluginEditor.h"
+#include "Editor.h"
 
 juce::String message;
 
-Editor::Editor(_SineSynth& p)
+Editor::Editor(Processor& p)
 	: AudioProcessorEditor(&p), processor(&p)
 {
 	constrainer.setMinimumWidth(WIDTH);

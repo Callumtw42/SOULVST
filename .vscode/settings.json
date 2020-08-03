@@ -12,5 +12,6 @@
             "cmd": "soul generate --cpp --output=${workspaceRoot}\\Source\\soulpatch.cpp ${workspaceRoot}\\Source\\soul\\SineSynth.soulpatch",
             "event": "onFileChange"
         }
-    ]
+    ],
+    "powershell.codeFormatting.addWhitespaceAroundPipe": true
 }

@@ -8,20 +8,24 @@
   <MAINGROUP id="tPqceN" name="defaultplugin">
     <GROUP id="{1BF8D3CB-F9A7-43D2-B317-640F5BCEBB19}" name="Source">
       <GROUP id="{2CDA30D1-6DFD-6021-2CCB-2961D7C6F3D5}" name="SineSynth">
+        <FILE id="FO08Hi" name="endpoint.h" compile="0" resource="0" file="Source/endpoint.h"/>
+        <FILE id="KGmlWy" name="voice.h" compile="0" resource="0" file="Source/voice.h"/>
+        <FILE id="VW9uqp" name="soul_processor.h" compile="0" resource="0"
+              file="Source/soul_processor.h"/>
+        <FILE id="pc0nUs" name="param.h" compile="0" resource="0" file="Source/param.h"/>
         <FILE id="qkrI4u" name="editor_component.cpp" compile="0" resource="0"
               file="Source/editor_component.cpp"/>
-        <FILE id="p0zh3h" name="parameter.cpp" compile="0" resource="0" file="Source/parameter.cpp"/>
-        <FILE id="WW4QSi" name="main_processor.cpp" compile="0" resource="0"
-              file="Source/main_processor.cpp"/>
-        <FILE id="liUgtC" name="SineSynth.cpp" compile="1" resource="0" file="Source/SineSynth.cpp"/>
-        <FILE id="XwdpVd" name="SineSynth.h" compile="0" resource="0" file="Source/SineSynth.h"/>
+        <FILE id="p0zh3h" name="param.cpp" compile="0" resource="0" file="Source/param.cpp"/>
+        <FILE id="WW4QSi" name="soul_processor.cpp" compile="0" resource="0"
+              file="Source/soul_processor.cpp"/>
       </GROUP>
-      <FILE id="fABNXd" name="soulpatch.cpp" compile="0" resource="0" file="Source/soulpatch.cpp"/>
-      <FILE id="B4diM5" name="param.h" compile="0" resource="0" file="Source/param.h"/>
       <FILE id="rOdEgE" name="lfo.h" compile="0" resource="0" file="Source/lfo.h"/>
-      <FILE id="Uco0Jl" name="PluginEditor.cpp" compile="1" resource="0"
-            file="Source/PluginEditor.cpp"/>
-      <FILE id="GjXsLR" name="PluginEditor.h" compile="0" resource="0" file="Source/PluginEditor.h"/>
+      <FILE id="XwdpVd" name="Processor.h" compile="0" resource="0" file="Source/Processor.h"/>
+      <FILE id="liUgtC" name="Processor.cpp" compile="1" resource="0" file="Source/Processor.cpp"/>
+      <FILE id="GjXsLR" name="Editor.h" compile="0" resource="0" file="Source/Editor.h"/>
+      <FILE id="Uco0Jl" name="Editor.cpp" compile="1" resource="0" file="Source/Editor.cpp"/>
+      <FILE id="E8MQjc" name="soulpatch.h" compile="0" resource="0" file="Source/soulpatch.h"/>
+      <FILE id="fABNXd" name="soulpatch.cpp" compile="0" resource="0" file="Source/soulpatch.cpp"/>
     </GROUP>
   </MAINGROUP>
   <JUCEOPTIONS JUCE_STRICT_REFCOUNTEDPOINTER="1" JUCE_VST3_CAN_REPLACE_VST2="0"/>

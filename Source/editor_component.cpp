@@ -8,10 +8,6 @@
   ==============================================================================
 */
 
-//#include "soulpatch.cpp"
-//#include "SineSynth.h"
-
-
 struct _SineSynth::EditorComponent : public juce::AudioProcessorEditor
 {
 	EditorComponent(_SineSynth& p)
@@ -20,10 +16,10 @@ struct _SineSynth::EditorComponent : public juce::AudioProcessorEditor
 	{
 		setLookAndFeel(&lookAndFeel);
 
-		if constexpr (MainProcessor::GeneratedClass::numParameters != 0)
+		if constexpr (SoulProcessor::GeneratedClass::numParameters != 0)
 			addAndMakeVisible(editor);
 
-		if (MainProcessor::GeneratedClass::hasMIDIInput)
+		if (SoulProcessor::GeneratedClass::hasMIDIInput)
 			addAndMakeVisible(midiKeyboard);
 
 		auto size = owner.getStoredEditorSize({ 600, 400 });

@@ -1,7 +1,5 @@
 #pragma once
-
-//#include "PluginProcessor.h"
-#include "SineSynth.h"
+#include "Processor.h"
 
 static const int WIDTH = 700;
 static const int HEIGHT = 500;
@@ -9,14 +7,14 @@ static const int HEIGHT = 500;
 class Editor : public juce::AudioProcessorEditor, public juce::AudioProcessorParameter::Listener
 {
 public:
-	Editor(_SineSynth&);
+	Editor(Processor&);
 	~Editor() override;
 	void resized() override;
 	void parameterValueChanged(int parameterIndex, float newValue) override;
 	void parameterGestureChanged(int parameterIndex, bool gestureIsStarting) override {}
 	void updateParams();
 	void bindNativeCallbacks();
-	_SineSynth* processor;
+	Processor* processor;
 	blueprint::ReactApplicationRoot appRoot;
 	Label errorText;
 	ComponentBoundsConstrainer constrainer;

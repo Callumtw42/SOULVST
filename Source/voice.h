@@ -2,83 +2,53 @@
   ==============================================================================
 
 	voice.h
-	Created: 13 Jul 2020 8:51:34am
+	Created: 2 Aug 2020 4:55:25pm
 	Author:  callu
 
   ==============================================================================
 */
 
 #pragma once
-
 #include <JuceHeader.h>
-#include <functional>
+//#include "soul_processor.h"
+#include "endpoint.h"
 
-#include "../../SOUL/source/API/soul_patch/API/soul_patch.h"
-#include "../../SOUL/source/API/soul_patch/helper_classes/soul_patch_AudioPluginFormat.h"
-#include "../../SOUL/source/API/soul_patch/helper_classes/soul_patch_Utilities.h"
-#include "../../SOUL/source/API/soul_patch/helper_classes/soul_patch_CompilerCacheFolder.h"
-#include "../../SOUL/source/API/soul_patch/helper_classes/soul_patch_AudioProcessor.h"
-#include "../../SOUL/examples/SOULPatchHostDemo/Source/PatchLoaderComponent.h"
-#include "lfo.h";
+const int numParams = GeneratedClass::numParameters;
 
-using namespace juce;
-using namespace soul::patch;
-
-class Voice : public juce::AudioProcessor
+struct Voice
 {
-public:
-	//==============================================================================
-	Voice();
-	~Voice() override;
+	Voice(double* bpm, int sessionID)
+	{
+		this->sessionID = sessionID;
+		for (size_t i = 0; i < numParams; i++)
+		{
+			endPointParameters[i] = std::make_unique<EndPoint>(&processor.getParameterProperties()[i], bpm);
+		}
+	}
+	;
+	void startLFOs()
+	{
+		for (size_t i = 0; i < GeneratedClass::numParameters; i++)
+		{
+			endPointParameters[i]->lfo->start();
+		}
+	}
 
-	//==============================================================================
-	void prepareToPlay(double sampleRate, int samplesPerBlock) override;
-	void releaseResources() override;
+	void initialise(double sampleRate, int maxBlockSize)
+	{
+		processor.init(sampleRate, sessionID);
+		outputBuffer.setSize(GeneratedClass::numAudioOutputChannels, maxBlockSize, false, false, true);
+		midiBufferSize = maxBlockSize;
+	}
+	
+	int sessionID;
+	GeneratedClass processor;
+	juce::AudioBuffer<float> outputBuffer;
+	std::vector<GeneratedClass::MIDIMessage> incomingMIDIMessages;
+	std::array<std::unique_ptr<EndPoint>, numParams> endPointParameters;
+	int midiBufferSize = 0;
+	int noteOn = -1;
+	int numMessages = 0;
 
-#ifndef JucePlugin_PreferredChannelConfigurations
-	bool isBusesLayoutSupported(const BusesLayout& layouts) const override;
-#endif
-
-	void processBlock(juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
-
-	//==============================================================================
-	juce::AudioProcessorEditor* createEditor() override;
-	bool hasEditor() const override;
-
-	//==============================================================================
-	const juce::String getName() const override;
-
-	bool acceptsMidi() const override;
-	bool producesMidi() const override;
-	bool isMidiEffect() const override;
-	double getTailLengthSeconds() const override;
-
-	//==============================================================================
-	int getNumPrograms() override;
-	int getCurrentProgram() override;
-	void setCurrentProgram(int index) override;
-	const juce::String getProgramName(int index) override;
-	void changeProgramName(int index, const juce::String& newName) override;
-
-	//==============================================================================
-	void getStateInformation(juce::MemoryBlock& destData) override;
-	void setStateInformation(const void* data, int sizeInBytes) override;
-
-	void initialiseGraph();
-
-	std::unique_ptr<juce::AudioPluginInstance> plugin;
-
-private:
-	AudioProcessorPlayer* player;
-	AudioDeviceManager* manager;
-	SOULPatchAudioPluginFormat* patchFormat;
-	bool isPlayable;
-	AudioProcessorEditor* editor;
-	PluginDescription* desc;
-	LFO* lfo;
-	AudioProcessorGraph graph;
-	std::unique_ptr<SOULPatchAudioProcessor> soulProcessor;
-	//==============================================================================
-	JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(Voice)
 };
 
