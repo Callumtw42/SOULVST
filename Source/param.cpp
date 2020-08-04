@@ -8,7 +8,7 @@
   ==============================================================================
 */
 
-#include "param.h"
+//#include "param.h"
 
 Param::Param(std::array<Voice*, MAXVOICES> voices)
 	:AudioProcessorParameterWithID(uid, name)

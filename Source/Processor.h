@@ -1,25 +1,11 @@
-//      _____ _____ _____ __
-//     |   __|     |  |  |  |        Auto-generated C++
-//     |__   |  |  |  |  |  |__      SOUL Version 0.9.0
-//     |_____|_____|_____|_____|     https://soul.dev
-//
 
 #pragma once
-#include <JuceHeader.h>
-#include "soulpatch.h"
-
-//#ifndef JUCE_AUDIO_PROCESSORS_H_INCLUDED
-//#error "This file is designed to be included inside a file in a JUCE project, so that the module headers have already been included before it"
-//#endif
-
 const int MAXVOICES = 3;
 const int LFORES = 128;
+#include <JuceHeader.h>
+#include "soulpatch.h"
+#include "param.h"
 
-
-struct Voice : SineSynth
-{
-	int noteOn = -1;
-};
 
 class Processor : public AudioProcessor
 {
@@ -43,12 +29,18 @@ public:
 	void changeProgramName(int index, const juce::String& newName) override;
 	void getStateInformation(juce::MemoryBlock& destData) override;
 	void setStateInformation(const void* data, int sizeInBytes) override;
+
 	std::array<Voice*, MAXVOICES> initVoices();
-	int noteCount = 0;
+	void initParams();
+	std::array<AudioProcessorParameter*, MAXVOICES> getEndPointGroup(juce::String paramName);
 	int getVoicePlayingNote(int note);
+	void triggerLFOs(int v, juce::MidiMessage message);
+
+	int noteCount = 0;
+	AudioProcessorEditor* editor;
 
 	std::array<Voice*, MAXVOICES> voices;
-	HashMap<juce::String, AudioProcessorParameter*> params;
+	HashMap<juce::String, Param*> params;
 };
 
 #define SOUL_HEADER_INCLUDED_167054764 1

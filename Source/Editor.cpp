@@ -74,10 +74,11 @@ void Editor::bindNativeCallbacks()
 		[](void* stash, const var::NativeFunctionArgs& args) {
 			auto* self = reinterpret_cast<Editor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
-			//AudioProcessorParameter* param = self->processor->mainParams.getReference(paramId);
+			Param* param = self->processor->params.getReference(paramId);
+			param->enableLFOs();
 			for (int i = 0; i < LFORES; i++) {
 				double inVal = static_cast<double>(args.arguments[1][i]);
-				//param->lfo->plot[i] = inVal;
+				param->lfoPlot[i] = inVal;
 			}
 			return var::undefined();
 		},
@@ -89,9 +90,9 @@ void Editor::bindNativeCallbacks()
 		[](void* stash, const var::NativeFunctionArgs& args) {
 			auto* self = reinterpret_cast<Editor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
-			//AudioProcessorParameter* param = self->processor->mainParams.getReference(paramId);
+			Param* param = self->processor->params.getReference(paramId);
 
-			//param->lfo->speed = args.arguments[1];
+			param->setLFOSpeed(args.arguments[1]);
 			return var::undefined();
 		},
 		(void*)this

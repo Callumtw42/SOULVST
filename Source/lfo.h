@@ -8,20 +8,20 @@
   ==============================================================================
 */
 
-static const int LFORES = 128;
-static const int DEFAULT_TEMPO = 128;
+//static const int DEFAULT_TEMPO = 128;
 
 #pragma once
 #define _USE_MATH_DEFINES
 #include <JuceHeader.h>
 #include <math.h>
-#include <functional>
 
+inline AudioPlayHead::CurrentPositionInfo playheadPosition;
+inline double bpm = 128;
 
 class LFO
 {
 public:
-	LFO(std::function<void(float)>* callback, float* paramValue, double* bpm) :callBack(callback), bpm(bpm), paramSliderValue(paramValue)
+	LFO(AudioProcessorParameter* endPoint, float* paramValue, double* speed, std::array<double, LFORES>& plot) :endPoint(endPoint), paramSliderValue(paramValue), speed(speed), plot(plot)
 	{
 		plot.fill(0);
 
@@ -31,49 +31,57 @@ public:
 
 	void start()
 	{
+
+		std::chrono::steady_clock::time_point startTime = std::chrono::high_resolution_clock::now();
 		isOn = true;
-		std::thread proc([this]()
+		std::thread proc([this, startTime]()
 			{
-				while (true)
+				while (isOn)
 				{
-					process();
+					process(startTime);
 					std::this_thread::sleep_for(std::chrono::microseconds(minInterval));
 				}
 			});
 		proc.detach();
 	}
 
-
-
-	void process()
+	void stop()
 	{
-		double bpm = *this->bpm;
-		if (bpm < 0)
-			bpm = DEFAULT_TEMPO;
+		isOn = false;
+	}
+
+
+
+	void process(std::chrono::steady_clock::time_point startTime)
+	{
+		//double bpm = *this->bpm;
+		//if (bpm < 0)
+			//bpm = DEFAULT_TEMPO;
 		double microSecondsPerBeat = (60.0 / bpm) * 1000000;
 		double barLength = microSecondsPerBeat * 4;
 		std::chrono::duration<float> elapsedTime = std::chrono::high_resolution_clock::now() - startTime;
 		double microsecondsElapsed = elapsedTime.count() * 1000000;
 		double barsElapsed = microsecondsElapsed / barLength;
-		double intervalsElapsed = barsElapsed / speed;
+		double intervalsElapsed = barsElapsed / *speed;
 		int index = std::round(intervalsElapsed * LFORES);
 		double lfoVal = plot[index % LFORES];
 		double outVal = std::clamp(*paramSliderValue + lfoVal, 0.0, 1.0);
-		std::function<void(float)> callBack = *this->callBack;
-		callBack(outVal);
+		//std::function<void(float)> endPoint = *this->endP;
+		//callBack(outVal);
+		endPoint->setValue(outVal);
 
 		//soulParam->setValue(outVal);
 	}
 
 	//AudioPlayHead::CurrentPositionInfo* playHead;
 	int minInterval = 1000;
-	double* bpm;
-	double speed = 0.0;
-	std::chrono::steady_clock::time_point startTime = std::chrono::high_resolution_clock::now();
-	std::array<double, LFORES> plot;
+	//double* bpm;
+	double* speed;
+	std::array<double, LFORES>& plot;
 	float* paramSliderValue;
 	//void(*callBack)(double);
-	std::function<void(float)>* callBack;
+	//std::function<void(float)>* callBack;
+	AudioProcessorParameter* endPoint;
 	bool isOn = false;
 
 	//AudioProcessorParameter* soulParam;

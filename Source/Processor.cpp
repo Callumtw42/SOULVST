@@ -4,7 +4,11 @@
 
 Processor::Processor() :
 	voices(initVoices()),
-	AudioProcessor(createBuses()) {}
+	editor(new Editor(*this)),
+	AudioProcessor(createBuses())
+{
+	initParams();
+}
 
 Processor::~Processor() {}
 
@@ -19,6 +23,24 @@ std::array<Voice*, MAXVOICES> Processor::initVoices()
 	return voices;
 }
 
+void Processor::initParams()
+{
+	for (AudioProcessorParameter* p : voices[0]->getParameters())
+	{
+		juce::String name = p->getName(100);
+		Param* param = new Param(getEndPointGroup(name));
+		params.set(name, param);
+		addParameter(param);
+		param->addListener(dynamic_cast<Editor*>(editor));
+		param->setValue(param->getDefaultValue());
+	}
+}
+
+void connectParamsToUI()
+{
+
+}
+
 void Processor::prepareToPlay(double sampleRate, int maximumExpectedSamplesPerBlock)
 {
 	for (int i = 0; i < MAXVOICES; ++i)
@@ -27,29 +49,14 @@ void Processor::prepareToPlay(double sampleRate, int maximumExpectedSamplesPerBl
 	}
 }
 
-
-
-//juce::MidiMessage midiBlank(int samplePosition)
-//{
-//
-//	return  { static_cast<uint32_t> (samplePosition),
-//							  static_cast<uint8_t> (0),
-//							  static_cast<uint8_t> (0),
-//							  static_cast<uint8_t> (0) };
-//}
-//
-//juce::MIDIMessage midiBytes(int samplePosition)
-//{
-//
-//	return  { static_cast<uint32_t> (message.samplePosition),
-//							  static_cast<uint8_t> (message.data[0]),
-//							  static_cast<uint8_t> (message.data[1]),
-//							  static_cast<uint8_t> (message.data[2]) };
-//}
-
 void Processor::processBlock(AudioBuffer<float>& audio, MidiBuffer& midi)
 {
-	//Populate 3 arrays with blank midimessages
+
+	if (playHead.load() && playHead.load()->getCurrentPosition(playheadPosition))
+	{
+		bpm = playheadPosition.bpm;
+	}
+
 	std::array<MidiBuffer, MAXVOICES> midiOut;
 	std::array<AudioBuffer<float>, MAXVOICES> audioOut;
 	int numSamples = audio.getNumSamples();
@@ -58,16 +65,6 @@ void Processor::processBlock(AudioBuffer<float>& audio, MidiBuffer& midi)
 	{
 		audioOut[i].setSize(numChannels, numSamples, false, false, true);
 	}
-	//for (int i = 0; i < MAXVOICES; ++i)
-	//{
-		//midiOut[i].resize(getBlockSize());
-		//int msgCount = 0;
-		//for (MidiMessageMetadata data : midi)
-		//{
-		//	if (data.numBytes < 4)
-		//		midiOut[i][msgCount] = midiBlank(data.samplePosition);
-		//}
-	//}
 
 	for (MidiMessageMetadata data : midi)
 	{
@@ -81,6 +78,7 @@ void Processor::processBlock(AudioBuffer<float>& audio, MidiBuffer& midi)
 				midiOut[selection].addEvent(message, data.samplePosition);
 				voices[selection]->noteOn = message.getNoteNumber();
 				noteCount++;
+				triggerLFOs(selection, message);
 			}
 			else if (message.isNoteOff())
 			{
@@ -88,6 +86,7 @@ void Processor::processBlock(AudioBuffer<float>& audio, MidiBuffer& midi)
 				midiOut[selection].addEvent(message, data.samplePosition);
 				voices[selection]->noteOn = -1;
 				noteCount--;
+				triggerLFOs(selection, message);
 			}
 			else
 			{
@@ -106,6 +105,14 @@ void Processor::processBlock(AudioBuffer<float>& audio, MidiBuffer& midi)
 		voices[i]->processBlock(audioOut[i], midiOut[i]);
 		for (int j = 0; j < numChannels; ++j)
 			audio.addFrom(j, 0, audioOut[i], j, 0, numSamples);
+	}
+}
+
+void Processor::triggerLFOs(int v, juce::MidiMessage message)
+{
+	for (Param* p : params)
+	{
+		p->triggerLFO(v, message);
 	}
 }
 
@@ -131,8 +138,18 @@ Processor::BusesProperties Processor::createBuses()
 	return buses;
 }
 
+std::array<AudioProcessorParameter*, MAXVOICES> Processor::getEndPointGroup(juce::String paramName)
+{
+	std::array<AudioProcessorParameter*, MAXVOICES> endPoints;
+	for (int i = 0; i < MAXVOICES; ++i)
+	{
+		endPoints[i] = voices[i]->params.getReference((paramName));
+	}
+	return endPoints;
+}
 
-AudioProcessorEditor* Processor::createEditor() { return new Editor(*this); }
+
+AudioProcessorEditor* Processor::createEditor() { return editor; }
 
 const juce::String Processor::getName() const { return SOUL_SineSynth::name; }
 

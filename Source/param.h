@@ -10,55 +10,81 @@
 
 #pragma once
 #include <JuceHeader.h>
-//#include "voice.h"
-#include "soulpatch.cpp"
+#include "lfo.h"
 
-using GeneratedClass = SineSynth;
-class Param : public juce::AudioProcessorParameterWithID
+struct Voice : SineSynth
+{
+	Voice()
+	{
+		for (AudioProcessorParameter* p : getParameters())
+		{
+			params.set(p->getName(100), p);
+		}
+	}
+	int noteOn = -1;
+	HashMap <juce::String, AudioProcessorParameter* >params;
+
+};
+
+class Param : public AudioProcessorParameter
 {
 public:
-	Param(std::array < Voice*, MAXVOICES> voices);
-	float currentFullRangeValue = 0;
-	bool needsUpdate = false;
-	//_SineSynth* owner;
-	std::array < Voice*, MAXVOICES> voices;
-	Voice::GeneratedClass::ParameterProperties* properties;
-	//std::array<MainProcessor::EndPointParameter*, MAXVOICES>* endPoints;
-	juce::StringArray textValues;
-	const juce::NormalisableRange<float>* range;
-	int numDecimalPlaces;
-	std::atomic<uint32_t>* numParametersNeedingUpdate;
+	Param(std::array<AudioProcessorParameter*, MAXVOICES> endPoints) :
+		endPoints(endPoints)
+	{
+		lfoPlot.fill(0.0f);
+		initLFOs();
+	}
 
-	juce::String getName(int maximumStringLength) const override { return name.substring(0, maximumStringLength); }
-	juce::String getLabel() const override { return properties->unit; }
-	Category getCategory() const override { return genericParameter; }
-	bool isDiscrete() const override { return range->interval != 0; }
-	bool isBoolean() const override { return properties->isBoolean; }
-	bool isAutomatable() const override { return properties->isAutomatable; }
-	bool isMetaParameter() const override { return false; }
-	juce::StringArray getAllValueStrings() const override { return textValues; }
-	float getDefaultValue() const override { return convertTo0to1(properties->initialValue); }
-	float getValue() const override { return convertTo0to1(currentFullRangeValue); }
-	void setValue(float newValue) override { setFullRangeValue(convertFrom0to1(newValue)); }
+	void initLFOs()
+	{
+		for (int i = 0; i < MAXVOICES; ++i)
+		{
+			lfos[i] = new LFO(endPoints[i], &value, &lfoSpeed, lfoPlot);
+		}
+	}
 
-	void setFullRangeValue(float newValue);
+	float getValue() const override { return value; };
 
-	void sendUpdate(int index);
+	void setValue(float newValue) override
+	{
+		value = newValue;
+		sendValueChangedMessageToListeners(newValue);
+		for (int i = 0; i < MAXVOICES; ++i)
+		{
+			if (!lfos[i]->isOn)	endPoints[i]->setValue(newValue);
+		}
+	};
 
-	bool sendUpdateIfNeeded();
-	juce::String getText(float v, int length) const override;
+	float getDefaultValue() const override { return endPoints[0]->getDefaultValue(); };
 
-	float getValueForText(const juce::String& text) const override;
+	float getValueForText(const juce::String& text) const override { return endPoints[0]->getValueForText(text); }
 
-	int getNumSteps() const override;
+	juce::String getName(int maximumStringLength) const override { return endPoints[0]->getName(100); };
+
+	juce::String getLabel() const override { return endPoints[0]->getLabel(); };
+
+	void enableLFOs() { lfosEnabled = true; };
+	void disableLFOs() { lfosEnabled = false; };
+	void setLFOSpeed(double d) { lfoSpeed = d; };
+	void triggerLFO(int i, MidiMessage message)
+	{
+		if (lfosEnabled) {
+			if (message.isNoteOn())
+				lfos[i]->start();
+			else if (message.isNoteOff())
+				lfos[i]->stop();
+		}
+	};
+	
+	std::array<double, LFORES> lfoPlot;
 
 private:
-	float convertTo0to1(float v) const { return range->convertTo0to1(range->snapToLegalValue(v)); }
-	float convertFrom0to1(float v) const { return range->snapToLegalValue(range->convertFrom0to1(juce::jlimit(0.0f, 1.0f, v))); }
+	float value = 0.0;
+	double lfoSpeed = 0.0;
+	std::array<AudioProcessorParameter*, MAXVOICES> endPoints;
+	std::array<LFO*, MAXVOICES> lfos;
+	bool lfosEnabled = true;
 
-	static int getNumDecimalPlaces(juce::NormalisableRange<float> r);
-
-	static juce::StringArray parseTextValues(const juce::String& text);
-
-	static juce::String preprocessText(juce::CharPointer_UTF8 text, float value);
 };
+
