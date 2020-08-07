@@ -1,0 +1,14 @@
+<svg width="50" height="50" viewBox="0 0 50 50" version="1.1"
+    transform="rotate(${(5 / 8 * 360)} 50 50/2" xmlns="http://www.w3.org/2000/svg">
+    <text x="50" y="${height / 2 + 20}" text-anchor="middle" fill="#D5D5D5">
+        <tspan style="font-size:9.0">${this.props.paramId}</tspan>
+    </text>>
+    <circle cx="${cx}" cy="${cy}" r="${paramRadius}" stroke="#626262" stroke-width="${strokeWidth}"
+        stroke-dasharray="${[paramArcCircumference].join(',')}" fill="none" />
+    <circle cx="${cx}" cy="${cy}" r="${paramRadius}" stroke="#66FDCF" stroke-width="${strokeWidth}"
+        stroke-dasharray="${paramDashArray.join(',')}" fill="none" />
+    <circle cx="${cx}" cy="${cy}" r="${modRadius}" stroke="#047cf4" stroke-width="${strokeWidth}"
+        stroke-dasharray="${[modDashArray].join(" ,")}" fill="none"
+        transform="rotate(${value * (3 / 4 * 360)} 50 ${height / 2}">
+    </circle>
+</svg>

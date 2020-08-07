@@ -7,8 +7,9 @@ import {
 } from 'juce-blueprint';
 import Mouse from "./mouse"
 import NodeList from "./nodelist"
-import Slider from "./slider"
-import Dial from "./dial"
+import Slider from "../slider/slider"
+import Dial from "../slider/dial"
+import Button from "../button"
 
 const boxHeight = 100;
 const boxWidth = 150;
@@ -52,7 +53,10 @@ class LFO extends Component {
         }
       ),
       plot: new Array(plotResolution),
-      gridRes: 16
+      gridRes: 16,
+      lineColor: "#626262",
+      on: false,
+      speed: 4.0
     }
   }
 
@@ -197,16 +201,16 @@ class LFO extends Component {
   }
 
   _svg() {
-    const { points, plot } = this.state;
+    const { points, plot, lineColor } = this.state;
     const { gridX, gridY } = this.grid();
     this.generatePlot();
     const paths = points.map((point) => {
-      if (point.rightNeighbour) return `<path d="M${point.x} ${point.y} L${point.rightNeighbour.x} ${point.rightNeighbour.y} Z" stroke="#3ade3a" stroke-width="2"/>`
+      if (point.rightNeighbour) return `<path d="M${point.x} ${point.y} L${point.rightNeighbour.x} ${point.rightNeighbour.y} Z" stroke="${lineColor}" stroke-width="2"/>`
       else return ``;
     })
     const circles = points.map((point, index) => {
       return `
-      <circle cx="${point.x}" cy="${point.y}" r="${point.radius}" fill="#3ade3a" />
+      <circle cx="${point.x}" cy="${point.y}" r="${point.radius}" fill="${lineColor}" />
       ${paths[index]}
         `
     })
@@ -224,15 +228,27 @@ class LFO extends Component {
   }
 
   setSpeed(value) {
+    this.setState({
+      speed: value
+    })
     global.sendLFOSpeed(this.props.paramId, value);
   }
 
   setGridRes(value) {
-    // const newValue = clamp(Math.round(value * MAX_GRID_RES), 1, 16)
     this.setState({ gridRes: value })
   }
 
+  setActive(buttonOn) {
+    this.setState({
+      lineColor: buttonOn ? "#3ade3a" : "#626262",
+      on: buttonOn
+    })
+    global.setLFOEnabled(this.props.paramId, buttonOn)
+    global.sendPlot(this.props.paramId, this.state.plot)
+  }
+
   render() {
+    const { speed, gridRes } = this.state;
     styles.container.left = this.props.x;
     styles.container.top = this.props.y;
     if (this.props.paramId == this.props.activeLFO) {
@@ -247,8 +263,9 @@ class LFO extends Component {
           {/* <Slider {...styles.slider} callBack={this.setSpeed.bind(this)}></Slider> */}
           {/* <Slider {...styles.slider} {...this.props} min={1} max={16} step={1} callBack={this.setGridRes.bind(this)} ></Slider> */}
           <View {...styles.dials}>
-            <Dial {...styles.dial} {...this.props} min={1} max={16} step={1} label={"Grid"} callBack={this.setGridRes.bind(this)} ></Dial>
-            <Dial {...styles.dial} {...this.props} min={4} max={1 / 64} step={1} skew={2} label={"Speed"} callBack={this.setSpeed.bind(this)} ></Dial>
+            <Dial {...styles.dial} {...this.props} value={gridRes} min={1} max={16} step={1} label={"Grid"} callBack={this.setGridRes.bind(this)} ></Dial>
+            <Dial {...styles.dial} {...this.props} value={speed} min={4} max={1 / 64} step={1} skew={2} label={"Speed"} callBack={this.setSpeed.bind(this)} ></Dial>
+            <Button {...styles.button}{...this.props} callBack={this.setActive.bind(this)} on={this.state.on} />
           </View>
         </View>
       );
@@ -282,6 +299,11 @@ let styles = {
     'left': 0,
     'top': 0
   },
+  button: {
+    'width': boxWidth / 4,
+    'height': boxWidth / 4,
+    'color': '#3ade3a'
+  }
 };
 
 export { LFO, boxHeight as lfoHeight, boxWidth as lfoWidth, plotHeight as lfoViewHeight };

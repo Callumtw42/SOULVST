@@ -40,16 +40,18 @@ public:
 	{
 		for (int i = 0; i < MAXVOICES; ++i)
 		{
-			lfos[i] = new LFO(endPoints[i], &value, &lfoSpeed, lfoPlot);
+			lfos[i] = new LFO(endPoints[i], &value, &lfoSpeed, lfoPlot, modAmt);
 		}
 	}
 
 	float getValue() const override { return value; };
 
+	juce::String getText(float normalisedValue, int i) const override { return endPoints[0]->getText(normalisedValue, i); };
+
 	void setValue(float newValue) override
 	{
 		value = newValue;
-		sendValueChangedMessageToListeners(newValue);
+		//sendValueChangedMessageToListeners(newValue);
 		for (int i = 0; i < MAXVOICES; ++i)
 		{
 			if (!lfos[i]->isOn)	endPoints[i]->setValue(newValue);
@@ -64,8 +66,21 @@ public:
 
 	juce::String getLabel() const override { return endPoints[0]->getLabel(); };
 
-	void enableLFOs() { lfosEnabled = true; };
-	void disableLFOs() { lfosEnabled = false; };
+	void setModAmt(float v) { modAmt = v; }
+
+	//void enableLFOs() { lfosEnabled = true; };
+	//void disableLFOs() { lfosEnabled = false; };
+	void setLFOEnabled(bool onOff)
+	{
+		lfosEnabled = onOff;
+		if(!lfosEnabled)
+		{
+			for (int i = 0; i < MAXVOICES; ++i)
+			{
+				lfos[i]->stop();
+			}
+		}
+	};
 	void setLFOSpeed(double d) { lfoSpeed = d; };
 	void triggerLFO(int i, MidiMessage message)
 	{
@@ -76,10 +91,11 @@ public:
 				lfos[i]->stop();
 		}
 	};
-	
+
 	std::array<double, LFORES> lfoPlot;
 
 private:
+	float modAmt = 0;
 	float value = 0.0;
 	double lfoSpeed = 0.0;
 	std::array<AudioProcessorParameter*, MAXVOICES> endPoints;

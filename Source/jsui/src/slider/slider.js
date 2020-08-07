@@ -16,12 +16,6 @@ class Slider extends Component {
 
         this._onMouseDown = this._onMouseDown.bind(this);
         this._onMouseDrag = this._onMouseDrag.bind(this);
-        this._onMouseUp = this._onMouseUp.bind(this);
-        this.state = {
-            width: this.props.width,
-            height: this.props.height,
-            value: this.props.min
-        };
     }
 
     snap(value, maxVal, stepSize, minStep, maxStep) {
@@ -32,29 +26,18 @@ class Slider extends Component {
         const skewed = skew ? Math.pow(skew, snapped) : snapped
         const clamped = clamp(skewed, Math.min(maxStep, minStep), Math.max(maxStep, minStep));
         return clamped
-        // return clamped
-    }
-
-    _onMouseUp(mouseX, mouseY) {
-        this.props.spawnLabel(0, 0, "")
     }
 
     _onMouseDown(mouseX, mouseY) {
-        const { max, min, step } = this.props;
-        const { height, width, value } = this.state
+        const { max, min, step, height, width } = this.props;
         const newVal = this.snap(mouseX, width, step, min, max)
-        this.setState({ value: newVal })
-        this.props.callBack(value);
-        // this.props.spawnLabel(global.getMouseX() - mouseX + width / 2, global.getMouseY() - mouseY + height, value)
+        this.props.callBack(newVal);
     }
 
     _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
-        const { max, min, step } = this.props;
-        const { height, width, value } = this.state
+        const { max, min, step, height, width, } = this.props;
         const newVal = this.snap(mouseX, width, step, min, max)
-        this.setState({ value: newVal })
-        this.props.callBack(value);
-        // this.props.spawnLabel(global.getMouseX() - mouseX + width / 2, global.getMouseY() - mouseY + height, value)
+        this.props.callBack(newVal);
     }
 
     _renderVectorGraphics(value, width, height) {
@@ -81,7 +64,8 @@ class Slider extends Component {
     }
 
     render() {
-        const { value, width, height } = this.state;
+        const { value } = this.props;
+        const { width, height } = this.props
         return (<View {...styles.container}>
             <View
                 {...this.props}
@@ -90,7 +74,6 @@ class Slider extends Component {
                 onMouseUp={this._onMouseUp}
             >
                 <Image {...styles.canvas} source={this._renderVectorGraphics(value, width, height)} />
-                {/* <Text {...styles.text}>{"Grid"}</Text> */}
             </View>
         </View>
         );
@@ -102,14 +85,11 @@ Slider.defaultProps = { skew: null }
 const styles = {
     container: {
         'flex-direction': 'column',
-        'background-color': 'ff333333',
+        'background-color': '#00333333',
     },
     text: {
         'color': 'ff626262',
         'font-size': 8.0,
-        // 'line-spacing': 1.6,
-        // 'left': 7,
-        // 'position': 'absolute'
     },
     canvas: {
         'height': '100%',

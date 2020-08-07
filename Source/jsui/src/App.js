@@ -6,8 +6,9 @@ import {
   Text
 } from 'juce-blueprint';
 
-const dialHeight = 50;
-const dialWidth = 50;
+
+const dialHeight = 55;
+const dialWidth = 55;
 
 function SliderLabel(props) {
   const styles = {

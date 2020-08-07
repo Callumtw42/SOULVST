@@ -1,6 +1,6 @@
 
 #pragma once
-const int MAXVOICES = 3;
+const int MAXVOICES = 12;
 const int LFORES = 128;
 #include <JuceHeader.h>
 #include "soulpatch.h"
@@ -41,6 +41,9 @@ public:
 
 	std::array<Voice*, MAXVOICES> voices;
 	HashMap<juce::String, Param*> params;
+private:
+	struct NoteHandler;
+	NoteHandler* noteHandler;
 };
 
 #define SOUL_HEADER_INCLUDED_167054764 1

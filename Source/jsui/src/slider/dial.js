@@ -5,16 +5,10 @@ export default class Dial extends Slider {
     super(props)
   }
 
-  _onMouseDown(mouseX, mouseY) {
-    const { max, min, steps, height, width } = this.props;
-    const { value } = this.state
-  }
-
   _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
     const { max, min, step, height, width } = this.props;
     const newVal = this.snap(height - mouseY, height, step, min, max)
-    this.setState({ value: newVal })
-    this.props.callBack(this.state.value);
+    this.props.callBack(newVal);
   }
 
   _renderVectorGraphics(value, width, height) {
@@ -32,7 +26,7 @@ export default class Dial extends Slider {
         version="1.1"
         xmlns="http://www.w3.org/2000/svg">
         <text x="${width / 2}" y="${height}" text-anchor="middle" fill="#D5D5D5"><tspan style="font-size:9.0">${label}</tspan></text>>
-        <text x="${width / 2}" y="${(9 / 16) * height}" text-anchor="middle" fill="#D5D5D5"><tspan style="font-size:9.0">${this.state.value}</tspan></text>>
+        <text x="${width / 2}" y="${(9 / 16) * height}" text-anchor="middle" fill="#D5D5D5"><tspan style="font-size:9.0">${this.props.value}</tspan></text>>
         <circle
         transform="rotate(-135,${width / 2},${height / 2})"
           cx="${width / 2}"

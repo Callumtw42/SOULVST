@@ -1,11 +1,15 @@
 import ParameterValueStore from './ParameterValueStore';
 import React, { Component } from 'react';
 import Label from './Label';
+import Dial from "./slider/dial"
+import ModAmt from "./slider/modAmt"
+import { clamp } from "./functions"
 import {
   Image,
   Text,
   View,
 } from 'juce-blueprint';
+
 
 class ParamDial extends Component {
   constructor(props) {
@@ -15,7 +19,7 @@ class ParamDial extends Component {
     this._onMouseDown = this._onMouseDown.bind(this);
     this._onMouseUp = this._onMouseUp.bind(this);
     this._onMouseDrag = this._onMouseDrag.bind(this);
-    this._renderVectorGraphics = this._renderVectorGraphics.bind(this);
+    // this._renderVectorGraphics = this._renderVectorGraphics.bind(this);
     this._onParameterValueChange = this._onParameterValueChange.bind(this);
     this._onMouseDoubleClick = this._onMouseDoubleClick.bind(this);
 
@@ -31,21 +35,24 @@ class ParamDial extends Component {
       width: 0,
       height: 0,
       value: initialValue,
+      dialPosition: initialValue,
+      modAmt: 0,
+      initialised: false
     };
   }
 
   componentDidMount() {
-    ParameterValueStore.addListener(
-      ParameterValueStore.CHANGE_EVENT,
-      this._onParameterValueChange
-    );
+    // ParameterValueStore.addListener(
+    //   ParameterValueStore.CHANGE_EVENT,
+    //   this._onParameterValueChange
+    // );
   }
 
   componentWillUnmount() {
-    ParameterValueStore.removeListener(
-      ParameterValueStore.CHANGE_EVENT,
-      this._onParameterValueChange
-    );
+    // ParameterValueStore.removeListener(
+    //   ParameterValueStore.CHANGE_EVENT,
+    //   this._onParameterValueChange
+    // );
   }
 
   _onMouseDoubleClick(mouseX, mouseY) {
@@ -62,6 +69,9 @@ class ParamDial extends Component {
   }
 
   _onMouseDown(mouseX, mouseY) {
+    this.setState({
+      initialised: true
+    })
     this._valueAtDragStart = this.state.value;
     global.beginParameterChangeGesture(this.props.paramId);
   }
@@ -79,10 +89,15 @@ class ParamDial extends Component {
     // let dm = dx + dy;
     let sensitivity = (1.0 / 200.0);
     let value = Math.max(0.0, Math.min(1.0, this._valueAtDragStart + dy * sensitivity));
+    this.setState({
+      value: value
+    })
+    this.setValue();
+  }
 
-
-    if (typeof this.props.paramId === 'string' && this.props.paramId.length > 0) {
-      global.setParameterValueNotifyingHost(this.props.paramId, value);
+  setValue() {
+    if (typeof this.props.paramId === 'string' && this.props.paramId.length > 0 && this.state.initialised) {
+      global.setParameterValueNotifyingHost(this.props.paramId, this.state.value);
     }
   }
 
@@ -101,68 +116,104 @@ class ParamDial extends Component {
     }
   }
 
+  setModAmt(v) {
+    this.setState({
+      modAmt: v
+    })
+    global.setModAmt(this.props.paramId, v);
+  }
+
+
   _renderVectorGraphics(value, width, height) {
+
     const cx = width * 0.5;
-    const cy = height * 0.5;
+    const cy = height * 0.4;
     const strokeWidth = 2.0;
+    const { modAmt } = this.state;
+    const { paramId } = this.props
 
     // Note that we nudge the radius by half the stroke width; this is because
     // the stroke will extend outwards in both directions from the given coordinates,
     // which gets clipped if we try to draw the circle perfectly on the edge of the
     // image. We nudge it in so that no part of the path gets clipped.
-    const radius = (Math.min(width, height) * 0.5) - (strokeWidth / 2);
+    const paramRadius = (Math.min(width, height) * 0.5) - (strokeWidth / 2) - 10;
+    const modRadius = paramRadius + 5;
 
     // Animate the arc by stroke-dasharray, where the length of the dash is
     // related to the value property and the length of the space takes up the
     // rest of the circle.
-    const arcCircumference = 1.5 * Math.PI * radius;
-    const dashArray = [value * arcCircumference, 2.0 * Math.PI * radius];
+    const paramArcCircumference = 1.5 * Math.PI * paramRadius;
+    const modArcCircumference = + 1.5 * Math.PI * modRadius;
 
-    return `
-      <svg
-        width="${width}"
-        height="${height}"
-        viewBox="0 0 ${width} ${height}"
-        version="1.1"
-        xmlns="http://www.w3.org/2000/svg">
-        <circle
-          cx="${cx}"
-          cy="${cy}"
-          r="${radius}"
-          stroke="#626262"
-          stroke-width="${strokeWidth}"
-          stroke-dasharray="${[arcCircumference, arcCircumference].join(',')}"
-          fill="none" />
-        <circle
-          cx="${cx}"
-          cy="${cy}"
-          r="${radius}"
-          stroke="#66FDCF"
-          stroke-width="${strokeWidth}"
-          stroke-dasharray="${dashArray.join(',')}"
-          fill="none" />
-      </svg>
-    `;
+    const paramDashArray = [value * paramArcCircumference, 2.0 * Math.PI * paramRadius];
+    const modDashArray = [clamp(modAmt, 0, (1 - value)) * modArcCircumference, 2.0 * Math.PI * modRadius];
+
+    return (
+      `
+    <svg
+      width="${width}"
+      height="${height}"
+      viewBox="0 0 ${width} ${height}"
+      version="1.1"
+      xmlns="http://www.w3.org/2000/svg">
+    <text font-size="9"  fill="#D4D4D4" x="${cx}" y="${cy + 19}" text-anchor="middle">
+        ${paramId}
+    </text>
+      <circle
+        cx="${cx}"
+        cy="${cy}"
+        r="${paramRadius}"
+        stroke="#626262"
+        stroke-width="${strokeWidth}"
+        stroke-dasharray="${[paramArcCircumference].join(',')}"
+        transform = "rotate(${5 / 8 * 360} ${cx} ${cy})"
+        fill="none" />
+      <circle
+        cx="${cx}"
+        cy="${cy}"
+        r="${paramRadius}"
+        stroke="#66FDCF"
+        stroke-width="${strokeWidth}"
+        stroke-dasharray="${paramDashArray.join(',')}"
+        transform = "rotate(${5 / 8 * 360} ${cx} ${cy})"
+        fill="none" />
+      <circle
+        cx="${cx}"
+        cy="${cy}"
+        r="${modRadius}"
+        stroke="#047cf4"
+        stroke-width="${strokeWidth}"
+        stroke-dasharray="${[modDashArray].join(",")}"
+        fill="none"
+        transform = "rotate(${(value * (3 / 4) + (5 / 8)) * 360} ${cx} ${cy})"
+        >
+        </circle>
+      </svg >
+    `
+    )
   }
 
   render() {
-    const { value, width, height } = this.state;
-    // this.props.addLFO(this.props.paramId);
+    const { value, width, height, dialPosition } = this.state;
 
-    return (<View {...styles.container}>
-
-      <View
-        {...this.props}
-        onMeasure={this._onMeasure}
-        onMouseDown={this._onMouseDown}
-        onMouseUp={this._onMouseUp}
-        onMouseDrag={this._onMouseDrag}
-        onMouseDoubleClick={this._onMouseDoubleClick}>
-        <Image {...styles.canvas} source={this._renderVectorGraphics(value, width, height)} />
-        <Label paramId={this.props.paramId} {...styles.label} />
+    return (<>
+      <View {...styles.container}>
+        <View
+          {...this.props}
+          onMeasure={this._onMeasure}
+          onMouseDown={this._onMouseDown}
+          onMouseUp={this._onMouseUp}
+          onMouseDrag={this._onMouseDrag}
+          onMouseDoubleClick={this._onMouseDoubleClick}>
+          <Image {...styles.canvas} source={this._renderVectorGraphics(value, width, height)} />
+          {/* <Label paramId={this.props.paramId} {...styles.label} /> */}
+        </View>
+        {/* <Text {...styles.nameText}>{this.props.paramId}</Text> */}
+        <View {...styles.wrap}>
+          <ModAmt {...styles.modAmt} value={this.state.modAmt} min={0.0} max={1} step={0.1} label={""} callBack={this.setModAmt.bind(this)}  ></ModAmt>
+        </View>
       </View>
-      <Text {...styles.nameText}>{this.props.paramId}</Text>
-    </View>
+    </>
     );
   }
 
@@ -171,14 +222,14 @@ class ParamDial extends Component {
 const styles = {
   container: {
     'flex-direction': 'column',
-    'background-color': '0f62ffff',
+    'background-color': '0062ffff',
   },
   canvas: {
-    'height': '100%',
-    'width': '100%',
+    'width': "100%",
+    'height': "100%",
     'top': 10.0,
     'interceptClickEvents': false,
-    'transform-rotate': Math.PI * 1.25,
+    // 'transform-rotate': Math.PI * 1.25,
     'position': 'absolute'
   },
   nameText: {
@@ -194,6 +245,13 @@ const styles = {
     'interceptClickEvents': false,
     'top': 10
   },
+  modAmt: {
+    'width': 15,
+    'height': 15,
+  },
+  wrap: {
+    'position': 'absolute'
+  }
 };
 
 

@@ -1,4 +1,4 @@
-import Slider from "./slider"
+import Slider from "../slider/slider"
 
 export default class Dial extends Slider {
   constructor(props) {

@@ -49,7 +49,7 @@ void Editor::bindNativeCallbacks()
 
 			if (AudioProcessorParameter* parameter = self->processor->params.getReference(paramId)) {
 				parameter->setValueNotifyingHost(value);
-				parameter->sendValueChangedMessageToListeners(parameter->getValue());
+				//parameter->sendValueChangedMessageToListeners(parameter->getValue());
 			}
 			return var::undefined();
 		},
@@ -75,7 +75,7 @@ void Editor::bindNativeCallbacks()
 			auto* self = reinterpret_cast<Editor*>(stash);
 			const juce::String& paramId = args.arguments[0].toString();
 			Param* param = self->processor->params.getReference(paramId);
-			param->enableLFOs();
+			//param->enableLFOs();
 			for (int i = 0; i < LFORES; i++) {
 				double inVal = static_cast<double>(args.arguments[1][i]);
 				param->lfoPlot[i] = inVal;
@@ -93,6 +93,32 @@ void Editor::bindNativeCallbacks()
 			Param* param = self->processor->params.getReference(paramId);
 
 			param->setLFOSpeed(args.arguments[1]);
+			return var::undefined();
+		},
+		(void*)this
+			);
+
+	appRoot.engine.registerNativeMethod(
+		"setLFOEnabled",
+		[](void* stash, const var::NativeFunctionArgs& args) {
+			auto* self = reinterpret_cast<Editor*>(stash);
+			const juce::String& paramId = args.arguments[0].toString();
+			Param* param = self->processor->params.getReference(paramId);
+
+			param->setLFOEnabled(args.arguments[1]);
+			return var::undefined();
+		},
+		(void*)this
+			);
+
+	appRoot.engine.registerNativeMethod(
+		"setModAmt",
+		[](void* stash, const var::NativeFunctionArgs& args) {
+			auto* self = reinterpret_cast<Editor*>(stash);
+			const juce::String& paramId = args.arguments[0].toString();
+			Param* param = self->processor->params.getReference(paramId);
+
+			param->setModAmt(args.arguments[1]);
 			return var::undefined();
 		},
 		(void*)this

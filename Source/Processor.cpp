@@ -2,15 +2,32 @@
 #include "Editor.h"
 #include "soulpatch.cpp"
 
+struct Processor::NoteHandler
+{
+	void addNote(int note, int voice)
+	{
+		noteMap[note] = voice;
+	}
+
+	int getVoicePlaying(int note)
+	{
+		return noteMap[note];
+	}
+
+	std::array<int, 128> noteMap;
+};
+
 Processor::Processor() :
 	voices(initVoices()),
 	editor(new Editor(*this)),
+	noteHandler(new NoteHandler()),
 	AudioProcessor(createBuses())
 {
 	initParams();
 }
 
 Processor::~Processor() {}
+
 
 
 std::array<Voice*, MAXVOICES> Processor::initVoices()
@@ -76,13 +93,15 @@ void Processor::processBlock(AudioBuffer<float>& audio, MidiBuffer& midi)
 			{
 				int selection = noteCount % MAXVOICES;
 				midiOut[selection].addEvent(message, data.samplePosition);
-				voices[selection]->noteOn = message.getNoteNumber();
+				//voices[selection]->noteOn = message.getNoteNumber();
+				noteHandler->addNote(message.getNoteNumber(), selection);
 				noteCount++;
 				triggerLFOs(selection, message);
 			}
 			else if (message.isNoteOff())
 			{
-				int selection = getVoicePlayingNote(message.getNoteNumber());
+				//int selection = getVoicePlayingNote(message.getNoteNumber());
+				int selection = noteHandler->getVoicePlaying(message.getNoteNumber());
 				midiOut[selection].addEvent(message, data.samplePosition);
 				voices[selection]->noteOn = -1;
 				noteCount--;
@@ -165,6 +184,8 @@ const juce::String Processor::getProgramName(int index) { return{}; }
 void Processor::changeProgramName(int index, const juce::String& newName) { }
 void Processor::getStateInformation(juce::MemoryBlock& destData) { }
 void Processor::setStateInformation(const void* data, int sizeInBytes) { }
+
+
 
 AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
