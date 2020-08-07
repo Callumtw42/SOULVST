@@ -1,14 +1,27 @@
 import Slider from "./slider"
+import { clamp } from "../functions"
 
 export default class Dial extends Slider {
   constructor(props) {
     super(props)
+    this.stepNo = 0;
+  }
+
+  snap(value, maxVal, stepSize, minStep, maxStep) {
+    const vRel = value / maxVal
+    const range = maxStep - minStep
+    const snapped = Math.round(vRel * range) * stepSize;
+    return snapped
   }
 
   _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
-    const { max, min, step, height, width } = this.props;
-    const newVal = this.snap(height - mouseY, height, step, min, max)
-    this.props.callBack(newVal);
+    const { max, min, step, height, width, skew } = this.props;
+    const startVal = this.valueAtDragStart;
+    const snapped = this.snap(mouseDownY - mouseY, width, step, min, max);
+    this.stepNo = snapped + startVal;
+    const skewed = skew ? Math.pow(skew, snapped + startVal) : snapped + startVal;
+    const clamped = clamp(skewed, Math.min(max, min), Math.max(max, min));
+    this.props.callBack(clamped);
   }
 
   _renderVectorGraphics(value, width, height) {
@@ -17,7 +30,7 @@ export default class Dial extends Slider {
     const radius = (Math.min(width - 5, height - 5) * 0.5) - (strokeWidth / 2);
 
     const arcCircumference = 1.5 * Math.PI * radius;
-    const dashArray = [(value - min) / (max - min) * arcCircumference, 2.0 * Math.PI * radius];
+    const dashArray = [clamp(this.stepNo, 0, Math.max(max, min)) / Math.max(max, min) * arcCircumference, 2.0 * Math.PI * radius];
     return `
         <svg
         width="${width}"

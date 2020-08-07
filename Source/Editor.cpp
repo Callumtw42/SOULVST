@@ -15,6 +15,7 @@ Editor::Editor(Processor& p)
 	jassert(UIPath.existsAsFile());
 	appRoot.enableHotReloading();
 	//updateParams();
+	//for (Param* param : processor->params)
 	appRoot.evaluate(UIPath);
 	bindNativeCallbacks();
 	addAndMakeVisible(appRoot);

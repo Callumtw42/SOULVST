@@ -19,10 +19,10 @@ struct Processor::NoteHandler
 
 Processor::Processor() :
 	voices(initVoices()),
-	editor(new Editor(*this)),
 	noteHandler(new NoteHandler()),
 	AudioProcessor(createBuses())
 {
+	editor = new Editor(*this);
 	initParams();
 }
 
@@ -50,6 +50,7 @@ void Processor::initParams()
 		addParameter(param);
 		param->addListener(dynamic_cast<Editor*>(editor));
 		param->setValue(param->getDefaultValue());
+		param->sendValueChangedMessageToListeners(param->getValue());
 	}
 }
 

@@ -8,6 +8,7 @@ import {
   Image,
   Text,
   View,
+  EventBridge
 } from 'juce-blueprint';
 
 
@@ -15,44 +16,31 @@ class ParamDial extends Component {
   constructor(props) {
     super(props);
 
+
     this._onMeasure = this._onMeasure.bind(this);
     this._onMouseDown = this._onMouseDown.bind(this);
     this._onMouseUp = this._onMouseUp.bind(this);
     this._onMouseDrag = this._onMouseDrag.bind(this);
-    // this._renderVectorGraphics = this._renderVectorGraphics.bind(this);
-    this._onParameterValueChange = this._onParameterValueChange.bind(this);
     this._onMouseDoubleClick = this._onMouseDoubleClick.bind(this);
+    this._onParameterValueChange = this._onParameterValueChange.bind(this);
 
     // During a drag, we hold the value at which the drag started here to
     // ensure smooth behavior while the component state is being updated.
     this._valueAtDragStart = 0.0;
+    this.label = 0;
 
-    const paramState = ParameterValueStore.getParameterState(this.props.paramId);
-    const initialValue = typeof paramState.currentValue === 'number' ?
-      paramState.currentValue : 0.0;
 
     this.state = {
       width: 0,
       height: 0,
-      value: initialValue,
-      dialPosition: initialValue,
+      value: 0,
       modAmt: 0,
-      initialised: false
+      initialised: false,
     };
   }
 
   componentDidMount() {
-    // ParameterValueStore.addListener(
-    //   ParameterValueStore.CHANGE_EVENT,
-    //   this._onParameterValueChange
-    // );
-  }
-
-  componentWillUnmount() {
-    // ParameterValueStore.removeListener(
-    //   ParameterValueStore.CHANGE_EVENT,
-    //   this._onParameterValueChange
-    // );
+    EventBridge.addListener('parameterValueChange', this._onParameterValueChange);
   }
 
   _onMouseDoubleClick(mouseX, mouseY) {
@@ -68,6 +56,15 @@ class ParamDial extends Component {
     });
   }
 
+  _onParameterValueChange(index, paramId, defaultValue, currentValue, stringValue) {
+    if (paramId === this.props.paramId) {
+      this.label = stringValue
+      if (!this.state.initialised) {
+        this.setState({ value: defaultValue });
+      }
+    }
+  }
+
   _onMouseDown(mouseX, mouseY) {
     this.setState({
       initialised: true
@@ -81,12 +78,7 @@ class ParamDial extends Component {
   }
 
   _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
-    // Component vectors
-    // let dx = mouseX - mouseDownX;
     let dy = mouseDownY - mouseY;
-
-    // Delta
-    // let dm = dx + dy;
     let sensitivity = (1.0 / 200.0);
     let value = Math.max(0.0, Math.min(1.0, this._valueAtDragStart + dy * sensitivity));
     this.setState({
@@ -101,21 +93,6 @@ class ParamDial extends Component {
     }
   }
 
-  _onParameterValueChange(paramId) {
-    const shouldUpdate = typeof this.props.paramId === 'string' &&
-      this.props.paramId.length > 0 &&
-      this.props.paramId === paramId;
-
-    if (shouldUpdate) {
-      const state = ParameterValueStore.getParameterState(paramId);
-
-      this.setState({
-        defaultValue: state.defaultValue,
-        value: state.currentValue,
-      });
-    }
-  }
-
   setModAmt(v) {
     this.setState({
       modAmt: v
@@ -124,7 +101,7 @@ class ParamDial extends Component {
   }
 
 
-  _renderVectorGraphics(value, width, height) {
+  _renderVectorGraphics(value, label, width, height) {
 
     const cx = width * 0.5;
     const cy = height * 0.4;
@@ -156,8 +133,11 @@ class ParamDial extends Component {
       viewBox="0 0 ${width} ${height}"
       version="1.1"
       xmlns="http://www.w3.org/2000/svg">
+    <text font-size="9"  fill="#D4D4D4" x="${cx}" y="${cy + 3}" text-anchor="middle">
+       ${label} 
+    </text>
     <text font-size="9"  fill="#D4D4D4" x="${cx}" y="${cy + 19}" text-anchor="middle">
-        ${paramId}
+       ${paramId} 
     </text>
       <circle
         cx="${cx}"
@@ -194,7 +174,7 @@ class ParamDial extends Component {
   }
 
   render() {
-    const { value, width, height, dialPosition } = this.state;
+    const { value, width, height } = this.state;
 
     return (<>
       <View {...styles.container}>
@@ -205,10 +185,8 @@ class ParamDial extends Component {
           onMouseUp={this._onMouseUp}
           onMouseDrag={this._onMouseDrag}
           onMouseDoubleClick={this._onMouseDoubleClick}>
-          <Image {...styles.canvas} source={this._renderVectorGraphics(value, width, height)} />
-          {/* <Label paramId={this.props.paramId} {...styles.label} /> */}
+          <Image {...styles.canvas} source={this._renderVectorGraphics(value, this.label, width, height)} />
         </View>
-        {/* <Text {...styles.nameText}>{this.props.paramId}</Text> */}
         <View {...styles.wrap}>
           <ModAmt {...styles.modAmt} value={this.state.modAmt} min={0.0} max={1} step={0.1} label={""} callBack={this.setModAmt.bind(this)}  ></ModAmt>
         </View>
@@ -229,7 +207,6 @@ const styles = {
     'height': "100%",
     'top': 10.0,
     'interceptClickEvents': false,
-    // 'transform-rotate': Math.PI * 1.25,
     'position': 'absolute'
   },
   nameText: {

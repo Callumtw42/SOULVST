@@ -1,3 +1,3 @@
 cd Source\jsui;
-npm start;
+npm run build;
 cd ..\..\;

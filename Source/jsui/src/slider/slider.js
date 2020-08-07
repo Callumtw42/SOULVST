@@ -16,28 +16,27 @@ class Slider extends Component {
 
         this._onMouseDown = this._onMouseDown.bind(this);
         this._onMouseDrag = this._onMouseDrag.bind(this);
+        this.valueAtDragStart = this.props.value
     }
 
-    snap(value, maxVal, stepSize, minStep, maxStep) {
-        const { skew } = this.props
-        const vRel = value / maxVal
-        const range = maxStep - minStep
-        const snapped = Math.round(vRel * range) * stepSize + minStep
-        const skewed = skew ? Math.pow(skew, snapped) : snapped
-        const clamped = clamp(skewed, Math.min(maxStep, minStep), Math.max(maxStep, minStep));
-        return clamped
-    }
 
     _onMouseDown(mouseX, mouseY) {
-        const { max, min, step, height, width } = this.props;
-        const newVal = this.snap(mouseX, width, step, min, max)
-        this.props.callBack(newVal);
+        const { max, min, step, height, width, value } = this.props;
+        this.valueAtDragStart = value;
+        // const newVal = this.valueAtDragStart + this.snap(mouseX, width, step, min, max)
+        // this.props.callBack(newVal);//
     }
 
     _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
         const { max, min, step, height, width, } = this.props;
-        const newVal = this.snap(mouseX, width, step, min, max)
-        this.props.callBack(newVal);
+        const snapped = this.snap(mouseDownX - mouseX, width, step, min, max);
+        const skewed = snapped * skew;
+        
+        // let dy = mouseDownX - mouseX;
+        // const clamped = clamp(this.state.valueAtDragStart + snapped, Math.min(max, min), Math.max(max, min));
+        let sensitivity = (1.0 / 200.0);
+        let value = Math.max(0.0, Math.min(1.0, this.state.valueAtDragStart + snapped * sensitivity));
+        this.props.callBack(value);
     }
 
     _renderVectorGraphics(value, width, height) {
@@ -80,7 +79,7 @@ class Slider extends Component {
     }
 }
 
-Slider.defaultProps = { skew: null }
+Slider.defaultProps = { skew: 0, step: 0 }
 
 const styles = {
     container: {
