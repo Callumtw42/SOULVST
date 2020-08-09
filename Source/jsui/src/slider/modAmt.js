@@ -2,18 +2,19 @@ import Dial from "./dial"
 
 export default class ModAmt extends Dial {
 
-    constructor(props) {
-        super(props)
-    }
+  constructor(props) {
+    super(props)
+  }
 
-    _renderVectorGraphics(value, width, height) {
-        const { max, min, step, label } = this.props;
-        const strokeWidth = 2.0;
-        const radius = (Math.min(width - 5, height - 5) * 0.5) - (strokeWidth / 2);
+  _renderVectorGraphics(value, width, height) {
+    const { end, start, step, label } = this.props;
+    const strokeWidth = 2.0;
+    const radius = (Math.min(width - 5, height - 5) * 0.5) - (strokeWidth / 2);
 
-        const arcCircumference = 1.5 * Math.PI * radius;
-        const dashArray = [(value - min) / (max - min) * arcCircumference, 2.0 * Math.PI * radius];
-        return `
+    const arcCircumference = 1.5 * Math.PI * radius;
+    // const dashArray = [(value - start) / (end - start) * arcCircumference, 2.0 * Math.PI * radius];
+    const dashArray = [value * arcCircumference, 2.0 * Math.PI * radius];
+    return `
         <svg
         width="${width}"
         height="${height}"
@@ -42,5 +43,5 @@ export default class ModAmt extends Dial {
       </svg>>
     `;
 
-    }
+  }
 }

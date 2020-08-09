@@ -123,7 +123,7 @@ class ParamDial extends Component {
     const modArcCircumference = + 1.5 * Math.PI * modRadius;
 
     const paramDashArray = [value * paramArcCircumference, 2.0 * Math.PI * paramRadius];
-    const modDashArray = [clamp(modAmt, 0, (1 - value)) * modArcCircumference, 2.0 * Math.PI * modRadius];
+    const modDashArray = [clamp(modAmt, 0, 1 - value) * modArcCircumference, 2.0 * Math.PI * modRadius];
 
     return (
       `
@@ -188,7 +188,7 @@ class ParamDial extends Component {
           <Image {...styles.canvas} source={this._renderVectorGraphics(value, this.label, width, height)} />
         </View>
         <View {...styles.wrap}>
-          <ModAmt {...styles.modAmt} value={this.state.modAmt} min={0.0} max={1} step={0.1} label={""} callBack={this.setModAmt.bind(this)}  ></ModAmt>
+          <ModAmt {...styles.modAmt} value={this.state.modAmt} start={0.0} end={1.0} step={0.01} label={""} callBack={this.setModAmt.bind(this)}  ></ModAmt>
         </View>
       </View>
     </>

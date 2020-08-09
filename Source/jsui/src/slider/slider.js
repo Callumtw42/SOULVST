@@ -14,22 +14,16 @@ class Slider extends Component {
     constructor(props) {
         super(props);
 
-        this._onMouseDown = this._onMouseDown.bind(this);
+        // this._onMouseDown = this._onMouseDown.bind(this);
         this._onMouseDrag = this._onMouseDrag.bind(this);
         this.valueAtDragStart = this.props.value
     }
 
 
-    _onMouseDown(mouseX, mouseY) {
-        const { max, min, step, height, width, value } = this.props;
-        this.valueAtDragStart = value;
-        // const newVal = this.valueAtDragStart + this.snap(mouseX, width, step, min, max)
-        // this.props.callBack(newVal);//
-    }
 
     _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
-        const { max, min, step, height, width, } = this.props;
-        const snapped = this.snap(mouseDownX - mouseX, width, step, min, max);
+        const { end, min, step, height, width, } = this.props;
+        const snapped = this.snap(mouseDownX - mouseX, width, step, min, end);
         const skewed = snapped * skew;
         
         // let dy = mouseDownX - mouseX;
@@ -52,7 +46,7 @@ class Slider extends Component {
 
         <path d="M0 ${height / 2} L${width} ${height / 2} Z" stroke="${COLOR}" />
         <circle
-          cx="${(value / (this.props.max)) * width}"
+          cx="${(value / (this.props.end)) * width}"
           cy="${height / 2}"
           r="${radius}"
           stroke="#626262"
