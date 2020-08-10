@@ -264,7 +264,7 @@ class LFO extends Component {
           {/* <Slider {...styles.slider} {...this.props} min={1} max={16} step={1} callBack={this.setGridRes.bind(this)} ></Slider> */}
           <View {...styles.dials}>
             <Dial {...styles.dial} value={gridRes} start={1} end={16} step={1} label={"Grid"} callBack={this.setGridRes.bind(this)} ></Dial>
-            <Dial {...styles.dial} value={speed} start={4} end={1 / 64} step={1} skew={2} label={"Speed"} callBack={this.setSpeed.bind(this)} ></Dial>
+            <Dial {...styles.dial} value={speed} start={4} end={1 / 64} step={-2} skew={0.5} label={"Speed"} callBack={this.setSpeed.bind(this)} ></Dial>
             <Button {...styles.button}{...this.props} callBack={this.setActive.bind(this)} on={this.state.on} />
           </View>
         </View>
