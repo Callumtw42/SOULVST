@@ -110,7 +110,7 @@ class LFO extends Component {
 
     }
     this.setState(this.state);
-  }//
+  }
 
   _onMouseDown(mouseX, mouseY) {
 
@@ -128,8 +128,6 @@ class LFO extends Component {
         break;
       }
     }
-
-
   }
 
   _onMouseUp(mouseX, mouseY) {
@@ -139,7 +137,6 @@ class LFO extends Component {
       }
       if (point.path)
         point.path.controlPoint.isSelected = false;
-
     })
   }
 
@@ -197,12 +194,15 @@ class LFO extends Component {
         const dy = end.y - start.y;
         const dx = end.x - start.x;
         const relY = control.relY;
+        const realControlX = start.x + dx * relY;
+        const realControlY = end.y - dy * relY
 
         return `<path 
       d="M${start.x} ${start.y} 
-      Q${start.x + dx * relY} ${end.y - dy * relY} ${end.x} ${end.y}" 
+      Q${realControlX} ${realControlY} ${end.x} ${end.y}" 
       stroke="${lineColor}" stroke-width="2"/>
       <circle cx="${control.x}" cy="${control.y}" r="${control.radius}" stroke="${lineColor}" stroke-width="1" />
+      <circle cx="${realControlX}" cy="${realControlY}" r="${1}" stroke="${"#ff00ff"}" stroke-width="1" />
       `
       }
       else return ``;

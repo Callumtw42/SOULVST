@@ -9,13 +9,21 @@ class Path {
             relY: 0.5,
             x: startNode.x + (endNode.x - startNode.x) / 2,
             y: startNode.y + (startNode.y - endNode.y) / 2,
-            radius: pointRadius - 1,
+            radius: pointRadius,
             isSelected: false//
         }
     }
     updateControlPoint() {
-        this.controlPoint.x = this.startNode.x + (this.endNode.x - this.startNode.x) * this.controlPoint.relY;
-        this.controlPoint.y = this.startNode.y + (this.endNode.y - this.startNode.y) * this.controlPoint.relY;
+        const startX = this.startNode.x;
+        const startY = this.startNode.y;
+        const endX = this.endNode.x;
+        const endY = this.endNode.y;
+        const dx = endX - startX;
+        const dy = endY - startY;
+        const relY = this.controlPoint.relY;
+
+        this.controlPoint.x = startX + dx * 0.5;
+        this.controlPoint.y = startY + dy * (1 - relY);//
     }
     moveControlPoint(y) {
         const endY = this.endNode.y;
@@ -24,9 +32,10 @@ class Path {
         const minY = Math.min(startY, endY);
         const clampY = clamp(y, minY, maxY);
 
-        const dy = Math.abs(this.endNode.y - this.startNode.y);
+        const dy = endY - startY;
         this.controlPoint.y = clampY;
-        this.controlPoint.relY = clampY / (dy - Math.min(this.endNode.y, this.startNode.y));
+        const yInBounds = clampY - minY;
+        this.controlPoint.relY = (dy > 0) ? (maxY - yInBounds) / dy : -yInBounds / dy;
     }
 }
 
