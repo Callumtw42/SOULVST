@@ -49,9 +49,7 @@ export default class Button extends Component {
 const styles = {
     container: {
         'flex-direction': 'column',
-        'background-color': '#00333333',
     },
-
     canvas: {
         'height': '100%',
         'width': '100%',

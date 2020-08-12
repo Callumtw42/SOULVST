@@ -6,16 +6,16 @@ import {
   Canvas
 } from 'juce-blueprint';
 import Mouse from "./mouse"
-import NodeList from "./nodelist"
+import { Node, NodeList } from "./nodelist"
 import Slider from "../slider/slider"
 import Dial from "../slider/dial"
 import Button from "../button"
 
 const boxHeight = 100;
 const boxWidth = 150;
-const plotHeight = (3 / 4) * boxHeight;
+export const plotHeight = (3 / 4) * boxHeight;
 const plotWidth = boxWidth;
-const pointRadius = 4;
+export const pointRadius = 4;
 const plotResolution = 128;
 const MAX_GRID_RES = 16;
 
@@ -33,24 +33,8 @@ class LFO extends Component {
 
     this.state = {
       points: new NodeList(
-        {
-          x: 0,
-          y: 0,
-          radius: pointRadius,
-          isSelected: false,
-          isBound: true,
-          leftNeighbour: null,
-          rightNeighbour: null
-        },
-        {
-          x: plotWidth,
-          y: 0,
-          radius: pointRadius,
-          isSelected: false,
-          isBound: true,
-          leftNeighbour: null,
-          rightNeighbour: null
-        }
+        new Node(0, 0, pointRadius, true),
+        new Node(plotWidth, 0, pointRadius, true)
       ),
       plot: new Array(plotResolution),
       gridRes: 16,
@@ -63,15 +47,7 @@ class LFO extends Component {
   componentDidMount() {
 
     this.state.points.insertAfter(0,
-      {
-        x: plotWidth / 2,
-        y: plotHeight,
-        radius: pointRadius,
-        isSelected: false,
-        isBound: false,
-        leftNeighbour: null,
-        rightNeighbour: null
-      },
+      new Node(plotWidth / 2, plotHeight, pointRadius, false)
     )
     this.setState(this.state);
   }
@@ -107,49 +83,53 @@ class LFO extends Component {
 
       points.insertAfter(
         index,
-        {
-          x: mouseX,
-          y: mouseY,
-          radius: pointRadius,
-          isSelected: false,
-        }
+        new Node(mouseX, mouseY, pointRadius, false)
       )
     }
 
     this.setState(this.state);
   }
 
-
   _onMouseDrag(mouseX, mouseY, mouseDownX, mouseDownY) {
-    const { gridRes } = this.state
+    const { gridRes, points } = this.state
     const dx = plotWidth / gridRes
     const dy = plotHeight / gridRes
-    const x = Math.round((mouseX / plotWidth) * gridRes) * dx
-    const y = Math.round((mouseY / plotHeight) * gridRes) * dy
+    const snapX = Math.round((mouseX / plotWidth) * gridRes) * dx
+    const snapY = Math.round((mouseY / plotHeight) * gridRes) * dy
 
-    this.state.points.forEach((point) => {
+    for (const point of points.get()) {
       if (point.isSelected) {
-        point.y = clamp(y, 0, plotHeight);
-        if (!point.isBound) {
-          point.x = clamp(x, point.leftNeighbour.x, point.rightNeighbour.x);
-        }
+        point.move(snapX, snapY)
+        break;
+      }
+      const path = point.path;
+      if (path && path.controlPoint.isSelected) {
+        path.moveControlPoint(mouseY);
+        break;
       }
 
-    })
-
+    }
     this.setState(this.state);
-  }
+  }//
 
   _onMouseDown(mouseX, mouseY) {
 
     this.initialised = true;
     const points = this.state.points;
     let mouse = new Mouse(mouseX, mouseY);
-    points.forEach((point) => {
+
+    for (const point of points.get()) {
       if (mouse.isOverlapping(point)) {
         point.isSelected = true;
+        break;
       }
-    });
+      if (point.path && mouse.isOverlapping(point.path.controlPoint)) {
+        point.path.controlPoint.isSelected = true;
+        break;
+      }
+    }
+
+
   }
 
   _onMouseUp(mouseX, mouseY) {
@@ -157,6 +137,9 @@ class LFO extends Component {
       if (point.isSelected) {
         point.isSelected = false;
       }
+      if (point.path)
+        point.path.controlPoint.isSelected = false;
+
     })
   }
 
@@ -204,15 +187,31 @@ class LFO extends Component {
     const { points, plot, lineColor } = this.state;
     const { gridX, gridY } = this.grid();
     this.generatePlot();
+
     const paths = points.map((point) => {
-      if (point.rightNeighbour) return `<path d="M${point.x} ${point.y} L${point.rightNeighbour.x} ${point.rightNeighbour.y} Z" stroke="${lineColor}" stroke-width="2"/>`
+      const path = point.path;
+      if (path) {
+        const control = path.controlPoint;
+        const start = path.startNode;
+        const end = path.endNode;
+        const dy = end.y - start.y;
+        const dx = end.x - start.x;
+        const relY = control.relY;
+
+        return `<path 
+      d="M${start.x} ${start.y} 
+      Q${start.x + dx * relY} ${end.y - dy * relY} ${end.x} ${end.y}" 
+      stroke="${lineColor}" stroke-width="2"/>
+      <circle cx="${control.x}" cy="${control.y}" r="${control.radius}" stroke="${lineColor}" stroke-width="1" />
+      `
+      }
       else return ``;
     })
+
     const circles = points.map((point, index) => {
-      return `
-      <circle cx="${point.x}" cy="${point.y}" r="${point.radius}" fill="${lineColor}" />
+      return `<circle cx="${point.x}" cy="${point.y}" r="${point.radius}" fill="${lineColor}" />
       ${paths[index]}
-        `
+      `
     })
 
     const img =
@@ -302,7 +301,7 @@ let styles = {
   button: {
     'width': boxWidth / 4,
     'height': boxWidth / 4,
-    'color': '#3ade3a'
+    'color': '#3ade3a',
   }
 };
 
