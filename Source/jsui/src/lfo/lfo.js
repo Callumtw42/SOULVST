@@ -194,15 +194,36 @@ class LFO extends Component {
         const dy = end.y - start.y;
         const dx = end.x - start.x;
         const relY = control.relY;
-        const realControlX = start.x + dx * relY;
-        const realControlY = end.y - dy * relY
+
+        const D = Math.abs(dy);
+
+        const ctrl1 = (relY >= 0)
+          ? {
+            x: start.x + dx * relY,
+            y: start.y
+          }
+          : {
+            x: start.x,
+            y: start.y - dy * relY
+          }
+
+        const ctrl2 = (relY >= 0)
+          ? {
+            x: end.x,
+            y: end.y - dy * relY
+          }
+          : {
+            x: end.x + dx * relY,
+            y: end.y
+          }
 
         return `<path 
       d="M${start.x} ${start.y} 
-      Q${realControlX} ${realControlY} ${end.x} ${end.y}" 
+      C${ctrl1.x} ${ctrl1.y} ${ctrl2.x} ${ctrl2.y} ${end.x} ${end.y}" 
       stroke="${lineColor}" stroke-width="2"/>
       <circle cx="${control.x}" cy="${control.y}" r="${control.radius}" stroke="${lineColor}" stroke-width="1" />
-      <circle cx="${realControlX}" cy="${realControlY}" r="${1}" stroke="${"#ff00ff"}" stroke-width="1" />
+      <circle cx="${ctrl1.x}" cy="${ctrl1.y}" r="${1}" stroke="${"#ff00ff"}" stroke-width="1" />
+      <circle cx="${ctrl2.x}" cy="${ctrl2.y}" r="${1}" stroke="${"#ffffff"}" stroke-width="1" />
       `
       }
       else return ``;

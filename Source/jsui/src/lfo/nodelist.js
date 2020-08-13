@@ -10,7 +10,7 @@ class Path {
             x: startNode.x + (endNode.x - startNode.x) / 2,
             y: startNode.y + (startNode.y - endNode.y) / 2,
             radius: pointRadius,
-            isSelected: false//
+            isSelected: false
         }
     }
     updateControlPoint() {
@@ -23,19 +23,49 @@ class Path {
         const relY = this.controlPoint.relY;
 
         this.controlPoint.x = startX + dx * 0.5;
-        this.controlPoint.y = startY + dy * (1 - relY);//
+        this.controlPoint.y = startY + dy * Math.abs(relY);
     }
+
+
+    quadraticBezier(p0, p1, p2, t, pFinal) {
+        pFinal = pFinal || {};
+        pFinal.x = Math.pow(1 - t, 2) * p0.x +
+            (1 - t) * 2 * t * p1.x +
+            t * t * p2.x;
+        pFinal.y = Math.pow(1 - t, 2) * p0.y +
+            (1 - t) * 2 * t * p1.y +
+            t * t * p2.y;
+        return pFinal;
+    }
+
+    cubicBezier(p0, p1, p2, p3, t, pFinal) {
+        pFinal = pFinal || {};
+        pFinal.x = Math.pow(1 - t, 3) * p0.x +
+            Math.pow(1 - t, 2) * 3 * t * p1.x +
+            (1 - t) * 3 * t * t * p2.x +
+            t * t * t * p3.x;
+        pFinal.y = Math.pow(1 - t, 3) * p0.y +
+            Math.pow(1 - t, 2) * 3 * t * p1.y +
+            (1 - t) * 3 * t * t * p2.y +
+            t * t * t * p3.y;
+        return pFinal;
+    }
+
     moveControlPoint(y) {
-        const endY = this.endNode.y;
-        const startY = this.startNode.y;
-        const maxY = Math.max(startY, endY);
-        const minY = Math.min(startY, endY);
+        const start = this.startNode;
+        const end = this.endNode;
+        // const endY = this.endNode.y;
+        // const startY = this.startNode.y;
+        const maxY = Math.max(start.y, end.y);
+        const minY = Math.min(start.y, end.y);
         const clampY = clamp(y, minY, maxY);
 
-        const dy = endY - startY;
+        const dy = end.y - start.y;
+        const yInBounds = clampY - end.y;
+        // this.controlPoint.relY = (dy > 0) ? (maxY - yInBounds) / dy : -yInBounds / dy;
+        this.controlPoint.relY = (-yInBounds * 2 / dy) - 1;
+
         this.controlPoint.y = clampY;
-        const yInBounds = clampY - minY;
-        this.controlPoint.relY = (dy > 0) ? (maxY - yInBounds) / dy : -yInBounds / dy;
     }
 }
 
