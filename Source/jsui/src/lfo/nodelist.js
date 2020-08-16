@@ -65,7 +65,30 @@ class Path {
         // this.controlPoint.relY = (dy > 0) ? (maxY - yInBounds) / dy : -yInBounds / dy;
         this.controlPoint.relY = (-yInBounds * 2 / dy) - 1;
 
-        this.controlPoint.y = clampY;
+        const relY = this.controlPoint.relY;
+        const dx = end.x - start.x;
+        const ctrl1 = (relY >= 0)
+            ? {
+                x: start.x + dx * relY,
+                y: start.y
+            }
+            : {
+                x: start.x,
+                y: start.y - dy * relY
+            }
+
+        const ctrl2 = (relY >= 0)
+            ? {
+                x: end.x,
+                y: end.y - dy * relY
+            }
+            : {
+                x: end.x + dx * relY,
+                y: end.y
+            }
+
+        const midPoint = this.cubicBezier(start, ctrl2, ctrl1, end, 0.5);
+        this.controlPoint.y = clampY; 
     }
 }
 
