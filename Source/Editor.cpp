@@ -79,6 +79,7 @@ void Editor::bindNativeCallbacks()
 			//param->enableLFOs();
 			for (int i = 0; i < LFORES; i++) {
 				double inVal = static_cast<double>(args.arguments[1][i]);
+				//Logger::writeToLog(juce::String(inVal));
 				param->lfoPlot[i] = inVal;
 			}
 			return var::undefined();

@@ -18,6 +18,7 @@ const plotWidth = boxWidth;
 export const pointRadius = 4;
 const plotResolution = 128;
 const MAX_GRID_RES = 16;
+const CURVE_RES = 32;
 
 const GRID_COLOR = "rgba(122, 129, 132, 0.25)"
 
@@ -140,28 +141,104 @@ class LFO extends Component {
     })
   }
 
+  getControlPoints(start, end) {
+    const dy = end.y - start.y;
+    const dx = end.x - start.x;
+    const relY = 1 - ((start.path.controlPoint.relY + 1) / 2);
+    // global.log(relY)
+
+    // const ctrl1 = (relY >= 0)
+    //   ? {
+    //     x: start.x + dx * relY,
+    //     y: start.y
+    //   }
+    //   : {
+    //     x: start.x,
+    //     y: start.y - dy * relY
+    //   }
+
+    // const ctrl2 = (relY >= 0)
+    //   ? {
+    //     x: end.x,
+    //     y: end.y - dy * relY
+    //   }
+    //   : {
+    //     x: end.x + dx * relY,
+    //     y: end.y
+    //   }
+    const ctrl1 = {
+      x: end.x - dx * relY,
+      y: start.y + dy * relY
+    }
+
+    const ctrl2 = {
+      x: end.x - dx * relY,
+      y: start.y + dy * relY
+    }
+
+    // global.log(relY);
+
+
+    return { ctrl1, ctrl2 }
+  }
+
+  bezier(p0, p1, p2, p3, t) {
+    var cX = 3 * (p1.x - p0.x),
+      bX = 3 * (p2.x - p1.x) - cX,
+      aX = p3.x - p0.x - cX - bX;
+
+    var cY = 3 * (p1.y - p0.y),
+      bY = 3 * (p2.y - p1.y) - cY,
+      aY = p3.y - p0.y - cY - bY;
+
+    var x = (aX * Math.pow(t, 3)) + (bX * Math.pow(t, 2)) + (cX * t) + p0.x;
+    var y = (aY * Math.pow(t, 3)) + (bY * Math.pow(t, 2)) + (cY * t) + p0.y;
+
+    return { x: x, y: y };
+  }
+
+  normalisePlot() {
+    return this.state.plot.map((y, index) => {
+      return 1 - y / plotHeight;
+    })
+  }
   generatePlot() {
     const { points, plot } = this.state;
-
-    let startIndex = 0;
     points.forEach((point, index) => {
-
-      if (point.rightNeighbour != null) {
-        const rightNeighbourY = point.rightNeighbour.y / plotHeight;
-        const rightNeighbourX = point.rightNeighbour.x / plotWidth;
-        const x = point.x / plotWidth;
-        const y = point.y / plotHeight;
-        const targetIndex = Math.round(rightNeighbourX * plotResolution);
-        const dy = (rightNeighbourY - y) / (rightNeighbourX - x) / plotResolution;
-        let value = y;
-        for (let i = startIndex; i < targetIndex; i++) {
-          plot[i] = 1 - value;
-          value += dy;
+      if (point.rightNeighbour) {
+        const start = point;
+        const end = point.rightNeighbour;
+        const { ctrl1, ctrl2 } = this.getControlPoints(start, end);
+        const startIndex = Math.round((start.x / plotWidth) * plotResolution);
+        const endIndex = Math.round((end.x / plotWidth) * plotResolution);
+        // global.log(ctrl1.x)
+        const xOvers = new Array(CURVE_RES);
+        for (let i = 0; i < CURVE_RES; i++) {
+          const t = i / CURVE_RES;
+          // global.log(t)
+          const p = this.bezier(start, ctrl1, ctrl2, end, t);
+          p.targetIndex = Math.round(((p.x - start.x) / (end.x - start.x)) * (endIndex - startIndex));
+          xOvers[i] = p;
         }
-        startIndex = targetIndex;
+
+        let current = 0;
+        let next = 1;
+        for (let i = startIndex; i < endIndex; i++) {
+          if (!xOvers[next]) break;
+          const targetIndex = xOvers[next].targetIndex;
+          const dx = targetIndex - i;
+          const dy = (xOvers[next].y - xOvers[current].y) / (dx || 1);
+          plot[i] = xOvers[current].y + dy;
+          // global.log(plot[i]);
+          if (i >= targetIndex) {
+            current++;
+            next++;
+          }
+
+        }
       }
     })
-    if (this.initialised) global.sendPlot(this.props.paramId, plot);
+    if (this.initialised) global.sendPlot(this.props.paramId, this.normalisePlot());
   }
 
   grid() {
@@ -181,68 +258,61 @@ class LFO extends Component {
   }
 
   _svg() {
+    this.generatePlot();
     const { points, plot, lineColor } = this.state;
     const { gridX, gridY } = this.grid();
-    this.generatePlot();
 
-    const paths = points.map((point) => {
-      const path = point.path;
-      if (path) {
-        const control = path.controlPoint;
-        const start = path.startNode;
-        const end = path.endNode;
-        const dy = end.y - start.y;
-        const dx = end.x - start.x;
-        const relY = control.relY;
+    const paths = [];
+    for (let i = 0; i < plotResolution - 1; i++) {
 
-        const D = Math.abs(dy);
-
-        const ctrl1 = (relY >= 0)
-          ? {
-            x: start.x + dx * relY,
-            y: start.y
-          }
-          : {
-            x: start.x,
-            y: start.y - dy * relY
-          }
-
-        const ctrl2 = (relY >= 0)
-          ? {
-            x: end.x,
-            y: end.y - dy * relY
-          }
-          : {
-            x: end.x + dx * relY,
-            y: end.y
-          }
-
-        return `<path 
-      d="M${start.x} ${start.y} 
-      C${ctrl1.x} ${ctrl1.y} ${ctrl2.x} ${ctrl2.y} ${end.x} ${end.y}" 
-      stroke="${lineColor}" stroke-width="2"/>
-      <circle cx="${control.x}" cy="${control.y}" r="${control.radius}" stroke="${lineColor}" stroke-width="1" />
-      <circle cx="${ctrl1.x}" cy="${ctrl1.y}" r="${1}" stroke="${"#ff00ff"}" stroke-width="1" />
-      <circle cx="${ctrl2.x}" cy="${ctrl2.y}" r="${1}" stroke="${"#ffffff"}" stroke-width="1" />
-      `
+      const start = {
+        x: (i / plotResolution) * plotWidth,
+        y: plot[i]
       }
-      else return ``;
-    })
+
+      const end = {
+        x: ((i + 1) / plotResolution) * plotWidth,
+        y: plot[i + 1]
+      }
+
+      // paths.push(`<path 
+      // d="M${start.x} ${start.y} 
+      // L${end.x} ${end.y}" 
+      // stroke="${lineColor}" stroke-width="2"/>
+      // `
+      // )
+      paths.push(`
+        <circle cx="${start.x}" cy="${start.y}" r="${0.5}" fill="${lineColor}" />
+      `)
+    }
 
     const circles = points.map((point, index) => {
-      return `<circle cx="${point.x}" cy="${point.y}" r="${point.radius}" fill="${lineColor}" />
-      ${paths[index]}
-      `
+      if (point.rightNeighbour) {
+        const start = point;
+        const end = point.rightNeighbour;
+        const { ctrl1, ctrl2 } = this.getControlPoints(start, end);
+        const curveMod = point.path.controlPoint;
+
+        return `
+        <circle cx="${point.x}" cy="${point.y}" r="${point.radius}" fill="${lineColor}" />
+        <circle cx="${curveMod.x}" cy="${curveMod.y}" r="${3}" fill="${"#FFEF08"}" />
+        <circle cx="${ctrl1.x}" cy="${ctrl1.y}" r="${2}" fill="${"#D519DA"}" />
+        <circle cx="${ctrl2.x}" cy="${ctrl2.y}" r="${1.5}" fill="${"#FFFFFF"}" />
+        `
+      }
+      else return `< circle cx = "${point.x}" cy = "${point.y}" r = "${point.radius}" fill = "${lineColor}" />
+          `
     })
 
     const img =
       `
-      <svg width="${boxWidth}" height="${boxWidth}" viewBox="0 0 0 0" xmlns="http://www.w3.org/2000/svg">
-        <rect x="${0}" y="${0}" stroke="green" stroke-width="1" fill="#2a302a" width="${boxWidth}" height="${plotHeight}" />
+          < svg width = "${boxWidth}" height = "${boxWidth}" viewBox = "0 0 0 0" xmlns = "http://www.w3.org/2000/svg" >
+            <rect x="${0}" y="${0}" stroke="green" stroke-width="1" fill="#2a302a" width="${boxWidth}" height="${plotHeight}" />
         ${gridX}
         ${gridY}
+        ${paths}
         ${circles}
-      </svg>
+      </svg >
       `
     return img;
   }
