@@ -1,42 +1,106 @@
-import { pointRadius, plotHeight } from "./lfo"
+import { pointRadius, plotHeight, plotWidth, plotResolution } from "./lfo"
 import { clamp } from "../functions"
+const MAX_dx = 2;
 
 class Path {
-    constructor(startNode, endNode) {
-        this.startNode = startNode;
-        this.endNode = endNode;
-        this.controlPoint = {
+    constructor(start, end) {
+        this.start = start;
+        this.end = end;
+        this.plot = new Array(this.widthToArrayLength(this.end.x - this.start.x))
+        this.curveRes = (end.x - start.x / 4)
+        this.ctrlParam = {
             relY: 0.5,
-            x: startNode.x + (endNode.x - startNode.x) / 2,
-            y: startNode.y + (startNode.y - endNode.y) / 2,
+            x: start.x + (end.x - start.x) / 2,
+            y: start.y + (start.y - end.y) / 2,
             radius: pointRadius,
             isSelected: false
         }
-    }
-    updateControlPoint() {
-        const startX = this.startNode.x;
-        const startY = this.startNode.y;
-        const endX = this.endNode.x;
-        const endY = this.endNode.y;
-        const dx = endX - startX;
-        const dy = endY - startY;
-        const relY = this.controlPoint.relY;
-
-        this.controlPoint.x = startX + dx * 0.5;
-        this.controlPoint.y = startY + dy * Math.abs(relY);
+        // this.generatePlot();
     }
 
-
-    quadraticBezier(p0, p1, p2, t, pFinal) {
-        pFinal = pFinal || {};
-        pFinal.x = Math.pow(1 - t, 2) * p0.x +
-            (1 - t) * 2 * t * p1.x +
-            t * t * p2.x;
-        pFinal.y = Math.pow(1 - t, 2) * p0.y +
-            (1 - t) * 2 * t * p1.y +
-            t * t * p2.y;
-        return pFinal;
+    widthToArrayLength(Dx) {
+        const relDx = Dx / plotWidth;
+        const length = relDx * plotResolution;
+        return Math.round(length);
     }
+
+    getControlPoints() {
+        const { start, end, ctrlParam } = this;
+        const dy = end.y - start.y;
+        const dx = end.x - start.x;
+        const relY = 1 - ((ctrlParam.relY + 1) / 2);
+        const ctrl1 = {
+            x: end.x - dx * relY,
+            y: start.y + dy * relY
+        }
+
+        const ctrl2 = {
+            x: end.x - dx * relY,
+            y: start.y + dy * relY
+        }
+
+        return { ctrl1, ctrl2 }
+    }
+
+    generatePlot() {
+        this.plot = new Array(this.widthToArrayLength(this.end.x - this.start.x))
+        const { start, end, plot, cubicBezier } = this;
+        const { ctrl1, ctrl2 } = this.getControlPoints();
+        // const startIndex = Math.round((start.x / plotWidth) * plotResolution);
+        // const endIndex = Math.round((end.x / plotWidth) * plotResolution);
+        const curveRes = Math.round(plot.length / MAX_dx);
+        const xOvers = new Array(curveRes);
+
+        for (let i = 0; i < curveRes; i++) {
+            const t = i / curveRes;
+            const p = cubicBezier(start, ctrl1, ctrl2, end, t);
+            p.targetIndex = Math.round(((p.x - start.x) / (end.x - start.x)) * (plot.length));
+            xOvers[i] = p;
+        }
+
+
+        let current = 0;
+        let next = 1;
+        for (let i = 0; i < plot.length; i++) {
+            // if (!xOvers[next]) break;
+            const startIndex = xOvers[current].targetIndex;
+            const targetIndex = xOvers[next] ? xOvers[next].targetIndex : plot.length - 1;
+            const targetY = xOvers[next] ? xOvers[next].y : end.y;
+            const Dx = targetIndex - startIndex;
+            const Dy = (targetY - xOvers[current].y)
+            const dy = Dy / Dx || 1;
+            this.plot[i] = xOvers[current].y + dy;
+
+            if (i >= targetIndex) {
+                current++;
+                next++;
+            }
+        }
+        this.ctrlParam.y = this.plot[Math.round(plot.length / 2)]
+    }
+
+    updateControlParam() {
+        const { start, end, ctrlParam } = this;
+        const dx = end.x - start.x;
+        const dy = end.y - start.y;
+        const relY = this.ctrlParam.relY;
+
+        ctrlParam.x = start.x + dx * 0.5;
+        ctrlParam.y = start.y + dy * Math.abs(relY);
+        this.generatePlot();
+    }
+
+
+    // quadraticBezier(p0, p1, p2, t, pFinal) {
+    //     pFinal = pFinal || {};
+    //     pFinal.x = Math.pow(1 - t, 2) * p0.x +
+    //         (1 - t) * 2 * t * p1.x +
+    //         t * t * p2.x;
+    //     pFinal.y = Math.pow(1 - t, 2) * p0.y +
+    //         (1 - t) * 2 * t * p1.y +
+    //         t * t * p2.y;
+    //     return pFinal;
+    // }
 
     cubicBezier(p0, p1, p2, p3, t, pFinal) {
         pFinal = pFinal || {};
@@ -51,44 +115,18 @@ class Path {
         return pFinal;
     }
 
-    moveControlPoint(y) {
-        const start = this.startNode;
-        const end = this.endNode;
-        // const endY = this.endNode.y;
-        // const startY = this.startNode.y;
+    moveControlParam(y) {
+        const { start, end } = this;
         const maxY = Math.max(start.y, end.y);
         const minY = Math.min(start.y, end.y);
         const clampY = clamp(y, minY, maxY);
-
         const dy = end.y - start.y;
         const yInBounds = clampY - end.y;
-        // this.controlPoint.relY = (dy > 0) ? (maxY - yInBounds) / dy : -yInBounds / dy;
-        this.controlPoint.relY = (-yInBounds * 2 / dy) - 1;
-
-        const relY = this.controlPoint.relY;
-        const dx = end.x - start.x;
-        const ctrl1 = (relY >= 0)
-            ? {
-                x: start.x + dx * relY,
-                y: start.y
-            }
-            : {
-                x: start.x,
-                y: start.y - dy * relY
-            }
-
-        const ctrl2 = (relY >= 0)
-            ? {
-                x: end.x,
-                y: end.y - dy * relY
-            }
-            : {
-                x: end.x + dx * relY,
-                y: end.y
-            }
-
-        const midPoint = this.cubicBezier(start, ctrl2, ctrl1, end, 0.5);
-        this.controlPoint.y = clampY; 
+        this.ctrlParam.relY = (-yInBounds * 2 / dy) - 1;
+        this.generatePlot();
+        // const { ctrl1, ctrl2 } = this.getControlPoints();
+        // const midPoint = this.cubicBezier(start, ctrl1, ctrl2, end, 0.5);
+        // this.ctrlParam.y = midPoint.y;
     }
 }
 
@@ -114,8 +152,8 @@ export class Node {
         this.y = clampY;
         if (!this.isBound)
             this.x = clampX;
-        if (this.path) this.path.updateControlPoint();
-        if (this.leftNeighbour) this.leftNeighbour.path.updateControlPoint();
+        if (this.path) this.path.updateControlParam();
+        if (this.leftNeighbour) this.leftNeighbour.path.updateControlParam();
     }
 }
 
@@ -130,22 +168,26 @@ export class NodeList {
     }
 
     insertAfter(index, node) {
+        const leftNeighbour = this.nodes[index];
+        const rightNeighbour = leftNeighbour.rightNeighbour;
 
         this.nodes.splice(
             index + 1,
             0,
             node
         )
-        node.leftNeighbour = this.nodes[index];
-        node.leftNeighbour.rightNeighbour = node;
-        node.rightNeighbour = (this.nodes[index + 2]) ? this.nodes[index + 2] : null;
-        node.rightNeighbour.leftNeighbour = node;
 
-        node.leftNeighbour.path = new Path(node.leftNeighbour, node);
-        node.leftNeighbour.path.updateControlPoint();
+        node.leftNeighbour = leftNeighbour;
+        leftNeighbour.rightNeighbour = node;
 
-        node.path = new Path(node, node.rightNeighbour)
-        node.path.updateControlPoint();
+        node.rightNeighbour = rightNeighbour;
+        rightNeighbour.leftNeighbour = node;
+
+        leftNeighbour.path = new Path(leftNeighbour, node);
+        leftNeighbour.path.updateControlParam();
+
+        node.path = new Path(node, rightNeighbour)
+        node.path.updateControlParam();
     }
 
     remove(index) {
@@ -156,7 +198,7 @@ export class NodeList {
 
         this.nodes.splice(index, 1);
         this.nodes[index].leftNeighbour = leftNeighbour;
-        leftNeighbour.path.updateControlPoint();
+        leftNeighbour.path.updateControlParam();
         this.nodes[index - 1].rightNeighbour = rightNeighbour;
 
     }

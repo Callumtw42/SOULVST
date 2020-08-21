@@ -14,9 +14,9 @@ import Button from "../button"
 const boxHeight = 100;
 const boxWidth = 150;
 export const plotHeight = (3 / 4) * boxHeight;
-const plotWidth = boxWidth;
+export const plotWidth = boxWidth;
 export const pointRadius = 4;
-const plotResolution = 128;
+export const plotResolution = 128;
 const MAX_GRID_RES = 16;
 const CURVE_RES = 32;
 
@@ -46,7 +46,6 @@ class LFO extends Component {
   }
 
   componentDidMount() {
-
     this.state.points.insertAfter(0,
       new Node(plotWidth / 2, plotHeight, pointRadius, false)
     )
@@ -55,7 +54,6 @@ class LFO extends Component {
 
   _onMouseDoubleClick(mouseX, mouseY) {
     const { points } = this.state;
-
     let mouse = new Mouse(mouseX, mouseY);
     let removing = false;
 
@@ -104,8 +102,8 @@ class LFO extends Component {
         break;
       }
       const path = point.path;
-      if (path && path.controlPoint.isSelected) {
-        path.moveControlPoint(mouseY);
+      if (path && path.ctrlParam.isSelected) {
+        path.moveControlParam(mouseY);
         break;
       }
 
@@ -114,7 +112,6 @@ class LFO extends Component {
   }
 
   _onMouseDown(mouseX, mouseY) {
-
     this.initialised = true;
     const points = this.state.points;
     let mouse = new Mouse(mouseX, mouseY);
@@ -124,8 +121,8 @@ class LFO extends Component {
         point.isSelected = true;
         break;
       }
-      if (point.path && mouse.isOverlapping(point.path.controlPoint)) {
-        point.path.controlPoint.isSelected = true;
+      if (point.path && mouse.isOverlapping(point.path.ctrlParam)) {
+        point.path.ctrlParam.isSelected = true;
         break;
       }
     }
@@ -137,64 +134,8 @@ class LFO extends Component {
         point.isSelected = false;
       }
       if (point.path)
-        point.path.controlPoint.isSelected = false;
+        point.path.ctrlParam.isSelected = false;
     })
-  }
-
-  getControlPoints(start, end) {
-    const dy = end.y - start.y;
-    const dx = end.x - start.x;
-    const relY = 1 - ((start.path.controlPoint.relY + 1) / 2);
-    // global.log(relY)
-
-    // const ctrl1 = (relY >= 0)
-    //   ? {
-    //     x: start.x + dx * relY,
-    //     y: start.y
-    //   }
-    //   : {
-    //     x: start.x,
-    //     y: start.y - dy * relY
-    //   }
-
-    // const ctrl2 = (relY >= 0)
-    //   ? {
-    //     x: end.x,
-    //     y: end.y - dy * relY
-    //   }
-    //   : {
-    //     x: end.x + dx * relY,
-    //     y: end.y
-    //   }
-    const ctrl1 = {
-      x: end.x - dx * relY,
-      y: start.y + dy * relY
-    }
-
-    const ctrl2 = {
-      x: end.x - dx * relY,
-      y: start.y + dy * relY
-    }
-
-    // global.log(relY);
-
-
-    return { ctrl1, ctrl2 }
-  }
-
-  bezier(p0, p1, p2, p3, t) {
-    var cX = 3 * (p1.x - p0.x),
-      bX = 3 * (p2.x - p1.x) - cX,
-      aX = p3.x - p0.x - cX - bX;
-
-    var cY = 3 * (p1.y - p0.y),
-      bY = 3 * (p2.y - p1.y) - cY,
-      aY = p3.y - p0.y - cY - bY;
-
-    var x = (aX * Math.pow(t, 3)) + (bX * Math.pow(t, 2)) + (cX * t) + p0.x;
-    var y = (aY * Math.pow(t, 3)) + (bY * Math.pow(t, 2)) + (cY * t) + p0.y;
-
-    return { x: x, y: y };
   }
 
   normalisePlot() {
@@ -202,42 +143,16 @@ class LFO extends Component {
       return 1 - y / plotHeight;
     })
   }
+
   generatePlot() {
     const { points, plot } = this.state;
+    let newPlot = [];
     points.forEach((point, index) => {
-      if (point.rightNeighbour) {
-        const start = point;
-        const end = point.rightNeighbour;
-        const { ctrl1, ctrl2 } = this.getControlPoints(start, end);
-        const startIndex = Math.round((start.x / plotWidth) * plotResolution);
-        const endIndex = Math.round((end.x / plotWidth) * plotResolution);
-        // global.log(ctrl1.x)
-        const xOvers = new Array(CURVE_RES);
-        for (let i = 0; i < CURVE_RES; i++) {
-          const t = i / CURVE_RES;
-          // global.log(t)
-          const p = this.bezier(start, ctrl1, ctrl2, end, t);
-          p.targetIndex = Math.round(((p.x - start.x) / (end.x - start.x)) * (endIndex - startIndex));
-          xOvers[i] = p;
-        }
-
-        let current = 0;
-        let next = 1;
-        for (let i = startIndex; i < endIndex; i++) {
-          if (!xOvers[next]) break;
-          const targetIndex = xOvers[next].targetIndex;
-          const dx = targetIndex - i;
-          const dy = (xOvers[next].y - xOvers[current].y) / (dx || 1);
-          plot[i] = xOvers[current].y + dy;
-          // global.log(plot[i]);
-          if (i >= targetIndex) {
-            current++;
-            next++;
-          }
-
-        }
+      if (point.path) {
+        newPlot = newPlot.concat(point.path.plot);
       }
     })
+    this.state.plot = newPlot;
     if (this.initialised) global.sendPlot(this.props.paramId, this.normalisePlot());
   }
 
@@ -270,17 +185,6 @@ class LFO extends Component {
         y: plot[i]
       }
 
-      const end = {
-        x: ((i + 1) / plotResolution) * plotWidth,
-        y: plot[i + 1]
-      }
-
-      // paths.push(`<path 
-      // d="M${start.x} ${start.y} 
-      // L${end.x} ${end.y}" 
-      // stroke="${lineColor}" stroke-width="2"/>
-      // `
-      // )
       paths.push(`
         <circle cx="${start.x}" cy="${start.y}" r="${0.5}" fill="${lineColor}" />
       `)
@@ -290,11 +194,12 @@ class LFO extends Component {
       if (point.rightNeighbour) {
         const start = point;
         const end = point.rightNeighbour;
-        const { ctrl1, ctrl2 } = this.getControlPoints(start, end);
-        const curveMod = point.path.controlPoint;
+        const { ctrl1, ctrl2 } = point.path.getControlPoints(start, end);
+        const curveMod = point.path.ctrlParam;
+        global.log(curveMod.x);
 
         return `
-        <circle cx="${point.x}" cy="${point.y}" r="${point.radius}" fill="${lineColor}" />
+        <circle cx="${point.x}" cy="${point.y}" r="${point.radius}" fill="${"#0866FF"}" />
         <circle cx="${curveMod.x}" cy="${curveMod.y}" r="${3}" fill="${"#FFEF08"}" />
         <circle cx="${ctrl1.x}" cy="${ctrl1.y}" r="${2}" fill="${"#D519DA"}" />
         <circle cx="${ctrl2.x}" cy="${ctrl2.y}" r="${1.5}" fill="${"#FFFFFF"}" />
@@ -310,8 +215,8 @@ class LFO extends Component {
             <rect x="${0}" y="${0}" stroke="green" stroke-width="1" fill="#2a302a" width="${boxWidth}" height="${plotHeight}" />
         ${gridX}
         ${gridY}
-        ${paths}
         ${circles}
+        ${paths}
       </svg >
       `
     return img;
@@ -350,8 +255,6 @@ class LFO extends Component {
             onMouseDrag={this._onMouseDrag}
             onMouseDoubleClick={this._onMouseDoubleClick}
             {...styles.plot} source={this._svg()} />
-          {/* <Slider {...styles.slider} callBack={this.setSpeed.bind(this)}></Slider> */}
-          {/* <Slider {...styles.slider} {...this.props} min={1} max={16} step={1} callBack={this.setGridRes.bind(this)} ></Slider> */}
           <View {...styles.dials}>
             <Dial {...styles.dial} value={gridRes} start={1} end={16} step={1} label={"Grid"} callBack={this.setGridRes.bind(this)} ></Dial>
             <Dial {...styles.dial} value={speed} start={4} end={1 / 64} step={-2} skew={0.5} label={"Speed"} callBack={this.setSpeed.bind(this)} ></Dial>
@@ -368,7 +271,6 @@ let styles = {
   plot: {
     'height': plotHeight,
     'width': plotWidth,
-    // 'position': 'absolute',
     'interceptClickEvents': true,
   },
   slider: {
@@ -378,7 +280,6 @@ let styles = {
   dial: {
     'width': boxWidth / 4,
     'height': boxWidth / 4,
-    // 'transform-rotate': Math.PI * 1.25,
   },
   dials: {
     'flex-direction': 'row'
